@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase';
+import ParticipationSummary from '@/components/dashboard/ParticipationSummary';
 
 interface RealLeaderGroup {
   group_id: string;
@@ -67,6 +68,8 @@ interface LeaderProject {
     text: string;
     time: string;
   }[];
+  // ข้อมูลดิบจากฐานข้อมูล สำหรับคำนวณคะแนนการมีส่วนร่วม (โครงการตัวอย่างไม่มี)
+  raw?: { members: any[]; tasks: any[]; responses: any[] };
 }
 
 const DEFAULT_LEADER_PROJECTS: LeaderProject[] = [
@@ -336,10 +339,7 @@ export default function LeaderPage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // เก็บแท็บที่เลือกของแต่ละโครงการแยกกัน โดยค่าเริ่มต้นคือ 'tasks' (งานทั้งหมดในโครงการ)
-  const [activeTabs, setActiveTabs] = useState<Record<string, ProjectTab>>({
-    p1: 'tasks',
-    p2: 'tasks',
-  });
+  const [activeTabs, setActiveTabs] = useState<Record<string, ProjectTab>>({});
 
   useEffect(() => {
     loadLeaderGroups();
@@ -403,6 +403,17 @@ export default function LeaderPage() {
           (userRows || []).forEach((u: any) => {
             userMap[u.user_id] = u.full_name || u.email || 'สมาชิก';
           });
+        }
+
+        // ดึงการตอบรับ/ปฏิเสธงาน สำหรับคะแนนการมีส่วนร่วม
+        const allTaskIds = (taskRows || []).map((t: any) => t.task_id);
+        let responseRows: any[] = [];
+        if (allTaskIds.length > 0) {
+          const { data } = await supabase
+            .from('task_responses')
+            .select('task_id, user_id, response')
+            .in('task_id', allTaskIds);
+          responseRows = data || [];
         }
 
         // 4. แปลงกลุ่มจริงเป็น LeaderProject พร้อม Kanban Board
@@ -485,6 +496,18 @@ export default function LeaderPage() {
                 time: t.status === 'done' ? 'เสร็จแล้ว' : 'กำลังดำเนินการ',
               })),
             ],
+            raw: {
+              members: groupMembers.map((m: any) => ({
+                user_id: m.user_id,
+                role: m.role,
+                full_name: userMap[m.user_id] || null,
+                email: null,
+              })),
+              tasks: groupTasks,
+              responses: responseRows.filter((r: any) =>
+                groupTasks.some((t: any) => t.task_id === r.task_id)
+              ),
+            },
           };
         });
 
@@ -607,7 +630,7 @@ export default function LeaderPage() {
                         เพิ่มสมาชิก
                       </Link>
                       <Link
-                        href="/dashboard/tasks/new"
+                        href={`/dashboard/groups/${g.group_id}?tab=tasks`}
                         className="text-slate-500 hover:text-indigo-600 font-medium text-[12px]"
                       >
                         + มอบหมายงาน
@@ -625,11 +648,17 @@ export default function LeaderPage() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="text-[20px] font-bold text-slate-800">
-            ภาพรวมโครงการที่คุณดูแล ({realProjects.length > 0 ? realProjects.length : DEFAULT_LEADER_PROJECTS.length} โครงการ)
+            ภาพรวมโครงการที่คุณดูแล ({realProjects.length} โครงการ)
           </h2>
         </div>
 
-        {(realProjects.length > 0 ? realProjects : DEFAULT_LEADER_PROJECTS).map((proj) => {
+        {!loading && realProjects.length === 0 && (
+          <div className="gt-card p-8 text-center text-[14px] text-slate-500">
+            ยังไม่มีกลุ่มที่คุณเป็นหัวหน้า กด &quot;สร้างกลุ่มใหม่&quot; เพื่อเริ่มต้น
+          </div>
+        )}
+
+        {realProjects.map((proj) => {
           const currentTab = activeTabs[proj.id] || 'tasks';
 
           const todoTasks = proj.tasks.filter((t) => t.status === 'todo');
@@ -727,7 +756,7 @@ export default function LeaderPage() {
                 </div>
 
                 <Link
-                  href="/dashboard/tasks/new"
+                  href={`/dashboard/groups/${proj.id}?tab=tasks`}
                   className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 hover:text-indigo-700 -mb-2"
                 >
                   <Plus size={15} />
@@ -748,7 +777,7 @@ export default function LeaderPage() {
                       <span className="text-[12px] text-slate-400">| จัดการระยะเวลาและสถานะงานแต่ละช่วง</span>
                     </div>
                     <Link
-                      href="/dashboard/tasks/new"
+                      href={`/dashboard/groups/${proj.id}?tab=tasks`}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 shadow-sm transition"
                     >
                       <Plus size={14} />
@@ -769,7 +798,7 @@ export default function LeaderPage() {
                           <span className="text-[12px] text-slate-400 font-medium">{todoTasks.length}</span>
                         </div>
                         <Link
-                          href="/dashboard/tasks/new"
+                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
                           className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
                           title="เพิ่มงานใหม่"
                         >
@@ -821,7 +850,7 @@ export default function LeaderPage() {
                         ))}
 
                         <Link
-                          href="/dashboard/tasks/new"
+                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
                           className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
                         >
                           <Plus size={14} />
@@ -841,7 +870,7 @@ export default function LeaderPage() {
                           <span className="text-[12px] text-slate-400 font-medium">{doingTasks.length}</span>
                         </div>
                         <Link
-                          href="/dashboard/tasks/new"
+                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
                           className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
                           title="เพิ่มงานใหม่"
                         >
@@ -893,7 +922,7 @@ export default function LeaderPage() {
                         ))}
 
                         <Link
-                          href="/dashboard/tasks/new"
+                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
                           className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
                         >
                           <Plus size={14} />
@@ -913,7 +942,7 @@ export default function LeaderPage() {
                           <span className="text-[12px] text-slate-400 font-medium">{doneTasks.length}</span>
                         </div>
                         <Link
-                          href="/dashboard/tasks/new"
+                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
                           className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
                           title="เพิ่มงานใหม่"
                         >
@@ -964,7 +993,7 @@ export default function LeaderPage() {
                         ))}
 
                         <Link
-                          href="/dashboard/tasks/new"
+                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
                           className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
                         >
                           <Plus size={14} />
@@ -1015,47 +1044,16 @@ export default function LeaderPage() {
                 <div className="space-y-5">
                   <div className="grid gap-5 lg:grid-cols-3">
                     {/* รายงานสมาชิก (Members Report) */}
-                    <div className="lg:col-span-2 space-y-3">
-                      <h3 className="text-[14px] font-bold text-slate-700 flex items-center gap-2">
-                        <Users size={16} className="text-indigo-600" />
-                        รายงานและการมีส่วนร่วมของสมาชิก ({proj.members.length} คน)
-                      </h3>
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {proj.members.map((m) => (
-                          <div key={m.name} className="rounded-xl bg-slate-50 p-4 border border-slate-100 space-y-3">
-                            <div className="flex items-center gap-3">
-                              <div className={`h-9 w-9 rounded-xl ${m.color} flex items-center justify-center text-white text-[12px] font-bold shadow-sm`}>
-                                {m.initials}
-                              </div>
-                              <div>
-                                <span className="text-[14px] font-semibold text-slate-800 block">{m.name}</span>
-                                <span className="text-[11px] text-slate-400">อัตราความสำเร็จ {Math.round((m.done / m.assigned) * 100)}%</span>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 text-[11px]">
-                              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-indigo-700 font-medium">📋 มอบหมาย {m.assigned}</span>
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 font-medium">✅ เสร็จ {m.done}</span>
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 font-medium">⏳ ค้าง {m.pending}</span>
-                            </div>
-
-                            <div className="space-y-1">
-                              <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-                                  style={{ width: `${Math.round((m.done / m.assigned) * 100)}%` }}
-                                />
-                              </div>
-                            </div>
-
-                            <p className="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-slate-200/60">
-                              🕐 {m.lastActivity}
-                            </p>
-                          </div>
-                        ))}
+                    {proj.raw && (
+                      <div className="lg:col-span-2">
+                        <ParticipationSummary
+                          groupId={proj.id}
+                          members={proj.raw.members}
+                          tasks={proj.raw.tasks}
+                          taskResponses={proj.raw.responses}
+                        />
                       </div>
-                    </div>
+                    )}
 
                     {/* เครื่องมือมอบหมายงานและสรุปยอด */}
                     <div className="space-y-4">
@@ -1063,19 +1061,19 @@ export default function LeaderPage() {
                         <h4 className="text-[13px] font-bold text-slate-700">⚡ จัดการและมอบหมายงาน</h4>
                         <div className="flex flex-col gap-2">
                           <Link
-                            href="/dashboard/tasks/new"
+                            href={`/dashboard/groups/${proj.id}?tab=tasks`}
                             className="w-full text-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2.5 text-[12px] font-semibold text-white hover:opacity-90 transition block shadow-sm"
                           >
                             + สร้างงานใหม่
                           </Link>
                           <Link
-                            href="/dashboard/tasks/new"
+                            href={`/dashboard/groups/${proj.id}?tab=tasks`}
                             className="w-full text-center rounded-xl border border-indigo-200 bg-white px-4 py-2 text-[12px] font-semibold text-indigo-700 hover:bg-indigo-50 transition block"
                           >
                             📤 มอบหมายงานให้สมาชิก
                           </Link>
                           <Link
-                            href="/dashboard/tasks/new"
+                            href={`/dashboard/groups/${proj.id}?tab=tasks`}
                             className="w-full text-center rounded-xl border border-purple-200 bg-white px-4 py-2 text-[12px] font-semibold text-purple-700 hover:bg-purple-50 transition block"
                           >
                             📋 สร้างงานว่าง (สมาชิกเลือกเอง)

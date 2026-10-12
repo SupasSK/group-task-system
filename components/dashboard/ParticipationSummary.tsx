@@ -32,12 +32,12 @@ const MAX_CONSISTENCY = 20
 
 function ScoreBar({ label, value, max }: { label: string; value: number; max: number }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-28 text-xs text-gray-500">{label}</span>
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+    <div className="flex items-center gap-2">
+      <span className="w-20 shrink-0 text-[11px] text-gray-500">{label}</span>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200">
         <div className="h-full rounded-full gt-gradient-x" style={{ width: `${(value / max) * 100}%` }} />
       </div>
-      <span className="w-14 text-right text-xs font-semibold text-gray-600">
+      <span className="w-10 shrink-0 text-right text-[11px] font-semibold text-gray-600">
         {Math.round(value)}/{max}
       </span>
     </div>
@@ -119,52 +119,57 @@ export default function ParticipationSummary({
     .sort((a, b) => b.total - a.total)
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-base font-semibold text-gray-800 mb-2">คะแนนการมีส่วนร่วม (เต็ม 100)</h2>
-        <ul className="text-xs text-gray-500 space-y-1 list-disc pl-5">
-          <li>
-            ภาระงาน {MAX_WORKLOAD} คะแนน: คะแนนงานที่ทำเสร็จ (ต่ำ 1, กลาง 2, สูง 3, ด่วน 4)
-            เทียบกับส่วนแบ่งเฉลี่ยต่อคนของกลุ่ม
-          </li>
-          <li>ความตรงเวลา {MAX_PUNCTUAL} คะแนน: สัดส่วนงานที่เสร็จทันกำหนดส่ง</li>
-          <li>
-            ความสม่ำเสมอ {MAX_CONSISTENCY} คะแนน: จำนวนวันที่มีกิจกรรมในกลุ่ม
-            เทียบกับสมาชิกที่มีกิจกรรมมากวันที่สุด
-          </li>
-        </ul>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4">
+      <div>
+        <h2 className="text-base font-semibold text-gray-800">คะแนนการมีส่วนร่วม (เต็ม 100)</h2>
+        <p className="mt-1 text-xs text-gray-500">
+          ภาระงาน {MAX_WORKLOAD} + ความตรงเวลา {MAX_PUNCTUAL} + ความสม่ำเสมอ {MAX_CONSISTENCY}
+        </p>
         {logError && (
-          <p className="mt-3 text-xs text-rose-600">โหลดประวัติกิจกรรมไม่สำเร็จ: {logError}</p>
+          <p className="mt-2 text-xs text-rose-600">โหลดประวัติกิจกรรมไม่สำเร็จ: {logError}</p>
         )}
       </div>
 
-      {rows.map((r) => (
-        <div key={r.member.user_id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-800">
-                {r.member.full_name || r.member.email || 'ไม่ทราบชื่อ'}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((r) => (
+          <div key={r.member.user_id} className="rounded-xl bg-slate-50 border border-slate-100 p-3.5 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-800">
+                  {r.member.full_name || r.member.email || 'ไม่ทราบชื่อ'}
+                </p>
+                <p className="text-[11px] text-gray-400">{r.member.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}</p>
+              </div>
+              <p className="shrink-0 text-xl font-bold text-indigo-600">
+                {r.total}
+                <span className="text-xs font-normal text-gray-400">/100</span>
               </p>
-              <p className="text-xs text-gray-400">{r.member.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}</p>
             </div>
-            <p className="text-2xl font-bold text-indigo-600">
-              {r.total}
-              <span className="text-sm font-normal text-gray-400"> /100</span>
-            </p>
-          </div>
 
-          <div className="space-y-2">
-            <ScoreBar label="ภาระงาน" value={r.workload} max={MAX_WORKLOAD} />
-            <ScoreBar label="ความตรงเวลา" value={r.punctual} max={MAX_PUNCTUAL} />
-            <ScoreBar label="ความสม่ำเสมอ" value={r.consistency} max={MAX_CONSISTENCY} />
-          </div>
+            <div className="space-y-1.5">
+              <ScoreBar label="ภาระงาน" value={r.workload} max={MAX_WORKLOAD} />
+              <ScoreBar label="ตรงเวลา" value={r.punctual} max={MAX_PUNCTUAL} />
+              <ScoreBar label="สม่ำเสมอ" value={r.consistency} max={MAX_CONSISTENCY} />
+            </div>
 
-          <p className="mt-4 text-xs text-gray-500">
-            เสร็จแล้ว {r.doneCount} งาน · คะแนนงาน {r.points} ({r.share}% ของทั้งกลุ่ม) · ทันกำหนด {r.onTime}/
-            {r.doneCount} งาน · ปฏิเสธงาน {r.rejected} ครั้ง · มีกิจกรรม {r.days} วัน
-          </p>
-        </div>
-      ))}
+            <div className="flex flex-wrap gap-1.5 text-[11px]">
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700">เสร็จ {r.doneCount} งาน</span>
+              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-indigo-700">{r.share}% ของกลุ่ม</span>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-blue-700">
+                ทันกำหนด {r.onTime}/{r.doneCount}
+              </span>
+              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">ปฏิเสธ {r.rejected}</span>
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-600">มีกิจกรรม {r.days} วัน</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <ul className="text-[11px] text-gray-400 space-y-0.5 list-disc pl-4">
+        <li>ภาระงาน: คะแนนงานที่เสร็จ (ต่ำ 1, กลาง 2, สูง 3, ด่วน 4) เทียบกับส่วนแบ่งเฉลี่ยต่อคนของกลุ่ม</li>
+        <li>ความตรงเวลา: สัดส่วนงานที่เสร็จทันกำหนดส่ง</li>
+        <li>ความสม่ำเสมอ: จำนวนวันที่มีกิจกรรม เทียบกับสมาชิกที่มีกิจกรรมมากวันที่สุด</li>
+      </ul>
     </div>
   )
 }
