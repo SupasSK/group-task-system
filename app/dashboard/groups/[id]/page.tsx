@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
+import CatchUpDigest from '@/components/dashboard/CatchUpDigest'
 
 interface Group {
   group_id: string
@@ -91,7 +92,12 @@ export default function GroupDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
-  const [activeTab, setActiveTab] = useState<TabType>('overview')
+  // เปิดแท็บตามพารามิเตอร์ ?tab= (เช่น มาจากปุ่มสร้างงานในหน้าหัวหน้า)
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    if (typeof window === 'undefined') return 'overview'
+    const tab = new URLSearchParams(window.location.search).get('tab')
+    return tab === 'tasks' || tab === 'members' || tab === 'summary' ? tab : 'overview'
+  })
 
   const [copied, setCopied] = useState(false)
   const [emailInput, setEmailInput] = useState('')
@@ -717,9 +723,7 @@ export default function GroupDetailPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-400 text-sm">
-            การสรุปการเปลี่ยนแปลงล่าสุดจะแสดงที่นี่
-          </div>
+          {currentUserId && <CatchUpDigest groupId={id} currentUserId={currentUserId} members={members} />}
         </div>
       )}
 
