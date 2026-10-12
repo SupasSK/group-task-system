@@ -24,9 +24,9 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
   ]
 
   return (
-    <aside className="gt-gradient flex h-screen w-[220px] shrink-0 flex-col px-4 py-6 text-white select-none">
+    <aside className="gt-gradient flex shrink-0 flex-row items-center gap-1 px-2 py-2 text-white select-none md:h-screen md:w-[220px] md:flex-col md:items-stretch md:gap-0 md:px-4 md:py-6">
       {/* Brand */}
-      <div className="mb-6 flex items-center gap-2.5">
+      <div className="mb-6 hidden items-center gap-2.5 md:flex">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 border border-white/25">
           <Check size={16} strokeWidth={3} />
         </div>
@@ -34,7 +34,7 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
       </div>
 
       {/* User Card */}
-      <div className="mb-6 flex items-center gap-3 p-2.5 rounded-2xl bg-white/10 border border-white/10">
+      <div className="mb-6 hidden items-center gap-3 p-2.5 rounded-2xl bg-white/10 border border-white/10 md:flex">
         <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-sm ring-2 ring-white/30">
           {name.charAt(0).toUpperCase()}
         </div>
@@ -45,14 +45,14 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
       </div>
 
       {/* Nav — สไตล์แบบรูป: มุมมน Glassmorphism, ไอคอนเส้นสีขาว, ตัวหนังสือขาวคมชัด */}
-      <nav className="flex flex-1 flex-col gap-2">
+      <nav className="flex flex-1 flex-row gap-1 md:flex-col md:gap-2">
         {navItems.map(({ href, icon: Icon, label, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3.5 rounded-2xl px-4 py-3 text-[14px] transition-all duration-200 ${
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-2 py-2 text-[12px] transition-all duration-200 md:flex-none md:justify-start md:gap-3.5 md:px-4 md:py-3 md:text-[14px] ${
                 active
                   ? 'bg-white/25 backdrop-blur-md text-white font-semibold shadow-sm border border-white/15'
                   : 'text-white/80 hover:bg-white/10 hover:text-white font-medium'
@@ -68,13 +68,14 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
       {/* ออกจากระบบ — สไตล์เดียวกับเมนู */}
       <button
         onClick={handleSignOut}
-        className="flex items-center gap-3.5 rounded-2xl px-4 py-3 text-left text-[14px] text-white/80 hover:bg-white/10 hover:text-white transition-all cursor-pointer font-medium mt-auto"
+        aria-label="ออกจากระบบ"
+        className="flex items-center gap-3.5 rounded-2xl px-3 py-2 text-left text-[14px] text-white/80 hover:bg-white/10 hover:text-white transition-all cursor-pointer font-medium md:mt-auto md:px-4 md:py-3"
       >
         <LogOut size={19} strokeWidth={2.2} className="shrink-0" />
-        <span>ออกจากระบบ</span>
+        <span className="hidden md:inline">ออกจากระบบ</span>
       </button>
 
-      <p className="mt-4 pt-2 text-[11px] text-white/40">v2.0 • GroupTask</p>
+      <p className="mt-4 hidden pt-2 text-[11px] text-white/40 md:block">v2.0 • GroupTask</p>
     </aside>
   )
 }

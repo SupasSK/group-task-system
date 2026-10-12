@@ -31,11 +31,11 @@ export default function DashboardLayout({
   }, [router, supabase]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f4f6fb]">
-      <Suspense fallback={<aside className="gt-gradient w-[260px] h-screen shrink-0" />}>
+    <div className="flex h-screen flex-col overflow-hidden bg-[#f4f6fb] md:flex-row">
+      <Suspense fallback={<aside className="gt-gradient hidden w-[260px] h-screen shrink-0 md:block" />}>
         <Sidebar displayName={displayName} />
       </Suspense>
-      <main className="min-w-0 flex-1 overflow-y-auto px-8 py-7">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-7">{children}</main>
     </div>
   );
 }

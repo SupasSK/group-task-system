@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
+import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
 
 interface Group {
   group_id: string
@@ -1228,9 +1229,7 @@ export default function GroupDetailPage() {
 
       {/* ===== แท็บ: สรุปผล ===== */}
       {activeTab === 'summary' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-500 text-sm">
-          คะแนนการมีส่วนร่วมและประวัติกิจกรรมจะแสดงที่นี่
-        </div>
+        <ParticipationSummary groupId={id} members={members} tasks={tasks} taskResponses={taskResponses} />
       )}
     </div>
   )
