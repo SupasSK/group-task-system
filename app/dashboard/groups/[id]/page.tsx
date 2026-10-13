@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { projectProgress } from '@/lib/projectProgress'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
@@ -96,9 +97,9 @@ export default function GroupDetailPage() {
   const [notFound, setNotFound] = useState(false)
 
   // เปิดแท็บตามพารามิเตอร์ ?tab= (เช่น มาจากปุ่มสร้างงานในหน้าหัวหน้า)
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    if (typeof window === 'undefined') return 'overview'
-    const tab = new URLSearchParams(window.location.search).get('tab')
+    const tab = searchParams.get('tab')
     return tab === 'tasks' || tab === 'members' || tab === 'summary' ? tab : 'overview'
   })
 
@@ -115,9 +116,7 @@ export default function GroupDetailPage() {
 
   // ฟอร์มสร้างงาน
   // ?new=1 เปิดฟอร์มสร้างงานทันที (มาจากปุ่มสร้างงานในหน้าหัวหน้า)
-  const [showCreateModal, setShowCreateModal] = useState(
-    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('new') === '1'
-  )
+  const [showCreateModal, setShowCreateModal] = useState(() => searchParams.get('new') === '1')
   const [createTaskLoading, setCreateTaskLoading] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
@@ -727,6 +726,23 @@ export default function GroupDetailPage() {
                 <p className="text-sm font-semibold text-gray-800 mt-1">{members.length} คน</p>
               </div>
             </div>
+
+            {/* หลอดความคืบหน้าของโครงการ */}
+            <div className="mt-5">
+              <div className="mb-1.5 flex items-center justify-between text-sm">
+                <span className="font-semibold text-gray-700">ความคืบหน้าของโครงการ</span>
+                <span className="font-bold text-indigo-600">{projectProgress(tasks)}%</span>
+              </div>
+              <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full gt-gradient-x transition-all"
+                  style={{ width: `${projectProgress(tasks)}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-gray-400">
+                เสร็จแล้ว {tasks.filter((t) => t.status === 'completed').length} จาก {tasks.length} งาน
+              </p>
+            </div>
           </div>
 
           {currentUserId && (
@@ -967,7 +983,7 @@ export default function GroupDetailPage() {
                       </div>
                     </div>
 
-                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isLeader || isAssignee} />
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isLeader || isAssignee} onProgressSaved={loadTasks} />
 
                     {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
                     {t.status === 'rejected' && (

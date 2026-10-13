@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase';
+import { projectProgress } from '@/lib/projectProgress';
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary';
 import CatchUpDigest from '@/components/dashboard/CatchUpDigest';
 
@@ -480,8 +481,7 @@ export default function LeaderPage() {
           });
 
           const total = kanbanTasks.length;
-          const doneCount = kanbanTasks.filter((t) => t.status === 'done').length;
-          const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+          const progress = projectProgress(groupTasks);
 
           return {
             id: g.group_id,

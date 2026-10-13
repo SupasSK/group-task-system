@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase';
 import { loadUnreadCounts } from '@/lib/unreadCounts';
+import { projectProgress } from '@/lib/projectProgress';
 import DashboardCalendar, { type EventItem } from '@/components/dashboard/DashboardCalendar';
 import { Plus, UserPlus, Users, Sparkles } from 'lucide-react';
 
@@ -48,6 +49,8 @@ export default function DashboardPage() {
   // สถิติงาน กำหนดส่ง และกิจกรรมล่าสุด จากทุกกลุ่มของผู้ใช้
   const [taskStats, setTaskStats] = useState({ total: 0, doing: 0, done: 0, overdue: 0 });
   const [events, setEvents] = useState<EventItem[]>([]);
+  // ความคืบหน้าของแต่ละกลุ่ม (0-100)
+  const [groupProgress, setGroupProgress] = useState<Record<string, number>>({});
   const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
 
   useEffect(() => {
@@ -98,9 +101,15 @@ export default function DashboardPage() {
 
           const { data: taskRows } = await supabase
             .from('tasks')
-            .select('task_id, title, status, deadline, group_id')
+            .select('*')
             .in('group_id', groupIds);
           const tasks = taskRows || [];
+
+          const progressMap: Record<string, number> = {};
+          for (const id of groupIds) {
+            progressMap[id] = projectProgress(tasks.filter((t) => t.group_id === id));
+          }
+          setGroupProgress(progressMap);
           const now = new Date();
 
           setTaskStats({
@@ -245,6 +254,20 @@ export default function DashboardPage() {
                       มี {unreadCounts[g.group_id]} การเปลี่ยนแปลงใหม่
                     </span>
                   )}
+
+                  {/* หลอดความคืบหน้าของโครงการ */}
+                  <div className="mt-3">
+                    <div className="mb-1 flex items-center justify-between text-[12px]">
+                      <span className="text-slate-500">ความคืบหน้า</span>
+                      <span className="font-semibold text-indigo-600">{groupProgress[g.group_id] ?? 0}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                        style={{ width: `${groupProgress[g.group_id] ?? 0}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[12px]">

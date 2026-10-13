@@ -69,6 +69,8 @@ export default function CatchUpDigest({
   const [logs, setLogs] = useState<ActivityLog[]>([])
   // เวลาที่เข้าดูกลุ่มนี้ครั้งก่อน (null = เข้าครั้งแรก)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
+  // จุดเริ่มของช่วงที่นำมาสรุป: เวลาเข้าดูครั้งก่อน หรือ 24 ชม. ที่แล้ว แล้วแต่อันไหนเก่ากว่า
+  const [since, setSince] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [verifyText, setVerifyText] = useState<{ ok: boolean; text: string } | null>(null)
@@ -100,7 +102,10 @@ export default function CatchUpDigest({
         return
       }
 
-      setLastSeen(visit?.last_seen_at ?? null)
+      const seen: string | null = visit?.last_seen_at ?? null
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      setLastSeen(seen)
+      setSince(seen && new Date(seen) < dayAgo ? seen : dayAgo.toISOString())
       setLogs(logRows || [])
       setLoading(false)
 
@@ -196,9 +201,10 @@ export default function CatchUpDigest({
     )
   }
 
-  // การเปลี่ยนแปลงของคนอื่นตั้งแต่เข้าดูครั้งก่อน จัดกลุ่มตามงาน
-  const newLogs = lastSeen
-    ? logs.filter((l) => l.actor_id !== currentUserId && new Date(l.created_at) > new Date(lastSeen))
+  // การเปลี่ยนแปลงของคนอื่นตั้งแต่เข้าดูครั้งก่อน (หรือย้อนหลัง 24 ชม. แล้วแต่อันไหนนานกว่า) จัดกลุ่มตามงาน
+  const isNew = (l: ActivityLog) => !lastSeen || new Date(l.created_at) > new Date(lastSeen)
+  const newLogs = since
+    ? logs.filter((l) => l.actor_id !== currentUserId && new Date(l.created_at) > new Date(since))
     : []
   const topics: { key: string; title: string; items: ActivityLog[] }[] = []
   for (const log of [...newLogs].reverse()) {
@@ -218,33 +224,37 @@ export default function CatchUpDigest({
       )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-        <h2 className="text-base font-semibold text-gray-800">มีอะไรเปลี่ยนตั้งแต่คุณเข้ามาครั้งล่าสุด</h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="text-base font-semibold text-gray-800">มีอะไรเปลี่ยนตั้งแต่คุณเข้ามาครั้งล่าสุด</h2>
+          {onOpenTasks && (
+            <button
+              onClick={onOpenTasks}
+              className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+            >
+              ดูงานและผลงานทั้งหมด →
+            </button>
+          )}
+        </div>
         <p className="mt-1 text-xs text-gray-400">
-          {lastSeen ? `เข้าดูครั้งล่าสุด ${formatDateTime(lastSeen)}` : 'นี่คือการเข้าดูกลุ่มนี้ครั้งแรกของคุณ'}
+          {lastSeen ? `เข้าดูครั้งล่าสุด ${formatDateTime(lastSeen)}` : 'นี่คือการเข้าดูกลุ่มนี้ครั้งแรกของคุณ'} ·
+          รายการจะค้างแสดงอย่างน้อย 24 ชั่วโมง
         </p>
 
         {topics.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-500">
-            {lastSeen ? 'ไม่มีการเปลี่ยนแปลงใหม่จากสมาชิกคนอื่น' : 'ดูประวัติทั้งหมดของกลุ่มได้ด้านล่าง'}
-          </p>
+          <p className="mt-4 text-sm text-gray-500">ไม่มีการเปลี่ยนแปลงจากสมาชิกคนอื่นในช่วงนี้</p>
         ) : (
           <div className="mt-4 space-y-3">
             {topics.map((topic) => (
               <div key={topic.key} className="rounded-xl bg-indigo-50/60 border border-indigo-100 p-3.5">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <p className="text-sm font-semibold text-gray-800">{topic.title}</p>
-                  {onOpenTasks && topic.key !== 'group' && (
-                    <button
-                      onClick={onOpenTasks}
-                      className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
-                    >
-                      ดูงานและผลงาน →
-                    </button>
-                  )}
-                </div>
+                <p className="text-sm font-semibold text-gray-800">{topic.title}</p>
                 <ul className="mt-2 space-y-1.5">
                   {topic.items.map((log) => (
                     <li key={log.log_id} className="text-xs text-gray-600">
+                      {isNew(log) && (
+                        <span className="mr-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          ใหม่
+                        </span>
+                      )}
                       <span className="font-semibold text-gray-700">{getName(log.actor_id)}</span> {describe(log)}
                       <span className="text-gray-400"> · {formatDateTime(log.created_at)}</span>
                     </li>

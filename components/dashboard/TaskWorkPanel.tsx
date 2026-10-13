@@ -18,7 +18,10 @@ export default function TaskWorkPanel({
   task,
   currentUserId,
   canEdit,
+  onProgressSaved,
 }: {
+  // เรียกหลังบันทึกเปอร์เซ็นต์ใหม่ เพื่อให้หน้าที่ใช้คำนวณหลอดของโครงการใหม่
+  onProgressSaved?: () => void
   task: {
     task_id: string
     group_id: string
@@ -174,6 +177,7 @@ export default function TaskWorkPanel({
     setForm(null)
     if (showNotes) await loadNotes()
     setBusy(false)
+    onProgressSaved?.()
   }
 
   const handleAddNote = async () => {
