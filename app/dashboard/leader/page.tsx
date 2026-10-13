@@ -836,13 +836,6 @@ export default function LeaderPage() {
                                   {t.timeStatusLabel}
                                 </span>
                               </div>
-                              {/* แถบ Timeline Mini-bar แสดงความคืบหน้าของเวลา */}
-                              <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-amber-400"
-                                  style={{ width: `${t.timeProgressPercent}%` }}
-                                />
-                              </div>
                             </div>
                           </div>
                         ))}
@@ -908,13 +901,6 @@ export default function LeaderPage() {
                                   {t.timeStatusLabel}
                                 </span>
                               </div>
-                              {/* แถบ Timeline Mini-bar แสดงความคืบหน้าของเวลา */}
-                              <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-rose-500"
-                                  style={{ width: `${t.timeProgressPercent}%` }}
-                                />
-                              </div>
                             </div>
                           </div>
                         ))}
@@ -979,12 +965,6 @@ export default function LeaderPage() {
                                 <span className="text-emerald-600 font-semibold text-[10px]">
                                   {t.timeStatusLabel}
                                 </span>
-                              </div>
-                              <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-emerald-500"
-                                  style={{ width: '100%' }}
-                                />
                               </div>
                             </div>
                           </div>
