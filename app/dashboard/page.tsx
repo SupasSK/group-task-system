@@ -18,7 +18,7 @@ const ACTION_LABEL: Record<string, string> = {
   task_accepted: '👍 รับงาน',
   task_declined: '🚫 ปฏิเสธงาน',
   task_claimed: '🙋 เลือกรับงาน',
-  comment_added: '💬 อัปเดตความคืบหน้า',
+  comment_added: '💬 เขียนบันทึก',
   decision_added: '📌 บันทึกการตัดสินใจ',
 };
 

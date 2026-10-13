@@ -38,6 +38,7 @@ const FIELD_LABEL: Record<string, string> = {
   deadline: 'กำหนดส่ง',
   assigned_to: 'ผู้รับผิดชอบ',
   work_url: 'ลิงก์ผลงาน',
+  progress: 'ความคืบหน้า',
 }
 
 function formatDateTime(dateStr: string) {
@@ -54,7 +55,10 @@ export default function CatchUpDigest({
   currentUserId,
   members,
   trackVisit = true,
+  onOpenTasks,
 }: {
+  // ถ้าส่งมา จะแสดงปุ่มพาไปแท็บงาน ใต้หัวข้อการเปลี่ยนแปลงของแต่ละงาน
+  onOpenTasks?: () => void
   groupId: string
   currentUserId: string
   members: Member[]
@@ -127,6 +131,7 @@ export default function CatchUpDigest({
     if (value === null || value === undefined || value === '') return 'ไม่ระบุ'
     const text = String(value)
     if (field === 'priority') return PRIORITY_LABEL[text] ?? text
+    if (field === 'progress') return `${text}%`
     if (field === 'deadline') return formatDateTime(text)
     if (field === 'assigned_to') return getName(text)
     return text
@@ -162,7 +167,7 @@ export default function CatchUpDigest({
       case 'task_claimed':
         return 'เลือกรับงานเอง'
       case 'comment_added':
-        return `อัปเดตความคืบหน้า: ${p.preview || ''}`
+        return `เขียนบันทึก: ${p.preview || ''}`
       case 'decision_added':
         return `บันทึกการตัดสินใจ: ${p.preview || ''}`
       default:
@@ -226,7 +231,17 @@ export default function CatchUpDigest({
           <div className="mt-4 space-y-3">
             {topics.map((topic) => (
               <div key={topic.key} className="rounded-xl bg-indigo-50/60 border border-indigo-100 p-3.5">
-                <p className="text-sm font-semibold text-gray-800">{topic.title}</p>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-gray-800">{topic.title}</p>
+                  {onOpenTasks && topic.key !== 'group' && (
+                    <button
+                      onClick={onOpenTasks}
+                      className="text-xs px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                    >
+                      ดูงานและผลงาน →
+                    </button>
+                  )}
+                </div>
                 <ul className="mt-2 space-y-1.5">
                   {topic.items.map((log) => (
                     <li key={log.log_id} className="text-xs text-gray-600">

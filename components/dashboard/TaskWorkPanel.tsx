@@ -11,23 +11,36 @@ interface TaskNote {
   created_at: string
 }
 
-// ลิงก์ผลงาน + บันทึกความคืบหน้า/การตัดสินใจของงานหนึ่งงาน
+const PROGRESS_STEPS = [0, 25, 50, 75, 100]
+
+// หลอดความคืบหน้า + ลิงก์ผลงาน + บันทึกของงานหนึ่งงาน
 export default function TaskWorkPanel({
   task,
   currentUserId,
-  canEditLink,
+  canEdit,
 }: {
-  task: { task_id: string; group_id: string; title: string; work_url?: string | null }
+  task: {
+    task_id: string
+    group_id: string
+    title: string
+    status: string
+    work_url?: string | null
+    progress?: number | null
+  }
   currentUserId: string | null
-  // ผู้รับผิดชอบงานหรือหัวหน้าเท่านั้นที่แก้ลิงก์ผลงานได้
-  canEditLink: boolean
+  // ผู้รับผิดชอบงานหรือหัวหน้าเท่านั้นที่แก้ลิงก์และความคืบหน้าได้
+  canEdit: boolean
 }) {
   const supabase = createClient()
   const [url, setUrl] = useState(task.work_url || '')
-  const [editingLink, setEditingLink] = useState(false)
+  const [progress, setProgress] = useState(task.progress ?? 0)
+  // ฟอร์มที่เปิดอยู่: แนบลิงก์ / อัปเดตความคืบหน้า
+  const [form, setForm] = useState<'link' | 'progress' | null>(null)
   const [draftUrl, setDraftUrl] = useState('')
+  const [draftProgress, setDraftProgress] = useState(0)
+  const [progressNote, setProgressNote] = useState('')
 
-  const [open, setOpen] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
   const [notes, setNotes] = useState<TaskNote[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
   const [kind, setKind] = useState<TaskNote['kind']>('comment')
@@ -35,6 +48,9 @@ export default function TaskWorkPanel({
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // งานที่เสร็จแล้วถือว่าคืบหน้า 100% เสมอ
+  const shownProgress = task.status === 'completed' ? 100 : progress
 
   const loadNotes = async () => {
     const { data, error: noteErr } = await supabase
@@ -61,9 +77,29 @@ export default function TaskWorkPanel({
     }
   }
 
-  const handleToggle = async () => {
-    setOpen(!open)
-    if (!open) await loadNotes()
+  const insertNote = async (noteKind: TaskNote['kind'], text: string) => {
+    const { error: insertErr } = await supabase.from('task_comments').insert({
+      group_id: task.group_id,
+      task_id: task.task_id,
+      author_id: currentUserId,
+      kind: noteKind,
+      body: text,
+    })
+    if (insertErr) return insertErr.message
+
+    await logActivity(supabase, {
+      groupId: task.group_id,
+      action: noteKind === 'decision' ? 'decision_added' : 'comment_added',
+      entityType: 'task',
+      entityId: task.task_id,
+      payload: { title: task.title, preview: text.slice(0, 80) },
+    })
+    return null
+  }
+
+  const handleToggleNotes = async () => {
+    setShowNotes(!showNotes)
+    if (!showNotes) await loadNotes()
   }
 
   const handleSaveLink = async () => {
@@ -95,7 +131,48 @@ export default function TaskWorkPanel({
     })
 
     setUrl(next)
-    setEditingLink(false)
+    setForm(null)
+    setBusy(false)
+  }
+
+  const handleSaveProgress = async () => {
+    const text = progressNote.trim()
+    if (!text) {
+      setError('กรุณาเขียนสั้น ๆ ว่าทำอะไรไปบ้าง')
+      return
+    }
+    if (!currentUserId) return
+
+    setBusy(true)
+    setError(null)
+    if (draftProgress !== progress) {
+      const { error: updateErr } = await supabase
+        .from('tasks')
+        .update({ progress: draftProgress, updated_at: new Date().toISOString() })
+        .eq('task_id', task.task_id)
+
+      if (updateErr) {
+        setError(`บันทึกความคืบหน้าไม่สำเร็จ: ${updateErr.message}`)
+        setBusy(false)
+        return
+      }
+
+      await logActivity(supabase, {
+        groupId: task.group_id,
+        action: 'task_updated',
+        entityType: 'task',
+        entityId: task.task_id,
+        payload: { title: task.title, changes: { progress: { from: progress, to: draftProgress } } },
+      })
+      setProgress(draftProgress)
+    }
+
+    const noteErr = await insertNote('comment', text)
+    if (noteErr) setError(`บันทึกไม่สำเร็จ: ${noteErr}`)
+
+    setProgressNote('')
+    setForm(null)
+    if (showNotes) await loadNotes()
     setBusy(false)
   }
 
@@ -105,87 +182,122 @@ export default function TaskWorkPanel({
 
     setBusy(true)
     setError(null)
-    const { error: insertErr } = await supabase.from('task_comments').insert({
-      group_id: task.group_id,
-      task_id: task.task_id,
-      author_id: currentUserId,
-      kind,
-      body: text,
-    })
-
-    if (insertErr) {
-      setError(`บันทึกไม่สำเร็จ: ${insertErr.message}`)
-      setBusy(false)
-      return
+    const noteErr = await insertNote(kind, text)
+    if (noteErr) {
+      setError(`บันทึกไม่สำเร็จ: ${noteErr}`)
+    } else {
+      setBody('')
+      await loadNotes()
     }
-
-    await logActivity(supabase, {
-      groupId: task.group_id,
-      action: kind === 'decision' ? 'decision_added' : 'comment_added',
-      entityType: 'task',
-      entityId: task.task_id,
-      payload: { title: task.title, preview: text.slice(0, 80) },
-    })
-
-    setBody('')
-    await loadNotes()
     setBusy(false)
   }
 
-  return (
-    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-2 text-xs">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        {editingLink ? (
-          <div className="flex flex-1 items-center gap-2 min-w-[220px]">
-            <input
-              className="gt-input flex-1 !py-1.5 text-xs"
-              placeholder="วางลิงก์ Google Docs, Slides, Canva ฯลฯ"
-              value={draftUrl}
-              onChange={(e) => setDraftUrl(e.target.value)}
-            />
-            <button
-              onClick={handleSaveLink}
-              disabled={busy}
-              className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-60 cursor-pointer"
-            >
-              บันทึก
-            </button>
-            <button onClick={() => setEditingLink(false)} className="text-gray-500 hover:underline cursor-pointer">
-              ยกเลิก
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 flex-wrap">
-            {url ? (
-              <a href={url} target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 hover:underline">
-                🔗 เปิดผลงาน
-              </a>
-            ) : (
-              <span className="text-gray-400">ยังไม่มีลิงก์ผลงาน</span>
-            )}
-            {canEditLink && (
-              <button
-                onClick={() => {
-                  setDraftUrl(url)
-                  setError(null)
-                  setEditingLink(true)
-                }}
-                className="text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer"
-              >
-                {url ? 'แก้ไขลิงก์' : '+ แนบลิงก์ผลงาน'}
-              </button>
-            )}
-          </div>
-        )}
+  const outlineBtn =
+    'px-3 py-1.5 rounded-lg border border-indigo-200 bg-white text-indigo-700 font-semibold hover:bg-indigo-50 transition cursor-pointer'
+  const solidBtn =
+    'px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-60 cursor-pointer'
 
-        <button onClick={handleToggle} className="text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer">
-          {open ? 'ซ่อนความคืบหน้า' : '💬 ความคืบหน้าและการตัดสินใจ'}
+  return (
+    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-3 text-xs">
+      {/* หลอดความคืบหน้า */}
+      <div className="flex items-center gap-3">
+        <span className="shrink-0 font-semibold text-gray-600">ความคืบหน้า</span>
+        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className={`h-full rounded-full transition-all ${shownProgress === 100 ? 'bg-emerald-500' : 'gt-gradient-x'}`}
+            style={{ width: `${shownProgress}%` }}
+          />
+        </div>
+        <span className="w-10 shrink-0 text-right font-bold text-gray-700">{shownProgress}%</span>
+      </div>
+
+      {/* ปุ่มหลัก */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer" className={solidBtn}>
+            🔗 เปิดผลงาน
+          </a>
+        ) : (
+          <span className="text-gray-400">ยังไม่มีลิงก์ผลงาน</span>
+        )}
+        {canEdit && (
+          <button
+            onClick={() => {
+              setDraftUrl(url)
+              setError(null)
+              setForm(form === 'link' ? null : 'link')
+            }}
+            className={outlineBtn}
+          >
+            {url ? 'แก้ไขลิงก์' : '+ แนบลิงก์ผลงาน'}
+          </button>
+        )}
+        {canEdit && task.status !== 'completed' && (
+          <button
+            onClick={() => {
+              setDraftProgress(progress)
+              setError(null)
+              setForm(form === 'progress' ? null : 'progress')
+            }}
+            className={outlineBtn}
+          >
+            📈 อัปเดตความคืบหน้า
+          </button>
+        )}
+        <button onClick={handleToggleNotes} className={outlineBtn}>
+          {showNotes ? 'ซ่อนบันทึก' : '💬 ดูบันทึกของงานนี้'}
         </button>
       </div>
 
+      {form === 'link' && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            className="gt-input flex-1 min-w-[200px] !py-1.5 text-xs"
+            placeholder="วางลิงก์ Google Docs, Slides, Canva ฯลฯ"
+            value={draftUrl}
+            onChange={(e) => setDraftUrl(e.target.value)}
+          />
+          <button onClick={handleSaveLink} disabled={busy} className={solidBtn}>
+            บันทึกลิงก์
+          </button>
+        </div>
+      )}
+
+      {form === 'progress' && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-gray-500">ทำไปแล้ว</span>
+            {PROGRESS_STEPS.map((step) => (
+              <button
+                key={step}
+                onClick={() => setDraftProgress(step)}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
+                  draftProgress === step
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white border border-slate-200 text-gray-600 hover:bg-indigo-50'
+                }`}
+              >
+                {step}%
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              className="gt-input flex-1 min-w-[200px] !py-1.5 text-xs"
+              placeholder="ทำอะไรไปบ้าง เช่น แก้บทที่ 2 เพิ่มรูปประกอบแล้ว"
+              value={progressNote}
+              onChange={(e) => setProgressNote(e.target.value)}
+            />
+            <button onClick={handleSaveProgress} disabled={busy} className={solidBtn}>
+              บันทึกความคืบหน้า
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && <p className="text-rose-600">{error}</p>}
 
-      {open && (
+      {showNotes && (
         <div className="space-y-2 border-t border-slate-200 pt-2">
           <div className="flex items-center gap-2 flex-wrap">
             <select
@@ -193,21 +305,17 @@ export default function TaskWorkPanel({
               value={kind}
               onChange={(e) => setKind(e.target.value as TaskNote['kind'])}
             >
-              <option value="comment">อัปเดตความคืบหน้า</option>
-              <option value="decision">บันทึกการตัดสินใจ</option>
+              <option value="comment">ความเห็น</option>
+              <option value="decision">การตัดสินใจ</option>
             </select>
             <input
               className="gt-input flex-1 min-w-[180px] !py-1.5 text-xs"
-              placeholder={kind === 'decision' ? 'เช่น ตกลงเปลี่ยนหัวข้อบทที่ 3 เพราะ...' : 'เช่น แก้บทที่ 2 เพิ่มรูปประกอบแล้ว'}
+              placeholder={kind === 'decision' ? 'เช่น ตกลงเปลี่ยนหัวข้อบทที่ 3 เพราะ...' : 'เขียนความเห็นถึงเพื่อนในกลุ่ม'}
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
-            <button
-              onClick={handleAddNote}
-              disabled={busy || !body.trim()}
-              className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-60 cursor-pointer"
-            >
-              บันทึก
+            <button onClick={handleAddNote} disabled={busy || !body.trim()} className={solidBtn}>
+              ส่ง
             </button>
           </div>
 
@@ -217,13 +325,11 @@ export default function TaskWorkPanel({
             <ul className="space-y-1.5">
               {notes.map((n) => (
                 <li key={n.comment_id} className="text-gray-600">
-                  <span
-                    className={`mr-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      n.kind === 'decision' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-700'
-                    }`}
-                  >
-                    {n.kind === 'decision' ? 'การตัดสินใจ' : 'ความคืบหน้า'}
-                  </span>
+                  {n.kind === 'decision' && (
+                    <span className="mr-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                      การตัดสินใจ
+                    </span>
+                  )}
                   <span className="font-semibold text-gray-700">{names[n.author_id] || 'สมาชิก'}</span>: {n.body}
                   <span className="text-gray-400">
                     {' '}· {new Date(n.created_at).toLocaleDateString('th-TH', {

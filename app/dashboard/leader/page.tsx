@@ -633,7 +633,7 @@ export default function LeaderPage() {
                         เพิ่มสมาชิก
                       </Link>
                       <Link
-                        href={`/dashboard/groups/${g.group_id}?tab=tasks`}
+                        href={`/dashboard/groups/${g.group_id}?tab=tasks&new=1`}
                         className="text-slate-500 hover:text-indigo-600 font-medium text-[12px]"
                       >
                         + มอบหมายงาน
@@ -754,7 +754,7 @@ export default function LeaderPage() {
                 </div>
 
                 <Link
-                  href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                  href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                   className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 hover:text-indigo-700 -mb-2"
                 >
                   <Plus size={15} />
@@ -775,7 +775,7 @@ export default function LeaderPage() {
                       <span className="text-[12px] text-slate-400">| จัดการระยะเวลาและสถานะงานแต่ละช่วง</span>
                     </div>
                     <Link
-                      href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                      href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 shadow-sm transition"
                     >
                       <Plus size={14} />
@@ -796,7 +796,7 @@ export default function LeaderPage() {
                           <span className="text-[12px] text-slate-400 font-medium">{todoTasks.length}</span>
                         </div>
                         <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                           className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
                           title="เพิ่มงานใหม่"
                         >
@@ -848,7 +848,7 @@ export default function LeaderPage() {
                         ))}
 
                         <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                           className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
                         >
                           <Plus size={14} />
@@ -868,7 +868,7 @@ export default function LeaderPage() {
                           <span className="text-[12px] text-slate-400 font-medium">{doingTasks.length}</span>
                         </div>
                         <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                           className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
                           title="เพิ่มงานใหม่"
                         >
@@ -920,7 +920,7 @@ export default function LeaderPage() {
                         ))}
 
                         <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                           className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
                         >
                           <Plus size={14} />
@@ -940,7 +940,7 @@ export default function LeaderPage() {
                           <span className="text-[12px] text-slate-400 font-medium">{doneTasks.length}</span>
                         </div>
                         <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                           className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
                           title="เพิ่มงานใหม่"
                         >
@@ -991,7 +991,7 @@ export default function LeaderPage() {
                         ))}
 
                         <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                           className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
                         >
                           <Plus size={14} />
@@ -1051,19 +1051,19 @@ export default function LeaderPage() {
                         <h4 className="text-[13px] font-bold text-slate-700">⚡ จัดการและมอบหมายงาน</h4>
                         <div className="flex flex-col gap-2">
                           <Link
-                            href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                            href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                             className="w-full text-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2.5 text-[12px] font-semibold text-white hover:opacity-90 transition block shadow-sm"
                           >
                             + สร้างงานใหม่
                           </Link>
                           <Link
-                            href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                            href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                             className="w-full text-center rounded-xl border border-indigo-200 bg-white px-4 py-2 text-[12px] font-semibold text-indigo-700 hover:bg-indigo-50 transition block"
                           >
                             📤 มอบหมายงานให้สมาชิก
                           </Link>
                           <Link
-                            href={`/dashboard/groups/${proj.id}?tab=tasks`}
+                            href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
                             className="w-full text-center rounded-xl border border-purple-200 bg-white px-4 py-2 text-[12px] font-semibold text-purple-700 hover:bg-purple-50 transition block"
                           >
                             📋 สร้างงานว่าง (สมาชิกเลือกเอง)

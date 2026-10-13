@@ -36,6 +36,7 @@ interface Task {
   assigned_by: string | null
   deadline: string | null
   work_url?: string | null
+  progress?: number | null
   created_at: string
   updated_at: string
 }
@@ -113,7 +114,10 @@ export default function GroupDetailPage() {
   const [taskActionMessage, setTaskActionMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
 
   // ฟอร์มสร้างงาน
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  // ?new=1 เปิดฟอร์มสร้างงานทันที (มาจากปุ่มสร้างงานในหน้าหัวหน้า)
+  const [showCreateModal, setShowCreateModal] = useState(
+    () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('new') === '1'
+  )
   const [createTaskLoading, setCreateTaskLoading] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
@@ -725,7 +729,14 @@ export default function GroupDetailPage() {
             </div>
           </div>
 
-          {currentUserId && <CatchUpDigest groupId={id} currentUserId={currentUserId} members={members} />}
+          {currentUserId && (
+            <CatchUpDigest
+              groupId={id}
+              currentUserId={currentUserId}
+              members={members}
+              onOpenTasks={() => setActiveTab('tasks')}
+            />
+          )}
         </div>
       )}
 
@@ -767,7 +778,7 @@ export default function GroupDetailPage() {
           </div>
 
           {/* กล่อง/ฟอร์มสร้างงานใหม่ (เฉพาะหัวหน้า) */}
-          {showCreateModal && (
+          {showCreateModal && isLeader && (
             <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <h3 className="text-base font-bold text-gray-800">สร้างงานใหม่</h3>
@@ -956,7 +967,7 @@ export default function GroupDetailPage() {
                       </div>
                     </div>
 
-                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEditLink={isLeader || isAssignee} />
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isLeader || isAssignee} />
 
                     {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
                     {t.status === 'rejected' && (

@@ -43,6 +43,7 @@ interface MemberTask {
   deadline: string | null;
   completed_at: string | null;
   work_url?: string | null;
+  progress?: number | null;
   created_at: string;
   updated_at: string;
   group_name?: string;
@@ -557,7 +558,7 @@ export default function MemberPage() {
                         </div>
                       </div>
 
-                      <TaskWorkPanel task={t} currentUserId={currentUserId} canEditLink={t.assigned_to === currentUserId} />
+                      <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={t.assigned_to === currentUserId} />
 
                       {/* ปุ่มการทำงาน: ตอบรับงาน / เริ่มทำงาน / กดยืนยันว่างานเสร็จแล้ว */}
                       <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
@@ -720,7 +721,7 @@ export default function MemberPage() {
                         {t.completed_at ? `เสร็จเมื่อ: ${formatThaiDate(t.completed_at)}` : 'เสร็จแล้ว'}
                       </span>
                     </div>
-                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEditLink={t.assigned_to === currentUserId} />
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={t.assigned_to === currentUserId} />
 
                   </div>
                 ))}
