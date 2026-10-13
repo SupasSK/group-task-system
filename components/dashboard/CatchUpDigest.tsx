@@ -162,7 +162,7 @@ export default function CatchUpDigest({
       case 'task_claimed':
         return 'เลือกรับงานเอง'
       case 'comment_added':
-        return `แสดงความเห็น: ${p.preview || ''}`
+        return `อัปเดตความคืบหน้า: ${p.preview || ''}`
       case 'decision_added':
         return `บันทึกการตัดสินใจ: ${p.preview || ''}`
       default:

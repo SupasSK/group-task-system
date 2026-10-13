@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel';
 import {
   UserPlus,
   Plus,
@@ -41,6 +42,7 @@ interface MemberTask {
   assigned_by: string | null;
   deadline: string | null;
   completed_at: string | null;
+  work_url?: string | null;
   created_at: string;
   updated_at: string;
   group_name?: string;
@@ -555,6 +557,8 @@ export default function MemberPage() {
                         </div>
                       </div>
 
+                      <TaskWorkPanel task={t} currentUserId={currentUserId} canEditLink={t.assigned_to === currentUserId} />
+
                       {/* ปุ่มการทำงาน: ตอบรับงาน / เริ่มทำงาน / กดยืนยันว่างานเสร็จแล้ว */}
                       <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                         <Link
@@ -716,6 +720,8 @@ export default function MemberPage() {
                         {t.completed_at ? `เสร็จเมื่อ: ${formatThaiDate(t.completed_at)}` : 'เสร็จแล้ว'}
                       </span>
                     </div>
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEditLink={t.assigned_to === currentUserId} />
+
                   </div>
                 ))}
               </div>

@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
 import CatchUpDigest from '@/components/dashboard/CatchUpDigest'
+import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel'
 
 interface Group {
   group_id: string
@@ -34,6 +35,7 @@ interface Task {
   assigned_to: string | null
   assigned_by: string | null
   deadline: string | null
+  work_url?: string | null
   created_at: string
   updated_at: string
 }
@@ -953,6 +955,8 @@ export default function GroupDetailPage() {
                         </p>
                       </div>
                     </div>
+
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEditLink={isLeader || isAssignee} />
 
                     {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
                     {t.status === 'rejected' && (

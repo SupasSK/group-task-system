@@ -88,6 +88,14 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
         })}
       </nav>
 
+      {/* ชื่อบัญชีบนจอแคบ (จอกว้างใช้การ์ดผู้ใช้ด้านบน) */}
+      <div className="flex min-w-0 max-w-[90px] items-center gap-1.5 md:hidden">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-xs font-bold ring-1 ring-white/30">
+          {name.charAt(0).toUpperCase()}
+        </div>
+        <span className="truncate text-[11px] font-semibold">{name}</span>
+      </div>
+
       {/* ออกจากระบบ — สไตล์เดียวกับเมนู */}
       <button
         onClick={handleSignOut}
