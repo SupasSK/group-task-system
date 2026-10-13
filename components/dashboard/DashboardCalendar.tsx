@@ -7,7 +7,7 @@ import {
   Clock, CheckCircle2, AlertCircle, Plus,
 } from 'lucide-react';
 
-interface EventItem {
+export interface EventItem {
   id: string;
   title: string;
   project: string;
@@ -17,44 +17,6 @@ interface EventItem {
   color: string; // Tailwind bg class
   completed?: boolean;
 }
-
-const INITIAL_EVENTS: EventItem[] = [
-  {
-    id: 'e1', title: 'ส่ง Prototype แอปเดลิเวอรี่', project: 'แอปเดลิเวอรี่',
-    dateStr: '2026-10-13', time: '17:00', type: 'deadline',
-    color: 'bg-indigo-500', completed: false,
-  },
-  {
-    id: 'e2', title: 'รีวิว Design เว็บไซต์กับทีม UX', project: 'ปรับปรุงเว็บไซต์',
-    dateStr: '2026-10-14', time: '14:30', type: 'review',
-    color: 'bg-purple-500', completed: false,
-  },
-  {
-    id: 'e3', title: 'ตรวจสอบระบบ ERP รอบ 2', project: 'ระบบ ERP',
-    dateStr: '2026-10-15', time: '10:00', type: 'milestone',
-    color: 'bg-emerald-500', completed: false,
-  },
-  {
-    id: 'e4', title: 'เปิดตัวแคมเปญ Q4', project: 'แคมเปญ Q4',
-    dateStr: '2026-10-11', time: '09:00', type: 'milestone',
-    color: 'bg-rose-500', completed: false,
-  },
-  {
-    id: 'e5', title: 'Sprint Review ประจำสัปดาห์', project: 'ทั่วไป',
-    dateStr: '2026-10-11', time: '15:00', type: 'meeting',
-    color: 'bg-blue-500', completed: true,
-  },
-  {
-    id: 'e6', title: 'ประชุมทีม Backend', project: 'แอปเดลิเวอรี่',
-    dateStr: '2026-10-16', time: '11:00', type: 'meeting',
-    color: 'bg-cyan-500', completed: false,
-  },
-  {
-    id: 'e7', title: 'Demo Day กับลูกค้า', project: 'ปรับปรุงเว็บไซต์',
-    dateStr: '2026-10-17', time: '13:00', type: 'deadline',
-    color: 'bg-amber-500', completed: false,
-  },
-];
 
 const THAI_MONTHS = [
   'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -77,8 +39,9 @@ function getWeekStart(date: Date) {
   return d;
 }
 
-export default function DashboardCalendar() {
-  const today = new Date(2026, 9, 11); // 11 ต.ค. 2026
+// events = กำหนดส่งงานจริงจากกลุ่มของผู้ใช้ (หน้าแดชบอร์ดเป็นผู้ส่งมา)
+export default function DashboardCalendar({ events }: { events: EventItem[] }) {
+  const [today] = useState(() => new Date());
   const [weekStart, setWeekStart] = useState<Date>(getWeekStart(today));
   const [selectedDate, setSelectedDate] = useState<Date>(today);
 
@@ -116,7 +79,7 @@ export default function DashboardCalendar() {
     setSelectedDate(today);
   };
 
-  const selectedDayEvents = INITIAL_EVENTS.filter((e) => e.dateStr === selectedStr);
+  const selectedDayEvents = events.filter((e) => e.dateStr === selectedStr);
 
   const typeIcon = (type: EventItem['type']) => {
     if (type === 'deadline') return <AlertCircle size={12} />;
@@ -142,7 +105,7 @@ export default function DashboardCalendar() {
         <div className="flex items-center gap-2">
           {/* ปุ่มสร้างงานใหม่ */}
           <Link
-            href="/dashboard/tasks/new"
+            href="/dashboard/leader"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[13px] font-semibold shadow-md shadow-indigo-100 hover:opacity-90 hover:scale-[1.02] transition-all"
           >
             <Plus size={15} />
@@ -174,7 +137,7 @@ export default function DashboardCalendar() {
           const dStr = formatYMD(day);
           const isToday = dStr === todayStr;
           const isSelected = dStr === selectedStr;
-          const dayEvents = INITIAL_EVENTS.filter((e) => e.dateStr === dStr);
+          const dayEvents = events.filter((e) => e.dateStr === dStr);
           const isWeekend = i === 0 || i === 6;
 
           return (

@@ -4,25 +4,31 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase';
 import { loadUnreadCounts } from '@/lib/unreadCounts';
-import { PROJECTS } from '@/lib/mock-data';
-import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
-import IconNavigationToolbar from '@/components/dashboard/IconNavigationToolbar';
-import { Plus, UserPlus, Users, Sparkles, FolderKanban } from 'lucide-react';
+import DashboardCalendar, { type EventItem } from '@/components/dashboard/DashboardCalendar';
+import { Plus, UserPlus, Users, Sparkles } from 'lucide-react';
 
-const STATS = [
-  { label: 'โครงการทั้งหมด', value: 6, color: 'from-indigo-500 to-purple-500', emoji: '📁' },
-  { label: 'งานทั้งหมด', value: 24, color: 'from-purple-500 to-pink-500', emoji: '📋' },
-  { label: 'กำลังดำเนินการ', value: 9, color: 'from-blue-500 to-cyan-400', emoji: '⚡' },
-  { label: 'เสร็จสิ้น', value: 12, color: 'from-emerald-500 to-teal-400', emoji: '✅' },
-  { label: 'เลยกำหนด', value: 3, color: 'from-rose-500 to-pink-400', emoji: '⚠️' },
-];
+// ข้อความสั้นของกิจกรรมแต่ละประเภท สำหรับรายการกิจกรรมล่าสุด
+const ACTION_LABEL: Record<string, string> = {
+  group_created: '📁 สร้างกลุ่ม',
+  member_added: '👋 มีสมาชิกใหม่',
+  task_created: '📝 สร้างงาน',
+  task_updated: '✏️ แก้ไขงาน',
+  task_status_changed: '🔄 เปลี่ยนสถานะงาน',
+  task_assigned: '📤 มอบหมายงาน',
+  task_accepted: '👍 รับงาน',
+  task_declined: '🚫 ปฏิเสธงาน',
+  task_claimed: '🙋 เลือกรับงาน',
+  comment_added: '💬 แสดงความเห็น',
+  decision_added: '📌 บันทึกการตัดสินใจ',
+};
 
-const RECENT_ACTIVITY = [
-  { icon: '📝', text: 'สมชาย สร้างงาน "พัฒนาหน้าโปรไฟล์ผู้ใช้งาน"', project: 'แอปเดลิเวอรี่', time: '9 นาทีที่แล้ว' },
-  { icon: '🔄', text: 'นที เปลี่ยนสถานะงาน "ออกแบบ UI" เป็น กำลังทำ', project: 'ปรับปรุงเว็บไซต์', time: '42 นาทีที่แล้ว' },
-  { icon: '✅', text: 'วรัญญา เสร็จสิ้นงาน "จัดทำเอกสาร"', project: 'ระบบ ERP', time: '2 ชั่วโมงที่แล้ว' },
-  { icon: '👋', text: 'ปริชาติ เข้าร่วมโครงการแคมเปญ Q4', project: 'แคมเปญ Q4', time: '1 วันที่แล้ว' },
-];
+interface RecentLog {
+  log_id: number;
+  group_id: string;
+  action_type: string;
+  payload: { title?: string } | null;
+  created_at: string;
+}
 
 interface SupabaseGroup {
   group_id: string;
@@ -39,6 +45,10 @@ export default function DashboardPage() {
   const [loadingGroups, setLoadingGroups] = useState(true);
   // จำนวนกิจกรรมใหม่ของแต่ละกลุ่ม ตั้งแต่เข้าดูครั้งล่าสุด
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  // สถิติงาน กำหนดส่ง และกิจกรรมล่าสุด จากทุกกลุ่มของผู้ใช้
+  const [taskStats, setTaskStats] = useState({ total: 0, doing: 0, done: 0, overdue: 0 });
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
 
   useEffect(() => {
     loadUserGroups();
@@ -80,6 +90,55 @@ export default function DashboardPage() {
           }));
         setUserGroups(groups);
         setUnreadCounts(await loadUnreadCounts(supabase, user.id));
+
+        const groupIds = groups.map((g) => g.group_id);
+        if (groupIds.length > 0) {
+          const groupName: Record<string, string> = {};
+          groups.forEach((g) => { groupName[g.group_id] = g.group_name; });
+
+          const { data: taskRows } = await supabase
+            .from('tasks')
+            .select('task_id, title, status, deadline, group_id')
+            .in('group_id', groupIds);
+          const tasks = taskRows || [];
+          const now = new Date();
+
+          setTaskStats({
+            total: tasks.length,
+            doing: tasks.filter((t) => t.status === 'accepted' || t.status === 'in_progress').length,
+            done: tasks.filter((t) => t.status === 'completed').length,
+            overdue: tasks.filter(
+              (t) => t.deadline && new Date(t.deadline) < now && t.status !== 'completed' && t.status !== 'rejected'
+            ).length,
+          });
+
+          setEvents(
+            tasks
+              .filter((t) => t.deadline)
+              .map((t) => {
+                const d = new Date(t.deadline);
+                const pad = (n: number) => String(n).padStart(2, '0');
+                return {
+                  id: t.task_id,
+                  title: t.title,
+                  project: groupName[t.group_id] || '',
+                  dateStr: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+                  time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+                  type: 'deadline' as const,
+                  color: t.status === 'completed' ? 'bg-emerald-500' : 'bg-indigo-500',
+                  completed: t.status === 'completed',
+                };
+              })
+          );
+
+          const { data: logRows } = await supabase
+            .from('activity_logs')
+            .select('log_id, group_id, action_type, payload, created_at')
+            .in('group_id', groupIds)
+            .order('created_at', { ascending: false })
+            .limit(4);
+          setRecentLogs(logRows || []);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -88,11 +147,16 @@ export default function DashboardPage() {
     }
   };
 
+  const stats = [
+    { label: 'กลุ่มทั้งหมด', value: userGroups.length, color: 'from-indigo-500 to-purple-500', emoji: '📁' },
+    { label: 'งานทั้งหมด', value: taskStats.total, color: 'from-purple-500 to-pink-500', emoji: '📋' },
+    { label: 'กำลังดำเนินการ', value: taskStats.doing, color: 'from-blue-500 to-cyan-400', emoji: '⚡' },
+    { label: 'เสร็จสิ้น', value: taskStats.done, color: 'from-emerald-500 to-teal-400', emoji: '✅' },
+    { label: 'เลยกำหนด', value: taskStats.overdue, color: 'from-rose-500 to-pink-400', emoji: '⚠️' },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* ===== แถบเครื่องมือนำทางแนวนอนสไตล์ไอคอน (Canva-inspired Toolbar) ===== */}
-      <IconNavigationToolbar />
-
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -121,17 +185,15 @@ export default function DashboardPage() {
       </div>
 
       {/* ===== ปฏิทิน — อันดับแรก เด่นที่สุด ===== */}
-      <DashboardCalendar />
+      {!loadingGroups && <DashboardCalendar events={events} />}
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-        {STATS.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className="gt-card p-5 flex flex-col gap-1">
             <span className="text-2xl">{s.emoji}</span>
             <span className={`text-[28px] font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>
-              {s.label === 'โครงการทั้งหมด' && userGroups.length > 0
-                ? userGroups.length + PROJECTS.length
-                : s.value}
+              {s.value}
             </span>
             <span className="text-[12px] text-slate-500">{s.label}</span>
           </div>
@@ -204,70 +266,36 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Projects ทั่วไป */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[18px] font-bold text-slate-800 flex items-center gap-2">
-            <FolderKanban size={18} className="text-indigo-600" />
-            โครงการทั้งหมด
-          </h2>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PROJECTS.map((p) => (
-            <div key={p.id} className="gt-card p-5 flex flex-col gap-3">
-              <div>
-                <h3 className="text-[15px] font-bold text-slate-800">{p.title}</h3>
-                <p className="mt-1 text-[12px] text-slate-500 line-clamp-2">{p.description}</p>
-              </div>
-              <div>
-                <div className="mb-1 flex items-center justify-between text-[12px]">
-                  <span className="text-slate-500">ความคืบหน้า</span>
-                  <span className="font-semibold text-indigo-600">{p.progress}%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                    style={{ width: `${p.progress}%` }}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-[12px] text-slate-500">
-                <span>👥 {p.members} สมาชิก</span>
-                <span className={`rounded-full px-2 py-0.5 font-semibold ${
-                  p.progress === 100 ? 'bg-emerald-100 text-emerald-700' :
-                  p.progress >= 70 ? 'bg-indigo-100 text-indigo-700' :
-                  'bg-amber-100 text-amber-700'
-                }`}>
-                  {p.progress === 100 ? 'เสร็จสิ้น' : p.progress >= 70 ? 'ใกล้เสร็จ' : 'กำลังทำ'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* (ปฏิทินย้ายขึ้นไปบนสุดแล้ว) */}
-
       {/* Recent Activity */}
-      <section className="gt-card p-6">
-        <h2 className="mb-4 text-[16px] font-bold text-slate-800">🕐 กิจกรรมล่าสุด</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {RECENT_ACTIVITY.map((a) => (
-            <div key={a.text} className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 text-sm">
-                {a.icon}
-              </span>
-              <div>
-                <p className="text-[12px] text-slate-700 leading-snug">{a.text}</p>
+      {recentLogs.length > 0 && (
+        <section className="gt-card p-6">
+          <h2 className="mb-4 text-[16px] font-bold text-slate-800">🕐 กิจกรรมล่าสุด</h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {recentLogs.map((log) => (
+              <Link
+                key={log.log_id}
+                href={`/dashboard/groups/${log.group_id}`}
+                className="block p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition"
+              >
+                <p className="text-[12px] text-slate-700 leading-snug">
+                  {ACTION_LABEL[log.action_type] ?? log.action_type}
+                  {log.payload?.title ? ` "${log.payload.title}"` : ''}
+                </p>
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{a.project}</span>
-                  <span className="text-[10px] text-slate-400">{a.time}</span>
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                    {userGroups.find((g) => g.group_id === log.group_id)?.group_name}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    {new Date(log.created_at).toLocaleDateString('th-TH', {
+                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                    })}
+                  </span>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
