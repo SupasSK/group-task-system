@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase';
+import { loadUnreadCounts } from '@/lib/unreadCounts';
 import { PROJECTS } from '@/lib/mock-data';
 import DashboardCalendar from '@/components/dashboard/DashboardCalendar';
 import IconNavigationToolbar from '@/components/dashboard/IconNavigationToolbar';
@@ -36,6 +37,8 @@ export default function DashboardPage() {
   const supabase = createClient();
   const [userGroups, setUserGroups] = useState<SupabaseGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  // จำนวนกิจกรรมใหม่ของแต่ละกลุ่ม ตั้งแต่เข้าดูครั้งล่าสุด
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadUserGroups();
@@ -76,6 +79,7 @@ export default function DashboardPage() {
             role: item.role,
           }));
         setUserGroups(groups);
+        setUnreadCounts(await loadUnreadCounts(supabase, user.id));
       }
     } catch (err) {
       console.error(err);
@@ -174,6 +178,11 @@ export default function DashboardPage() {
                   <p className="mt-1 text-[12px] text-slate-500 line-clamp-2">
                     {g.description || 'ไม่มีคำอธิบายโครงการ'}
                   </p>
+                  {unreadCounts[g.group_id] > 0 && (
+                    <span className="mt-2 inline-block rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-700">
+                      มี {unreadCounts[g.group_id]} การเปลี่ยนแปลงใหม่
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[12px]">

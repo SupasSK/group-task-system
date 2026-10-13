@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase';
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary';
+import CatchUpDigest from '@/components/dashboard/CatchUpDigest';
 
 interface RealLeaderGroup {
   group_id: string;
@@ -337,6 +338,7 @@ export default function LeaderPage() {
   const [realProjects, setRealProjects] = useState<LeaderProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // เก็บแท็บที่เลือกของแต่ละโครงการแยกกัน โดยค่าเริ่มต้นคือ 'tasks' (งานทั้งหมดในโครงการ)
   const [activeTabs, setActiveTabs] = useState<Record<string, ProjectTab>>({});
@@ -352,6 +354,7 @@ export default function LeaderPage() {
         setLoading(false);
         return;
       }
+      setCurrentUserId(user.id);
 
       // 1. ดึงกลุ่มที่ตนเองเป็นผู้สร้าง หรือเป็นหัวหน้ากลุ่ม
       const { data: groupRows, error } = await supabase
@@ -729,11 +732,6 @@ export default function LeaderPage() {
                   >
                     <Activity size={16} />
                     <span>ประวัติกิจกรรม</span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-                      currentTab === 'activity' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {proj.activity.length}
-                    </span>
                   </button>
 
                   <button
@@ -1020,22 +1018,14 @@ export default function LeaderPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col divide-y divide-slate-100 bg-white rounded-xl border border-slate-100 p-2">
-                    {proj.activity.map((a, idx) => (
-                      <div key={idx} className="flex items-center gap-3.5 py-3 px-3 hover:bg-slate-50/60 rounded-lg transition">
-                        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-base shadow-sm">
-                          {a.icon}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-slate-800">{a.text}</p>
-                          <span className="text-[11px] text-slate-400">โครงการ: {proj.title}</span>
-                        </div>
-                        <span className="text-[11px] font-medium text-slate-400 flex-shrink-0 bg-slate-100 px-2.5 py-1 rounded-full">
-                          {a.time}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  {currentUserId && proj.raw && (
+                    <CatchUpDigest
+                      groupId={proj.id}
+                      currentUserId={currentUserId}
+                      members={proj.raw.members}
+                      trackVisit={false}
+                    />
+                  )}
                 </div>
               )}
 

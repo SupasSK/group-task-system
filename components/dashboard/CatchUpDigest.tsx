@@ -53,10 +53,13 @@ export default function CatchUpDigest({
   groupId,
   currentUserId,
   members,
+  trackVisit = true,
 }: {
   groupId: string
   currentUserId: string
   members: Member[]
+  // false = แสดงอย่างเดียว ไม่บันทึกว่าเข้าดูแล้ว (ใช้ในหน้าหัวหน้า)
+  trackVisit?: boolean
 }) {
   const supabase = createClient()
   const [logs, setLogs] = useState<ActivityLog[]>([])
@@ -97,6 +100,8 @@ export default function CatchUpDigest({
       setLogs(logRows || [])
       setLoading(false)
 
+      if (!trackVisit) return
+
       // บันทึกเวลาเข้าดูครั้งนี้ หลังจากอ่านค่าเดิมไปแล้ว
       const { error: saveErr } = await supabase
         .from('group_visits')
@@ -111,7 +116,7 @@ export default function CatchUpDigest({
     return () => {
       cancelled = true
     }
-  }, [groupId, currentUserId, supabase])
+  }, [groupId, currentUserId, supabase, trackVisit])
 
   const getName = (userId: string) => {
     const m = members.find((item) => item.user_id === userId)

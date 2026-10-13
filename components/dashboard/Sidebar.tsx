@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { loadUnreadCounts } from '@/lib/unreadCounts'
 import { LayoutGrid, Crown, User, LogOut, Check } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import { DEMO_USER } from '@/lib/mock-data'
@@ -10,6 +12,22 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
   const pathname = usePathname()
   const supabase = createClient()
   const name = displayName || DEMO_USER.name
+  // จำนวนกิจกรรมใหม่รวมทุกกลุ่ม (นับใหม่ทุกครั้งที่เปลี่ยนหน้า)
+  const [unreadTotal, setUnreadTotal] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+      const counts = await loadUnreadCounts(supabase, user.id)
+      if (!cancelled) setUnreadTotal(Object.values(counts).reduce((sum, n) => sum + n, 0))
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [pathname, supabase])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -60,6 +78,11 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
             >
               <Icon size={19} strokeWidth={2.2} className="shrink-0" />
               <span>{label}</span>
+              {href === '/dashboard' && unreadTotal > 0 && (
+                <span className="rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-5 text-white md:ml-auto">
+                  {unreadTotal > 99 ? '99+' : unreadTotal}
+                </span>
+              )}
             </Link>
           )
         })}
