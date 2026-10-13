@@ -43,7 +43,6 @@ interface MemberTask {
   deadline: string | null;
   completed_at: string | null;
   work_url?: string | null;
-  progress?: number | null;
   created_at: string;
   updated_at: string;
   group_name?: string;

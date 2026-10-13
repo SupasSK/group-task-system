@@ -11,37 +11,21 @@ interface TaskNote {
   created_at: string
 }
 
-const PROGRESS_STEPS = [0, 25, 50, 75, 100]
-
-// หลอดความคืบหน้า + ลิงก์ผลงาน + บันทึกของงานหนึ่งงาน
+// ลิงก์ผลงาน + บันทึกของงานหนึ่งงาน
 export default function TaskWorkPanel({
   task,
   currentUserId,
   canEdit,
-  onProgressSaved,
 }: {
-  // เรียกหลังบันทึกเปอร์เซ็นต์ใหม่ เพื่อให้หน้าที่ใช้คำนวณหลอดของโครงการใหม่
-  onProgressSaved?: () => void
-  task: {
-    task_id: string
-    group_id: string
-    title: string
-    status: string
-    work_url?: string | null
-    progress?: number | null
-  }
+  task: { task_id: string; group_id: string; title: string; work_url?: string | null }
   currentUserId: string | null
-  // ผู้รับผิดชอบงานหรือหัวหน้าเท่านั้นที่แก้ลิงก์และความคืบหน้าได้
+  // ผู้รับผิดชอบงานหรือหัวหน้าเท่านั้นที่แก้ลิงก์ผลงานได้
   canEdit: boolean
 }) {
   const supabase = createClient()
   const [url, setUrl] = useState(task.work_url || '')
-  const [progress, setProgress] = useState(task.progress ?? 0)
-  // ฟอร์มที่เปิดอยู่: แนบลิงก์ / อัปเดตความคืบหน้า
-  const [form, setForm] = useState<'link' | 'progress' | null>(null)
+  const [editingLink, setEditingLink] = useState(false)
   const [draftUrl, setDraftUrl] = useState('')
-  const [draftProgress, setDraftProgress] = useState(0)
-  const [progressNote, setProgressNote] = useState('')
 
   const [showNotes, setShowNotes] = useState(false)
   const [notes, setNotes] = useState<TaskNote[]>([])
@@ -51,9 +35,6 @@ export default function TaskWorkPanel({
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // งานที่เสร็จแล้วถือว่าคืบหน้า 100% เสมอ
-  const shownProgress = task.status === 'completed' ? 100 : progress
 
   const loadNotes = async () => {
     const { data, error: noteErr } = await supabase
@@ -78,26 +59,6 @@ export default function TaskWorkPanel({
       for (const u of userRows || []) map[u.user_id] = u.full_name || u.email || 'สมาชิก'
       setNames(map)
     }
-  }
-
-  const insertNote = async (noteKind: TaskNote['kind'], text: string) => {
-    const { error: insertErr } = await supabase.from('task_comments').insert({
-      group_id: task.group_id,
-      task_id: task.task_id,
-      author_id: currentUserId,
-      kind: noteKind,
-      body: text,
-    })
-    if (insertErr) return insertErr.message
-
-    await logActivity(supabase, {
-      groupId: task.group_id,
-      action: noteKind === 'decision' ? 'decision_added' : 'comment_added',
-      entityType: 'task',
-      entityId: task.task_id,
-      payload: { title: task.title, preview: text.slice(0, 80) },
-    })
-    return null
   }
 
   const handleToggleNotes = async () => {
@@ -134,50 +95,8 @@ export default function TaskWorkPanel({
     })
 
     setUrl(next)
-    setForm(null)
+    setEditingLink(false)
     setBusy(false)
-  }
-
-  const handleSaveProgress = async () => {
-    const text = progressNote.trim()
-    if (!text) {
-      setError('กรุณาเขียนสั้น ๆ ว่าทำอะไรไปบ้าง')
-      return
-    }
-    if (!currentUserId) return
-
-    setBusy(true)
-    setError(null)
-    if (draftProgress !== progress) {
-      const { error: updateErr } = await supabase
-        .from('tasks')
-        .update({ progress: draftProgress, updated_at: new Date().toISOString() })
-        .eq('task_id', task.task_id)
-
-      if (updateErr) {
-        setError(`บันทึกความคืบหน้าไม่สำเร็จ: ${updateErr.message}`)
-        setBusy(false)
-        return
-      }
-
-      await logActivity(supabase, {
-        groupId: task.group_id,
-        action: 'task_updated',
-        entityType: 'task',
-        entityId: task.task_id,
-        payload: { title: task.title, changes: { progress: { from: progress, to: draftProgress } } },
-      })
-      setProgress(draftProgress)
-    }
-
-    const noteErr = await insertNote('comment', text)
-    if (noteErr) setError(`บันทึกไม่สำเร็จ: ${noteErr}`)
-
-    setProgressNote('')
-    setForm(null)
-    if (showNotes) await loadNotes()
-    setBusy(false)
-    onProgressSaved?.()
   }
 
   const handleAddNote = async () => {
@@ -186,13 +105,30 @@ export default function TaskWorkPanel({
 
     setBusy(true)
     setError(null)
-    const noteErr = await insertNote(kind, text)
-    if (noteErr) {
-      setError(`บันทึกไม่สำเร็จ: ${noteErr}`)
-    } else {
-      setBody('')
-      await loadNotes()
+    const { error: insertErr } = await supabase.from('task_comments').insert({
+      group_id: task.group_id,
+      task_id: task.task_id,
+      author_id: currentUserId,
+      kind,
+      body: text,
+    })
+
+    if (insertErr) {
+      setError(`บันทึกไม่สำเร็จ: ${insertErr.message}`)
+      setBusy(false)
+      return
     }
+
+    await logActivity(supabase, {
+      groupId: task.group_id,
+      action: kind === 'decision' ? 'decision_added' : 'comment_added',
+      entityType: 'task',
+      entityId: task.task_id,
+      payload: { title: task.title, preview: text.slice(0, 80) },
+    })
+
+    setBody('')
+    await loadNotes()
     setBusy(false)
   }
 
@@ -203,19 +139,6 @@ export default function TaskWorkPanel({
 
   return (
     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-3 text-xs">
-      {/* หลอดความคืบหน้า */}
-      <div className="flex items-center gap-3">
-        <span className="shrink-0 font-semibold text-gray-600">ความคืบหน้า</span>
-        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className={`h-full rounded-full transition-all ${shownProgress === 100 ? 'bg-emerald-500' : 'gt-gradient-x'}`}
-            style={{ width: `${shownProgress}%` }}
-          />
-        </div>
-        <span className="w-10 shrink-0 text-right font-bold text-gray-700">{shownProgress}%</span>
-      </div>
-
-      {/* ปุ่มหลัก */}
       <div className="flex items-center gap-2 flex-wrap">
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className={solidBtn}>
@@ -229,31 +152,19 @@ export default function TaskWorkPanel({
             onClick={() => {
               setDraftUrl(url)
               setError(null)
-              setForm(form === 'link' ? null : 'link')
+              setEditingLink(!editingLink)
             }}
             className={outlineBtn}
           >
             {url ? 'แก้ไขลิงก์' : '+ แนบลิงก์ผลงาน'}
           </button>
         )}
-        {canEdit && task.status !== 'completed' && (
-          <button
-            onClick={() => {
-              setDraftProgress(progress)
-              setError(null)
-              setForm(form === 'progress' ? null : 'progress')
-            }}
-            className={outlineBtn}
-          >
-            📈 อัปเดตความคืบหน้า
-          </button>
-        )}
         <button onClick={handleToggleNotes} className={outlineBtn}>
-          {showNotes ? 'ซ่อนบันทึก' : '💬 ดูบันทึกของงานนี้'}
+          {showNotes ? 'ซ่อนบันทึก' : '💬 บันทึกความคืบหน้าและการตัดสินใจ'}
         </button>
       </div>
 
-      {form === 'link' && (
+      {editingLink && (
         <div className="flex items-center gap-2 flex-wrap">
           <input
             className="gt-input flex-1 min-w-[200px] !py-1.5 text-xs"
@@ -267,38 +178,6 @@ export default function TaskWorkPanel({
         </div>
       )}
 
-      {form === 'progress' && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-gray-500">ทำไปแล้ว</span>
-            {PROGRESS_STEPS.map((step) => (
-              <button
-                key={step}
-                onClick={() => setDraftProgress(step)}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                  draftProgress === step
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-white border border-slate-200 text-gray-600 hover:bg-indigo-50'
-                }`}
-              >
-                {step}%
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <input
-              className="gt-input flex-1 min-w-[200px] !py-1.5 text-xs"
-              placeholder="ทำอะไรไปบ้าง เช่น แก้บทที่ 2 เพิ่มรูปประกอบแล้ว"
-              value={progressNote}
-              onChange={(e) => setProgressNote(e.target.value)}
-            />
-            <button onClick={handleSaveProgress} disabled={busy} className={solidBtn}>
-              บันทึกความคืบหน้า
-            </button>
-          </div>
-        </div>
-      )}
-
       {error && <p className="text-rose-600">{error}</p>}
 
       {showNotes && (
@@ -309,17 +188,17 @@ export default function TaskWorkPanel({
               value={kind}
               onChange={(e) => setKind(e.target.value as TaskNote['kind'])}
             >
-              <option value="comment">ความเห็น</option>
+              <option value="comment">ความคืบหน้า / ความเห็น</option>
               <option value="decision">การตัดสินใจ</option>
             </select>
             <input
               className="gt-input flex-1 min-w-[180px] !py-1.5 text-xs"
-              placeholder={kind === 'decision' ? 'เช่น ตกลงเปลี่ยนหัวข้อบทที่ 3 เพราะ...' : 'เขียนความเห็นถึงเพื่อนในกลุ่ม'}
+              placeholder={kind === 'decision' ? 'เช่น ตกลงเปลี่ยนหัวข้อบทที่ 3 เพราะ...' : 'เช่น แก้บทที่ 2 เพิ่มรูปประกอบแล้ว'}
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
             <button onClick={handleAddNote} disabled={busy || !body.trim()} className={solidBtn}>
-              ส่ง
+              บันทึก
             </button>
           </div>
 

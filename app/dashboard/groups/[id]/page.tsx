@@ -37,7 +37,6 @@ interface Task {
   assigned_by: string | null
   deadline: string | null
   work_url?: string | null
-  progress?: number | null
   created_at: string
   updated_at: string
 }
@@ -983,7 +982,7 @@ export default function GroupDetailPage() {
                       </div>
                     </div>
 
-                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isLeader || isAssignee} onProgressSaved={loadTasks} />
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isLeader || isAssignee} />
 
                     {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
                     {t.status === 'rejected' && (
