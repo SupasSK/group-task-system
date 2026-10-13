@@ -5,6 +5,7 @@ export type ActivityAction =
   | 'task_created' | 'task_updated' | 'task_status_changed'
   | 'task_assigned' | 'task_accepted' | 'task_declined' | 'task_claimed'
   | 'comment_added' | 'decision_added' | 'file_uploaded'
+  | 'eval_round_opened' | 'eval_round_closed'
 
 export async function logActivity(
   supabase: SupabaseClient,

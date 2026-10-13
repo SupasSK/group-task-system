@@ -175,6 +175,10 @@ export default function CatchUpDigest({
         return `เขียนบันทึก: ${p.preview || ''}`
       case 'decision_added':
         return `บันทึกการตัดสินใจ: ${p.preview || ''}`
+      case 'eval_round_opened':
+        return `เปิดรอบประเมินเพื่อน "${p.title || ''}"`
+      case 'eval_round_closed':
+        return `ปิดรอบประเมินเพื่อน "${p.title || ''}"`
       default:
         return log.action_type
     }

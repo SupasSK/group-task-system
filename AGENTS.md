@@ -31,5 +31,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   task_declined {title, reason} (ค่าที่เก็บในฐานข้อมูลคือ 'rejected' แต่ชื่อ action ใน log ใช้ task_declined)
   task_claimed {title}
   comment_added / decision_added {title, preview}
+  eval_round_opened / eval_round_closed {title} (title คือชื่อรอบประเมิน ไม่บันทึก log ตอนสมาชิกส่งแบบประเมิน เพื่อไม่เปิดเผยว่าใครส่งเมื่อไร)
 - ในหน้า client component ที่เป็น dynamic route (เช่น [id]) ให้อ่านค่า id ด้วย useParams() จาก 'next/navigation' เท่านั้น ห้ามรับ params เป็น props
 - ก่อนเขียนโค้ดที่ใช้ API ของ Next.js ที่ไม่แน่ใจ ให้ทำตามคำแนะนำในบล็อก nextjs-agent-rules ที่อยู่ด้านบนของไฟล์นี้ก่อน

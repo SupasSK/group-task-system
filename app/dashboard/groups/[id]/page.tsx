@@ -7,6 +7,7 @@ import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
 import CatchUpDigest from '@/components/dashboard/CatchUpDigest'
 import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel'
+import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
 
 interface Group {
   group_id: string
@@ -50,7 +51,7 @@ interface TaskResponse {
   responded_at: string
 }
 
-type TabType = 'overview' | 'tasks' | 'members' | 'summary'
+type TabType = 'overview' | 'tasks' | 'members' | 'summary' | 'evaluation'
 
 const PRIORITY_CONFIG: Record<Task['priority'], { label: string; className: string }> = {
   low: { label: 'ต่ำ', className: 'bg-slate-100 text-slate-700' },
@@ -99,7 +100,7 @@ export default function GroupDetailPage() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     const tab = searchParams.get('tab')
-    return tab === 'tasks' || tab === 'members' || tab === 'summary' ? tab : 'overview'
+    return tab === 'tasks' || tab === 'members' || tab === 'summary' || tab === 'evaluation' ? tab : 'overview'
   })
 
   const [copied, setCopied] = useState(false)
@@ -649,6 +650,7 @@ export default function GroupDetailPage() {
     { id: 'tasks', label: 'งาน' },
     { id: 'members', label: `สมาชิก (${members.length})` },
     { id: 'summary', label: 'สรุปผล' },
+    { id: 'evaluation', label: 'ประเมินเพื่อน' },
   ]
 
   return (
@@ -1264,6 +1266,11 @@ export default function GroupDetailPage() {
       {/* ===== แท็บ: สรุปผล ===== */}
       {activeTab === 'summary' && (
         <ParticipationSummary groupId={id} members={members} tasks={tasks} taskResponses={taskResponses} />
+      )}
+
+      {/* ===== แท็บ: ประเมินเพื่อน ===== */}
+      {activeTab === 'evaluation' && currentUserId && (
+        <PeerEvaluation groupId={id} currentUserId={currentUserId} isLeader={isLeader} members={members} />
       )}
     </div>
   )

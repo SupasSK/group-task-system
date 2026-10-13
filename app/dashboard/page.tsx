@@ -21,6 +21,8 @@ const ACTION_LABEL: Record<string, string> = {
   task_claimed: '🙋 เลือกรับงาน',
   comment_added: '💬 เขียนบันทึก',
   decision_added: '📌 บันทึกการตัดสินใจ',
+  eval_round_opened: '⭐ เปิดรอบประเมินเพื่อน',
+  eval_round_closed: '⭐ ปิดรอบประเมินเพื่อน',
 };
 
 interface RecentLog {
