@@ -25,7 +25,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   group_created {group_name, work_mode}
   member_added {role, email?}
   task_created {title, priority, deadline}
-  task_updated {title, changes: {ชื่อฟิลด์: {from, to}}}
+  task_updated {title, changes: {ชื่อฟิลด์: {from, to}}, reason?} (reason บังคับเมื่อหัวหน้าเปลี่ยน deadline, assigned_to, collaborators หรือ difficulty; changes.collaborators เก็บ from/to เป็นอาร์เรย์ user_id)
   task_status_changed {title, from, to}
   task_assigned {title, assigned_to, assignment_type, role?} (role: 'collaborator' เมื่อเชิญผู้ร่วมทำ)
   task_joined {title, role} (ผู้ร่วมทำรับคำเชิญ หรือเข้าร่วมงานว่างเอง)

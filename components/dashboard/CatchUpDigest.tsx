@@ -31,12 +31,18 @@ const STATUS_LABEL: Record<string, string> = {
 
 const PRIORITY_LABEL: Record<string, string> = { low: 'ต่ำ', medium: 'กลาง', high: 'สูง', urgent: 'ด่วน' }
 
+const DIFFICULTY_LABEL: Record<string, string> = { easy: 'ง่าย', medium: 'กลาง', hard: 'ยาก' }
+
 const FIELD_LABEL: Record<string, string> = {
   title: 'ชื่องาน',
   description: 'รายละเอียด',
   priority: 'ความสำคัญ',
+  difficulty: 'ความยาก',
   deadline: 'กำหนดส่ง',
+  headcount: 'จำนวนคน',
   assigned_to: 'ผู้รับผิดชอบ',
+  collaborators: 'ผู้ร่วมทำ',
+  status: 'สถานะ',
   work_url: 'ลิงก์ผลงาน',
   progress: 'ความคืบหน้า',
 }
@@ -133,9 +139,13 @@ export default function CatchUpDigest({
   }
 
   const formatValue = (field: string, value: unknown) => {
+    if (Array.isArray(value)) return value.length > 0 ? value.map((uid) => getName(String(uid))).join(', ') : 'ไม่มี'
     if (value === null || value === undefined || value === '') return 'ไม่ระบุ'
     const text = String(value)
     if (field === 'priority') return PRIORITY_LABEL[text] ?? text
+    if (field === 'difficulty') return DIFFICULTY_LABEL[text] ?? text
+    if (field === 'status') return STATUS_LABEL[text] ?? text
+    if (field === 'headcount') return `${text} คน`
     if (field === 'progress') return `${text}%`
     if (field === 'deadline') return formatDateTime(text)
     if (field === 'assigned_to') return getName(text)
@@ -159,7 +169,8 @@ export default function CatchUpDigest({
               ([field, c]) =>
                 `${FIELD_LABEL[field] ?? field} จาก "${formatValue(field, c?.from)}" เป็น "${formatValue(field, c?.to)}"`
             )
-            .join(', ')
+            .join(', ') +
+          (p.reason ? ` เหตุผล: ${p.reason}` : '')
         )
       case 'task_status_changed':
         return `เปลี่ยนสถานะจาก "${STATUS_LABEL[p.from] ?? p.from}" เป็น "${STATUS_LABEL[p.to] ?? p.to}"`

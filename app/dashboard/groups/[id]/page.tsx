@@ -10,6 +10,7 @@ import CatchUpDigest from '@/components/dashboard/CatchUpDigest'
 import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel'
 import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
 import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel'
+import TaskEditModal from '@/components/dashboard/TaskEditModal'
 
 interface Group {
   group_id: string
@@ -145,6 +146,9 @@ export default function GroupDetailPage() {
   const [reassignModalTask, setReassignModalTask] = useState<Task | null>(null)
   const [reassignMemberId, setReassignMemberId] = useState('')
   const [reassignLoading, setReassignLoading] = useState(false)
+
+  // โมดอลแก้ไขงาน (หัวหน้า)
+  const [editModalTask, setEditModalTask] = useState<Task | null>(null)
 
   const loadMembers = useCallback(async () => {
     const { data: memberRows, error: memberErr } = await supabase
@@ -1136,6 +1140,17 @@ export default function GroupDetailPage() {
                             {isAssignee && <span className="text-gray-400 ml-1">(คุณ)</span>}
                           </span>
                         </p>
+                        {isLeader && (
+                          <button
+                            onClick={() => {
+                              setTaskActionMessage(null)
+                              setEditModalTask(t)
+                            }}
+                            className="px-3 py-1 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition whitespace-nowrap cursor-pointer"
+                          >
+                            ✏️ แก้ไขงาน
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -1294,6 +1309,22 @@ export default function GroupDetailPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* กล่องโมดอลแก้ไขงาน (หัวหน้า) */}
+          {editModalTask && isLeader && (
+            <TaskEditModal
+              task={editModalTask}
+              collaborators={collaborators.filter((c) => c.task_id === editModalTask.task_id)}
+              members={members}
+              workloadLabel={workloadLabel}
+              onClose={() => setEditModalTask(null)}
+              onSaved={async (message) => {
+                setEditModalTask(null)
+                setTaskActionMessage(message)
+                await loadTasks()
+              }}
+            />
           )}
 
           {/* กล่องโมดอลสำหรับเปลี่ยนผู้รับผิดชอบงานที่ถูกปฏิเสธ (หัวหน้า) */}

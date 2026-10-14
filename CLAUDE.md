@@ -48,7 +48,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 
 ### หน้าต่าง ๆ
 - **ข้อมูลจริง:** `dashboard/page.tsx`, `leader`, `member`, `profile` (แก้ชื่อที่แสดง), `projects/new` (สร้างกลุ่ม), `projects/join` (เข้ากลุ่มด้วยรหัส 6 ตัว) และ `groups/[id]` ซึ่งเป็นหน้าหลักของกลุ่ม มีแท็บ ภาพรวม/งาน/สมาชิก/สรุป/ประเมินเพื่อน (เลือกแท็บได้ด้วย query `?tab=`) และ flow งานทั้งหมด — สร้าง, มอบหมาย, รับ, ปฏิเสธ, claim, เปลี่ยนสถานะ
-- ส่วนประกอบของหน้ากลุ่มแยกไว้ใน `components/dashboard/`: `CatchUpDigest` (สรุปสิ่งที่พลาดไป + ตรวจ log, ใช้ใน `leader` ด้วย), `TaskWorkPanel` (ลิงก์ผลงาน + ความเห็น/การตัดสินใจของงาน), `ParticipationSummary` (คะแนนการมีส่วนร่วม, ใช้ใน `leader` ด้วย), `PeerEvaluation`
+- ส่วนประกอบของหน้ากลุ่มแยกไว้ใน `components/dashboard/`: `CatchUpDigest` (สรุปสิ่งที่พลาดไป + ตรวจ log, ใช้ใน `leader` ด้วย), `TaskWorkPanel` (ลิงก์ผลงาน + ความเห็น/การตัดสินใจของงาน), `ParticipationSummary` (คะแนนการมีส่วนร่วม, ใช้ใน `leader` ด้วย), `PeerEvaluation`, `TaskEditModal` (หัวหน้าแก้ไขงาน ต้องใส่เหตุผลเมื่อเปลี่ยนกำหนดส่ง/คนทำ/ความยาก)
 - **redirect ทิ้ง:** `tasks`, `tasks/new` → `/dashboard/leader`; `projects`, `activity`, `contributions` → `/dashboard`
 - `projects/[project_id]` เป็นหน้าเก่าที่ยังใช้ `lib/mock-data.ts` ถ้า id เป็น UUID จะ redirect ไป `groups/[id]`
 - `lib/mock-data.ts` ยังถูกใช้แค่ `DEMO_USER` (`dashboard/layout.tsx`, `Sidebar`) และ `AVATARS` (`AvatarStack`) ส่วน `DEFAULT_LEADER_PROJECTS` ใน `leader/page.tsx` เป็นข้อมูลตัวอย่างที่ไม่ได้ถูกใช้แล้ว
