@@ -17,6 +17,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - ค่าที่ฐานข้อมูลยอมรับเท่านั้น (ค่าอื่นจะ error):
   tasks.status: pending | assigned | accepted | in_progress | completed | rejected
   tasks.priority: low | medium | high | urgent
+  tasks.difficulty: easy | medium | hard (แก้ได้เฉพาะหัวหน้า เหมือน priority และ deadline)
   tasks.assignment_type: leader_assign | open_choice
   task_responses.response: accepted | rejected
 - คอลัมน์ของ tasks: deadline, assigned_to, assigned_by, assignment_type, start_date, completed_at, updated_at (ห้ามใช้ due_date หรือ assignee_id) ทุกครั้งที่ update tasks ให้ตั้ง updated_at เป็นเวลาปัจจุบัน

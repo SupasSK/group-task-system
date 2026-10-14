@@ -32,6 +32,7 @@ interface Task {
   title: string
   description: string | null
   priority: 'low' | 'medium' | 'high' | 'urgent'
+  difficulty: 'easy' | 'medium' | 'hard'
   status: 'pending' | 'assigned' | 'accepted' | 'in_progress' | 'completed' | 'rejected'
   assignment_type: 'leader_assign' | 'open_choice'
   assigned_to: string | null
@@ -52,6 +53,8 @@ interface TaskResponse {
 }
 
 type TabType = 'overview' | 'tasks' | 'members' | 'summary' | 'evaluation'
+
+const DIFFICULTY_LABEL: Record<Task['difficulty'], string> = { easy: 'ง่าย', medium: 'กลาง', hard: 'ยาก' }
 
 const PRIORITY_CONFIG: Record<Task['priority'], { label: string; className: string }> = {
   low: { label: 'ต่ำ', className: 'bg-slate-100 text-slate-700' },
@@ -121,6 +124,7 @@ export default function GroupDetailPage() {
   const [newTitle, setNewTitle] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [newPriority, setNewPriority] = useState<Task['priority']>('medium')
+  const [newDifficulty, setNewDifficulty] = useState<Task['difficulty']>('medium')
   const [newDeadline, setNewDeadline] = useState('')
   const [newAssignmentType, setNewAssignmentType] = useState<Task['assignment_type']>('leader_assign')
   const [newAssignedTo, setNewAssignedTo] = useState('')
@@ -337,6 +341,7 @@ export default function GroupDetailPage() {
       title: newTitle.trim(),
       description: newDescription.trim() || null,
       priority: newPriority,
+      difficulty: newDifficulty,
       status: newAssignmentType === 'leader_assign' ? 'assigned' : 'pending',
       assignment_type: newAssignmentType,
       assigned_to: newAssignmentType === 'leader_assign' ? newAssignedTo : null,
@@ -389,6 +394,7 @@ export default function GroupDetailPage() {
     setNewTitle('')
     setNewDescription('')
     setNewPriority('medium')
+    setNewDifficulty('medium')
     setNewDeadline('')
     setNewAssignmentType('leader_assign')
     setNewAssignedTo('')
@@ -849,6 +855,19 @@ export default function GroupDetailPage() {
                   </div>
 
                   <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">ความยาก</label>
+                    <select
+                      value={newDifficulty}
+                      onChange={(e) => setNewDifficulty(e.target.value as Task['difficulty'])}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                    >
+                      <option value="easy">ง่าย</option>
+                      <option value="medium">กลาง</option>
+                      <option value="hard">ยาก</option>
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">กำหนดส่ง (Deadline)</label>
                     <input
                       type="datetime-local"
@@ -960,6 +979,9 @@ export default function GroupDetailPage() {
                           <h3 className="text-base font-bold text-gray-800">{t.title}</h3>
                           <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${priorityInfo.className}`}>
                             ความสำคัญ: {priorityInfo.label}
+                          </span>
+                          <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-violet-100 text-violet-700">
+                            ความยาก: {DIFFICULTY_LABEL[t.difficulty] ?? 'กลาง'}
                           </span>
                           <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${statusInfo.className}`}>
                             {statusInfo.label}
