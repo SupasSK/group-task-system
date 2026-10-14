@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase'
+import { taskTeam, taskWeight } from '@/lib/workload'
 
 interface Member {
   user_id: string
@@ -13,6 +14,7 @@ interface Task {
   task_id?: string
   title?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
+  difficulty?: string | null
   status: string
   assigned_to: string | null
   deadline: string | null
@@ -24,13 +26,28 @@ interface TaskResponse {
   response: string
 }
 
-// น้ำหนักงานตามระดับความสำคัญ
-const PRIORITY_WEIGHT: Record<Task['priority'], number> = { low: 1, medium: 2, high: 3, urgent: 4 }
-
 // คะแนนเต็มของแต่ละองค์ประกอบ (รวม 100)
-const MAX_WORKLOAD = 50
-const MAX_PUNCTUAL = 30
-const MAX_CONSISTENCY = 20
+const MAX_WORKLOAD = 40
+const MAX_PUNCTUAL = 25
+const MAX_ACTIVITY = 20
+const MAX_CONSISTENCY = 15
+
+// นับกิจกรรมได้ไม่เกินวันละเท่านี้ต่อคน กันการปั๊มความเห็น
+const DAILY_ACTIVITY_CAP = 5
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+interface LogRow {
+  actor_id: string
+  action_type: string
+  payload: { changes?: Record<string, unknown> } | null
+  created_at: string
+}
+
+// กิจกรรมที่นับ: ความเห็น, การตัดสินใจ และการแก้ลิงก์ผลงาน
+function isCountedActivity(log: LogRow) {
+  if (log.action_type === 'comment_added' || log.action_type === 'decision_added') return true
+  return log.action_type === 'task_updated' && !!log.payload?.changes?.work_url
+}
 
 function ScoreBar({ label, value, max }: { label: string; value: number; max: number }) {
   return (
@@ -77,8 +94,11 @@ export default function ParticipationSummary({
   showPeerEval?: boolean
 }) {
   const supabase = createClient()
-  // จำนวนวันที่สมาชิกแต่ละคนมีกิจกรรมในกลุ่ม
-  const [activeDays, setActiveDays] = useState<Record<string, number>>({})
+  const [logs, setLogs] = useState<LogRow[]>([])
+  const [collaborators, setCollaborators] = useState<{ task_id: string; user_id: string; status: string }[]>([])
+  const [joinedAt, setJoinedAt] = useState<Record<string, string>>({})
+  // เวลาที่โหลดข้อมูล ใช้นับจำนวนสัปดาห์ตั้งแต่เข้ากลุ่ม
+  const [now, setNow] = useState(0)
   const [logError, setLogError] = useState<string | null>(null)
   // ค่าเฉลี่ยผลประเมินเพื่อนจากทุกรอบที่ปิดแล้ว (null = ไม่มีสิทธิ์ดู หรือยังไม่โหลด)
   const [peerAverages, setPeerAverages] = useState<Record<string, PeerAverage> | null>(null)
@@ -129,29 +149,28 @@ export default function ParticipationSummary({
   }, [groupId, supabase, showPeerEval])
 
   useEffect(() => {
-    const loadActiveDays = async () => {
-      const { data, error } = await supabase
-        .from('activity_logs')
-        .select('actor_id, created_at')
-        .eq('group_id', groupId)
+    const loadData = async () => {
+      const [logRes, collabRes, memberRes] = await Promise.all([
+        supabase.from('activity_logs').select('actor_id, action_type, payload, created_at').eq('group_id', groupId),
+        supabase.from('task_collaborators').select('task_id, user_id, status').eq('group_id', groupId),
+        supabase.from('group_members').select('user_id, joined_at').eq('group_id', groupId),
+      ])
 
-      if (error) {
-        setLogError(error.message)
+      setCollaborators(collabRes.data || [])
+      const joined: Record<string, string> = {}
+      for (const m of memberRes.data || []) joined[m.user_id] = m.joined_at
+      setJoinedAt(joined)
+      setNow(Date.now())
+
+      if (logRes.error) {
+        setLogError(logRes.error.message)
         return
       }
-
-      const days: Record<string, Set<string>> = {}
-      for (const log of data || []) {
-        if (!days[log.actor_id]) days[log.actor_id] = new Set()
-        days[log.actor_id].add(new Date(log.created_at).toDateString())
-      }
-      const counts: Record<string, number> = {}
-      for (const userId of Object.keys(days)) counts[userId] = days[userId].size
-      setActiveDays(counts)
+      setLogs(logRes.data || [])
       setLogError(null)
     }
 
-    loadActiveDays()
+    loadData()
   }, [groupId, supabase, tasks])
 
   if (members.length === 0) {
@@ -162,27 +181,65 @@ export default function ParticipationSummary({
     )
   }
 
+  // งานที่เสร็จพร้อมทีม (คนหลัก + ผู้ร่วมทำที่ตอบรับแล้ว) น้ำหนักงานแบ่งเท่ากันในทีม
+  const completed = tasks
+    .filter((t) => t.status === 'completed')
+    .map((t) => ({
+      task: t,
+      team: taskTeam({ ...t, task_id: t.task_id ?? '' }, collaborators, true),
+    }))
+    .filter(({ team }) => team.length > 0)
+
   const stats = members.map((m) => {
-    const done = tasks.filter((t) => t.assigned_to === m.user_id && t.status === 'completed')
-    const points = done.reduce((sum, t) => sum + (PRIORITY_WEIGHT[t.priority] ?? 0), 0)
+    const done = completed.filter(({ team }) => team.includes(m.user_id))
+    const points = done.reduce((sum, { task, team }) => sum + taskWeight(task) / team.length, 0)
     const onTime = done.filter(
-      (t) => !t.deadline || (t.completed_at && new Date(t.completed_at) <= new Date(t.deadline))
+      ({ task: t }) => !t.deadline || (t.completed_at && new Date(t.completed_at) <= new Date(t.deadline))
     ).length
     const rejected = taskResponses.filter((r) => r.user_id === m.user_id && r.response === 'rejected').length
-    return { member: m, doneCount: done.length, points, onTime, rejected, days: activeDays[m.user_id] ?? 0 }
+
+    const myLogs = logs.filter((l) => l.actor_id === m.user_id)
+
+    // กิจกรรม: นับต่อวันไม่เกิน DAILY_ACTIVITY_CAP
+    const perDay: Record<string, number> = {}
+    for (const l of myLogs) {
+      if (!isCountedActivity(l)) continue
+      const day = new Date(l.created_at).toDateString()
+      perDay[day] = Math.min(DAILY_ACTIVITY_CAP, (perDay[day] ?? 0) + 1)
+    }
+    const activity = Object.values(perDay).reduce((sum, n) => sum + n, 0)
+
+    // ความสม่ำเสมอ: สัปดาห์ที่มีกิจกรรมใด ๆ นับจากวันที่เข้ากลุ่ม
+    const firstLog = myLogs.reduce((min, l) => Math.min(min, new Date(l.created_at).getTime()), now)
+    const start = joinedAt[m.user_id] ? new Date(joinedAt[m.user_id]).getTime() : firstLog
+    const totalWeeks = Math.max(1, Math.floor((now - start) / WEEK_MS) + 1)
+    const activeWeeks = new Set(
+      myLogs.map((l) => Math.max(0, Math.floor((new Date(l.created_at).getTime() - start) / WEEK_MS)))
+    ).size
+
+    return { member: m, doneCount: done.length, points, onTime, rejected, activity, activeWeeks, totalWeeks }
   })
 
-  const totalPoints = stats.reduce((sum, s) => sum + s.points, 0)
+  const totalPoints = completed.reduce((sum, { task }) => sum + taskWeight(task), 0)
   const fairShare = totalPoints / members.length
-  const maxDays = Math.max(...stats.map((s) => s.days))
+  const maxActivity = Math.max(...stats.map((s) => s.activity))
 
   const rows = stats
     .map((s) => {
       const workload = fairShare > 0 ? MAX_WORKLOAD * Math.min(1, s.points / fairShare) : 0
       const punctual = s.doneCount > 0 ? (MAX_PUNCTUAL * s.onTime) / s.doneCount : 0
-      const consistency = maxDays > 0 ? (MAX_CONSISTENCY * s.days) / maxDays : 0
+      const activityScore = maxActivity > 0 ? (MAX_ACTIVITY * s.activity) / maxActivity : 0
+      const consistency = MAX_CONSISTENCY * Math.min(1, s.activeWeeks / s.totalWeeks)
       const share = totalPoints > 0 ? Math.round((s.points / totalPoints) * 100) : 0
-      return { ...s, workload, punctual, consistency, share, total: Math.round(workload + punctual + consistency) }
+      return {
+        ...s,
+        workload,
+        punctual,
+        activityScore,
+        consistency,
+        share,
+        total: Math.round(workload + punctual + activityScore + consistency),
+      }
     })
     .sort((a, b) => b.total - a.total)
 
@@ -191,7 +248,8 @@ export default function ParticipationSummary({
       <div>
         <h2 className="text-base font-semibold text-gray-800">คะแนนการมีส่วนร่วม (เต็ม 100)</h2>
         <p className="mt-1 text-xs text-gray-500">
-          ภาระงาน {MAX_WORKLOAD} + ความตรงเวลา {MAX_PUNCTUAL} + ความสม่ำเสมอ {MAX_CONSISTENCY}
+          ภาระงาน {MAX_WORKLOAD} + ความตรงเวลา {MAX_PUNCTUAL} + กิจกรรม {MAX_ACTIVITY} + ความสม่ำเสมอ{' '}
+          {MAX_CONSISTENCY}
         </p>
         {logError && (
           <p className="mt-2 text-xs text-rose-600">โหลดประวัติกิจกรรมไม่สำเร็จ: {logError}</p>
@@ -217,6 +275,7 @@ export default function ParticipationSummary({
             <div className="space-y-1.5">
               <ScoreBar label="ภาระงาน" value={r.workload} max={MAX_WORKLOAD} />
               <ScoreBar label="ตรงเวลา" value={r.punctual} max={MAX_PUNCTUAL} />
+              <ScoreBar label="กิจกรรม" value={r.activityScore} max={MAX_ACTIVITY} />
               <ScoreBar label="สม่ำเสมอ" value={r.consistency} max={MAX_CONSISTENCY} />
             </div>
 
@@ -227,7 +286,10 @@ export default function ParticipationSummary({
                 ทันกำหนด {r.onTime}/{r.doneCount}
               </span>
               <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">ปฏิเสธ {r.rejected}</span>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-600">มีกิจกรรม {r.days} วัน</span>
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">กิจกรรม {r.activity} ครั้ง</span>
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-600">
+                มีกิจกรรม {r.activeWeeks}/{r.totalWeeks} สัปดาห์
+              </span>
             </div>
 
             {/* ผลประเมินเพื่อน แยกจากคะแนนการมีส่วนร่วม (หัวหน้าไม่ถูกประเมิน) */}
@@ -299,9 +361,16 @@ export default function ParticipationSummary({
       </div>
 
       <ul className="text-[11px] text-gray-400 space-y-0.5 list-disc pl-4">
-        <li>ภาระงาน: คะแนนงานที่เสร็จ (ต่ำ 1, กลาง 2, สูง 3, ด่วน 4) เทียบกับส่วนแบ่งเฉลี่ยต่อคนของกลุ่ม</li>
-        <li>ความตรงเวลา: สัดส่วนงานที่เสร็จทันกำหนดส่ง</li>
-        <li>ความสม่ำเสมอ: จำนวนวันที่มีกิจกรรม เทียบกับสมาชิกที่มีกิจกรรมมากวันที่สุด</li>
+        <li>
+          ภาระงาน: น้ำหนักงานที่เสร็จ (ความสำคัญ ต่ำ 1–ด่วน 4 + ความยาก ง่าย 1–ยาก 3) แบ่งเท่ากันระหว่างคนหลักกับผู้ร่วมทำที่ตอบรับ
+          เทียบกับส่วนแบ่งเฉลี่ยต่อคนของกลุ่ม
+        </li>
+        <li>ความตรงเวลา: สัดส่วนงานที่เสร็จทันกำหนดส่ง (ผู้ร่วมทำนับเหมือนคนหลัก)</li>
+        <li>
+          กิจกรรม: จำนวนความเห็น การตัดสินใจ และการแก้ลิงก์ผลงาน (นับไม่เกินวันละ {DAILY_ACTIVITY_CAP} ครั้ง)
+          เทียบกับสมาชิกที่มีกิจกรรมมากที่สุด
+        </li>
+        <li>ความสม่ำเสมอ: จำนวนสัปดาห์ที่มีกิจกรรมใด ๆ เทียบกับจำนวนสัปดาห์ตั้งแต่เข้ากลุ่ม</li>
       </ul>
     </div>
   )
