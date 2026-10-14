@@ -1265,7 +1265,13 @@ export default function GroupDetailPage() {
 
       {/* ===== แท็บ: สรุปผล ===== */}
       {activeTab === 'summary' && (
-        <ParticipationSummary groupId={id} members={members} tasks={tasks} taskResponses={taskResponses} />
+        <ParticipationSummary
+          groupId={id}
+          members={members}
+          tasks={tasks}
+          taskResponses={taskResponses}
+          showPeerEval={isLeader}
+        />
       )}
 
       {/* ===== แท็บ: ประเมินเพื่อน ===== */}

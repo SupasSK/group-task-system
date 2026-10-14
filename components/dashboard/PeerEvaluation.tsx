@@ -237,7 +237,7 @@ export default function PeerEvaluation({
           หัวหน้าเห็นเฉพาะค่าเฉลี่ยและคำบรรยายหลังปิดรอบ และคะแนนที่ส่งแล้วแก้ไขไม่ได้
         </p>
 
-        {isLeader && !openRound && (
+        {isLeader && !openRound && evaluators.length >= 3 && (
           <div className="mt-4 flex items-center gap-2 flex-wrap">
             <input
               className="gt-input flex-1 min-w-[200px] !py-2 text-sm"
@@ -250,9 +250,9 @@ export default function PeerEvaluation({
             </button>
           </div>
         )}
-        {isLeader && evaluators.length < 2 && (
+        {isLeader && evaluators.length < 3 && (
           <p className="mt-3 text-xs text-amber-700">
-            ต้องมีสมาชิก (ไม่นับหัวหน้า) อย่างน้อย 2 คน จึงจะประเมินกันได้
+            ต้องมีสมาชิก (ไม่นับหัวหน้า) อย่างน้อย 3 คน จึงจะเปิดรอบประเมินได้ เพื่อไม่ให้เดาได้ว่าใครเป็นผู้ประเมิน
           </p>
         )}
       </div>
@@ -344,9 +344,15 @@ export default function PeerEvaluation({
 
                 {results[r.round_id] && (
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {results[r.round_id].length === 0 && (
-                      <p className="text-xs text-gray-500">ไม่มีผู้ส่งแบบประเมินในรอบนี้</p>
-                    )}
+                    {/* ฐานข้อมูลไม่คืนผลของคนที่มีผู้ประเมินน้อยกว่า 2 คน */}
+                    {evaluators
+                      .filter((m) => !results[r.round_id].some((row) => row.evaluatee_id === m.user_id))
+                      .map((m) => (
+                        <div key={m.user_id} className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                          <p className="text-sm font-semibold text-gray-800">{getName(m.user_id)}</p>
+                          <p className="text-xs text-gray-400">ผู้ประเมินไม่พอ (ต้องมีอย่างน้อย 2 คน)</p>
+                        </div>
+                      ))}
                     {results[r.round_id].map((row) => (
                       <div key={row.evaluatee_id} className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-1.5">
                         <p className="text-sm font-semibold text-gray-800">

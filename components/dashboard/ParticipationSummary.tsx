@@ -44,21 +44,65 @@ function ScoreBar({ label, value, max }: { label: string; value: number; max: nu
   )
 }
 
+interface PeerAverage {
+  responsibility: number
+  quality: number
+  teamwork: number
+  rounds: number
+}
+
 export default function ParticipationSummary({
   groupId,
   members,
   tasks,
   taskResponses,
+  showPeerEval = false,
 }: {
   groupId: string
   members: Member[]
   tasks: Task[]
   taskResponses: TaskResponse[]
+  // แสดงผลประเมินเพื่อน (ฐานข้อมูลคืนผลให้เฉพาะหัวหน้า คนอื่นจะไม่เห็นส่วนนี้)
+  showPeerEval?: boolean
 }) {
   const supabase = createClient()
   // จำนวนวันที่สมาชิกแต่ละคนมีกิจกรรมในกลุ่ม
   const [activeDays, setActiveDays] = useState<Record<string, number>>({})
   const [logError, setLogError] = useState<string | null>(null)
+  // ค่าเฉลี่ยผลประเมินเพื่อนจากทุกรอบที่ปิดแล้ว (null = ไม่มีสิทธิ์ดู หรือยังไม่โหลด)
+  const [peerAverages, setPeerAverages] = useState<Record<string, PeerAverage> | null>(null)
+
+  useEffect(() => {
+    if (!showPeerEval) return
+    const loadPeerAverages = async () => {
+      const { data: rounds } = await supabase
+        .from('eval_rounds')
+        .select('round_id')
+        .eq('group_id', groupId)
+        .eq('status', 'closed')
+
+      const sums: Record<string, PeerAverage> = {}
+      for (const r of rounds || []) {
+        const { data, error } = await supabase.rpc('get_peer_eval_results', { p_round_id: r.round_id })
+        if (error) return // ไม่ใช่หัวหน้า
+        for (const row of data || []) {
+          const s = (sums[row.evaluatee_id] ??= { responsibility: 0, quality: 0, teamwork: 0, rounds: 0 })
+          s.responsibility += Number(row.avg_responsibility)
+          s.quality += Number(row.avg_quality)
+          s.teamwork += Number(row.avg_teamwork)
+          s.rounds += 1
+        }
+      }
+      // แต่ละรอบมีน้ำหนักเท่ากัน
+      for (const s of Object.values(sums)) {
+        s.responsibility /= s.rounds
+        s.quality /= s.rounds
+        s.teamwork /= s.rounds
+      }
+      setPeerAverages(sums)
+    }
+    loadPeerAverages()
+  }, [groupId, supabase, showPeerEval])
 
   useEffect(() => {
     const loadActiveDays = async () => {
@@ -161,6 +205,35 @@ export default function ParticipationSummary({
               <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">ปฏิเสธ {r.rejected}</span>
               <span className="rounded-full bg-slate-200 px-2 py-0.5 text-slate-600">มีกิจกรรม {r.days} วัน</span>
             </div>
+
+            {/* ผลประเมินเพื่อน แยกจากคะแนนการมีส่วนร่วม (หัวหน้าไม่ถูกประเมิน) */}
+            {peerAverages && r.member.role !== 'leader' && (
+              <div className="border-t border-slate-200 pt-2 text-[11px] text-gray-500">
+                {peerAverages[r.member.user_id] ? (
+                  <>
+                    <p>
+                      ผลประเมินจากเพื่อน{' '}
+                      <strong className="text-sm text-amber-600">
+                        {(
+                          (peerAverages[r.member.user_id].responsibility +
+                            peerAverages[r.member.user_id].quality +
+                            peerAverages[r.member.user_id].teamwork) /
+                          3
+                        ).toFixed(1)}
+                      </strong>
+                      /5 <span className="text-gray-400">({peerAverages[r.member.user_id].rounds} รอบ)</span>
+                    </p>
+                    <p>
+                      ความรับผิดชอบ {peerAverages[r.member.user_id].responsibility.toFixed(1)} · คุณภาพงาน{' '}
+                      {peerAverages[r.member.user_id].quality.toFixed(1)} · การทำงานร่วมกัน{' '}
+                      {peerAverages[r.member.user_id].teamwork.toFixed(1)}
+                    </p>
+                  </>
+                ) : (
+                  <p>ผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ</p>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

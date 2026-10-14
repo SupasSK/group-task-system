@@ -1021,6 +1021,7 @@ export default function LeaderPage() {
                           members={proj.raw.members}
                           tasks={proj.raw.tasks}
                           taskResponses={proj.raw.responses}
+                          showPeerEval
                         />
                       </div>
                     )}
