@@ -31,21 +31,26 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 `app/page.tsx` แค่ render หน้า login ส่วน `app/dashboard/layout.tsx` ตรวจผู้ใช้ซ้ำฝั่ง client และวาง `Sidebar`
 
 ### สคีมา Supabase
-สคีมาไม่ได้อยู่ใน repo (ไม่มี migration) ต้องอนุมานจากโค้ด `supabase-fix-rls.sql` เป็นสคริปต์ที่รันมือใน SQL Editor และครอบคลุมเฉพาะ `groups` กับ `group_members`
+สคีมาส่วนใหญ่ไม่ได้อยู่ใน repo (ไม่มี migration) ต้องอนุมานจากโค้ด ไฟล์ `supabase-*.sql` ที่ root เป็นสคริปต์ที่รันมือใน SQL Editor แต่ละไฟล์ครอบคลุมบางส่วนเท่านั้น:
+- `supabase-fix-rls.sql` — policy ของ `groups`/`group_members` รุ่นแรก (หละหลวม) **ห้ามรันซ้ำ** หลังรัน `supabase-harden-rls.sql` แล้ว
+- `supabase-harden-rls.sql` — ปิด policy หละหลวมของ `group_members` และเพิ่ม trigger `tasks_guard_leader_fields` ที่ให้เฉพาะหัวหน้าแก้ `priority`/`deadline` ได้ (ผู้รับงานแก้แล้วจะ error)
+- `supabase-peer-evaluation.sql` — ตาราง `eval_rounds`, `peer_evaluations` และ RPC ของการประเมินเพื่อน แถวคะแนนอ่านได้เฉพาะผู้ประเมินเอง หัวหน้าเห็นผลผ่าน RPC หลังปิดรอบเท่านั้น และไม่มี policy UPDATE/DELETE
+- `supabase-profile.sql` — ให้ผู้ใช้แก้ `users.full_name` ของตัวเองได้ (สิทธิ์ UPDATE ระดับคอลัมน์เฉพาะ `full_name`) ชื่อที่แสดงอ่านจาก `public.users` ไม่ใช่ `user_metadata` ซึ่งถูกทับด้วยชื่อจาก Google ทุกครั้งที่ล็อกอิน
 
-- Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`
-- ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `activity_logs`
-- `groups.work_mode`: `leader_all` | `member_choose` | `mixed` — `group_members.role`: `leader` | `member`
-- RPC ที่มีอยู่: `log_activity` (เรียกผ่าน `lib/logActivity.ts` เท่านั้น), `join_group_by_code(p_code)` คืน `{joined_group_id, joined_group_name, newly_joined}`, `find_user_by_email(p_email)`
+- Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`, `task_comments.comment_id`
+- ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `task_comments`, `activity_logs`, `group_visits`, `eval_rounds`, `peer_evaluations`
+- `groups.work_mode`: `leader_all` | `member_choose` | `mixed` — `group_members.role`: `leader` | `member` — `task_comments.kind`: `comment` | `decision` — `tasks.work_url` เก็บลิงก์ผลงาน
+- `group_visits(user_id, group_id, last_seen_at)` ใช้คำนวณกิจกรรมที่ยังไม่ได้อ่าน (`lib/unreadCounts.ts`, `CatchUpDigest`)
+- RPC ที่มีอยู่: `log_activity` (เรียกผ่าน `lib/logActivity.ts` เท่านั้น), `join_group_by_code(p_code)` คืน `{joined_group_id, joined_group_name, newly_joined}`, `find_user_by_email(p_email)`, `verify_activity_chain(p_group_id)` (ตรวจว่า log ไม่ถูกแก้/ลบ), `get_peer_eval_results(p_round_id)`, `peer_eval_submitted_count(p_round_id)`
 - การ join ชื่อสมาชิกทำเป็นสอง query (ดึง `group_members` แล้วค่อยดึง `users` ด้วย `.in('user_id', ...)`) ไม่ได้ใช้ embedded select
 
-### หน้าที่ใช้ข้อมูลจริง กับหน้าที่ยังเป็น mock
-โปรเจกต์อยู่ระหว่างย้ายจากข้อมูลจำลอง (`lib/mock-data.ts`) ไป Supabase ก่อนแก้หน้าใดให้ดูก่อนว่าอยู่ฝั่งไหน:
-
-- **ข้อมูลจริง:** `groups/[id]` (หน้าหลักของกลุ่ม: แท็บภาพรวม/งาน/สมาชิก/สรุป และ flow งานทั้งหมด — สร้าง, มอบหมาย, รับ, ปฏิเสธ, claim, เปลี่ยนสถานะ), `projects/new` (สร้างกลุ่ม), `projects/join` (เข้ากลุ่มด้วยรหัส 6 ตัว), `member`
-- **ผสม:** `dashboard/page.tsx` (กลุ่มจริง + สถิติ/โครงการ/กิจกรรมแบบ hardcode), `leader` (กลุ่มจริงปนกับกลุ่มตัวอย่าง `p1`/`p2`)
-- **mock ล้วน:** `tasks`, `tasks/new`, `projects`, `activity`, `contributions`
-- `projects/[project_id]` เป็นหน้าเก่า ถ้า id เป็น UUID จะ redirect ไป `groups/[id]`
+### หน้าต่าง ๆ
+- **ข้อมูลจริง:** `dashboard/page.tsx`, `leader`, `member`, `profile` (แก้ชื่อที่แสดง), `projects/new` (สร้างกลุ่ม), `projects/join` (เข้ากลุ่มด้วยรหัส 6 ตัว) และ `groups/[id]` ซึ่งเป็นหน้าหลักของกลุ่ม มีแท็บ ภาพรวม/งาน/สมาชิก/สรุป/ประเมินเพื่อน (เลือกแท็บได้ด้วย query `?tab=`) และ flow งานทั้งหมด — สร้าง, มอบหมาย, รับ, ปฏิเสธ, claim, เปลี่ยนสถานะ
+- ส่วนประกอบของหน้ากลุ่มแยกไว้ใน `components/dashboard/`: `CatchUpDigest` (สรุปสิ่งที่พลาดไป + ตรวจ log, ใช้ใน `leader` ด้วย), `TaskWorkPanel` (ลิงก์ผลงาน + ความเห็น/การตัดสินใจของงาน), `ParticipationSummary` (คะแนนการมีส่วนร่วม, ใช้ใน `leader` ด้วย), `PeerEvaluation`
+- **redirect ทิ้ง:** `tasks`, `tasks/new` → `/dashboard/leader`; `projects`, `activity`, `contributions` → `/dashboard`
+- `projects/[project_id]` เป็นหน้าเก่าที่ยังใช้ `lib/mock-data.ts` ถ้า id เป็น UUID จะ redirect ไป `groups/[id]`
+- `lib/mock-data.ts` ยังถูกใช้แค่ `DEMO_USER` (`dashboard/layout.tsx`, `Sidebar`) และ `AVATARS` (`AvatarStack`) ส่วน `DEFAULT_LEADER_PROJECTS` ใน `leader/page.tsx` เป็นข้อมูลตัวอย่างที่ไม่ได้ถูกใช้แล้ว
+- ความคืบหน้าของโครงการคำนวณที่เดียวคือ `lib/projectProgress.ts` (งาน `completed` / งานทั้งหมด)
 
 flow ของงานถูกเขียนซ้ำอยู่ทั้งใน `groups/[id]/page.tsx` และ `member/page.tsx` (update `tasks` → insert `task_responses` → `logActivity`) ถ้าแก้พฤติกรรมฝั่งหนึ่งให้ตรวจอีกฝั่งด้วย
 
