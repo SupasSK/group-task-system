@@ -8,6 +8,7 @@ import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
 import CatchUpDigest from '@/components/dashboard/CatchUpDigest'
 import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel'
 import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
+import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel'
 
 interface Group {
   group_id: string
@@ -33,6 +34,7 @@ interface Task {
   description: string | null
   priority: 'low' | 'medium' | 'high' | 'urgent'
   difficulty: 'easy' | 'medium' | 'hard'
+  headcount: number
   status: 'pending' | 'assigned' | 'accepted' | 'in_progress' | 'completed' | 'rejected'
   assignment_type: 'leader_assign' | 'open_choice'
   assigned_to: string | null
@@ -128,6 +130,10 @@ export default function GroupDetailPage() {
   const [newDeadline, setNewDeadline] = useState('')
   const [newAssignmentType, setNewAssignmentType] = useState<Task['assignment_type']>('leader_assign')
   const [newAssignedTo, setNewAssignedTo] = useState('')
+  // จำนวนคนของงาน และผู้ร่วมทำที่หัวหน้าเลือก (นอกจากผู้รับผิดชอบหลัก)
+  const [newHeadcount, setNewHeadcount] = useState(1)
+  const [newCollaborators, setNewCollaborators] = useState<string[]>([])
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([])
 
   // โมดอลปฏิเสธงาน
   const [rejectModalTask, setRejectModalTask] = useState<Task | null>(null)
@@ -189,6 +195,12 @@ export default function GroupDetailPage() {
     }
 
     setTasks(taskRows || [])
+
+    const { data: collabRows } = await supabase
+      .from('task_collaborators')
+      .select('task_id, group_id, user_id, status, note')
+      .eq('group_id', id)
+    setCollaborators(collabRows || [])
 
     if (taskRows && taskRows.length > 0) {
       const taskIds = taskRows.map((t) => t.task_id)
@@ -330,6 +342,13 @@ export default function GroupDetailPage() {
       return
     }
 
+    const inviteIds =
+      newAssignmentType === 'leader_assign' ? newCollaborators.filter((uid) => uid !== newAssignedTo) : []
+    if (inviteIds.length > newHeadcount - 1) {
+      setTaskActionMessage({ type: 'error', text: `เลือกผู้ร่วมทำได้ไม่เกิน ${newHeadcount - 1} คน` })
+      return
+    }
+
     setCreateTaskLoading(true)
     setTaskActionMessage(null)
 
@@ -342,6 +361,7 @@ export default function GroupDetailPage() {
       description: newDescription.trim() || null,
       priority: newPriority,
       difficulty: newDifficulty,
+      headcount: newHeadcount,
       status: newAssignmentType === 'leader_assign' ? 'assigned' : 'pending',
       assignment_type: newAssignmentType,
       assigned_to: newAssignmentType === 'leader_assign' ? newAssignedTo : null,
@@ -390,7 +410,31 @@ export default function GroupDetailPage() {
       })
     }
 
-    setTaskActionMessage({ type: 'success', text: `สร้างงาน "${createdTask.title}" สำเร็จ` })
+    // เชิญผู้ร่วมทำ (ต้องกดรับเองเหมือนผู้รับผิดชอบหลัก)
+    let inviteError = ''
+    if (inviteIds.length > 0) {
+      const { error: collabErr } = await supabase.from('task_collaborators').insert(
+        inviteIds.map((uid) => ({ task_id: createdTask.task_id, group_id: id, user_id: uid, status: 'pending' }))
+      )
+      if (collabErr) {
+        inviteError = ` แต่เชิญผู้ร่วมทำไม่สำเร็จ: ${collabErr.message}`
+      } else {
+        for (const uid of inviteIds) {
+          await logActivity(supabase, {
+            groupId: id,
+            action: 'task_assigned',
+            entityType: 'task',
+            entityId: createdTask.task_id,
+            payload: { title: createdTask.title, assigned_to: uid, assignment_type: 'leader_assign', role: 'collaborator' },
+          })
+        }
+      }
+    }
+
+    setTaskActionMessage({
+      type: inviteError ? 'error' : 'success',
+      text: `สร้างงาน "${createdTask.title}" สำเร็จ${inviteError}`,
+    })
     setNewTitle('')
     setNewDescription('')
     setNewPriority('medium')
@@ -398,6 +442,8 @@ export default function GroupDetailPage() {
     setNewDeadline('')
     setNewAssignmentType('leader_assign')
     setNewAssignedTo('')
+    setNewHeadcount(1)
+    setNewCollaborators([])
     setShowCreateModal(false)
     await loadTasks()
     setCreateTaskLoading(false)
@@ -458,6 +504,11 @@ export default function GroupDetailPage() {
     if (updateErr) {
       setTaskActionMessage({ type: 'error', text: `เลือกรับงานไม่สำเร็จ: ${updateErr.message}` })
       return
+    }
+
+    // ผู้ร่วมทำที่เลื่อนตัวเองเป็นผู้รับผิดชอบหลัก: เอาออกจากรายชื่อผู้ร่วมทำ
+    if (collaborators.some((c) => c.task_id === task.task_id && c.user_id === currentUserId)) {
+      await supabase.from('task_collaborators').delete().eq('task_id', task.task_id).eq('user_id', currentUserId)
     }
 
     await logActivity(supabase, {
@@ -609,6 +660,15 @@ export default function GroupDetailPage() {
       setTaskActionMessage({ type: 'error', text: `เปลี่ยนผู้รับผิดชอบไม่สำเร็จ: ${updateErr.message}` })
       setReassignLoading(false)
       return
+    }
+
+    // ถ้าคนใหม่เคยเป็นผู้ร่วมทำของงานนี้ ให้เอาออกจากรายชื่อผู้ร่วมทำ
+    if (collaborators.some((c) => c.task_id === reassignModalTask.task_id && c.user_id === reassignMemberId)) {
+      await supabase
+        .from('task_collaborators')
+        .delete()
+        .eq('task_id', reassignModalTask.task_id)
+        .eq('user_id', reassignMemberId)
     }
 
     await logActivity(supabase, {
@@ -879,6 +939,25 @@ export default function GroupDetailPage() {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">จำนวนคนที่ทำงานนี้</label>
+                  <select
+                    value={newHeadcount}
+                    onChange={(e) => {
+                      const n = Number(e.target.value)
+                      setNewHeadcount(n)
+                      setNewCollaborators((prev) => prev.slice(0, n - 1))
+                    }}
+                    className="w-full sm:w-48 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n === 1 ? '1 คน (ทำคนเดียว)' : `${n} คน (หลัก 1 + ผู้ร่วมทำ ${n - 1})`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">โหมดมอบหมายงาน</label>
                   <div className="flex gap-4 mt-1">
                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -930,6 +1009,43 @@ export default function GroupDetailPage() {
                   </div>
                 )}
 
+                {newAssignmentType === 'leader_assign' && newHeadcount > 1 && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">
+                      ผู้ร่วมทำ (เลือกได้ไม่เกิน {newHeadcount - 1} คน · ต้องกดรับงานเอง)
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {members
+                        .filter((m) => m.user_id !== newAssignedTo)
+                        .map((m) => {
+                          const checked = newCollaborators.includes(m.user_id)
+                          const full = !checked && newCollaborators.length >= newHeadcount - 1
+                          return (
+                            <label
+                              key={m.user_id}
+                              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs ${
+                                full ? 'opacity-50' : 'cursor-pointer'
+                              } ${checked ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={full}
+                                onChange={() =>
+                                  setNewCollaborators((prev) =>
+                                    checked ? prev.filter((uid) => uid !== m.user_id) : [...prev, m.user_id]
+                                  )
+                                }
+                              />
+                              {m.full_name || m.email}
+                            </label>
+                          )
+                        })}
+                    </div>
+                    <p className="mt-1 text-[11px] text-gray-400">ไม่เลือกครบก็ได้ เชิญเพิ่มภายหลังได้จากการ์ดงาน</p>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
@@ -965,6 +1081,11 @@ export default function GroupDetailPage() {
                 const priorityInfo = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.medium
                 const statusInfo = STATUS_CONFIG[t.status] || STATUS_CONFIG.pending
                 const isAssignee = t.assigned_to === currentUserId
+                const taskCollaborators = collaborators.filter((c) => c.task_id === t.task_id)
+                // ผู้ร่วมทำที่รับงานแล้วทำได้เหมือนคนหลัก ยกเว้นกด "เสร็จแล้ว"
+                const isCollaborator = taskCollaborators.some(
+                  (c) => c.user_id === currentUserId && c.status === 'accepted'
+                )
                 const isAwaitingResponse = t.assignment_type === 'leader_assign' && isAssignee && t.status === 'assigned'
                 const latestRejection = t.status === 'rejected' ? getLatestRejection(t.task_id) : null
 
@@ -1006,7 +1127,20 @@ export default function GroupDetailPage() {
                       </div>
                     </div>
 
-                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isLeader || isAssignee} />
+                    <TaskTeamPanel
+                      task={t}
+                      collaborators={taskCollaborators}
+                      currentUserId={currentUserId}
+                      isLeader={isLeader}
+                      members={members}
+                      onChanged={loadTasks}
+                    />
+
+                    <TaskWorkPanel
+                      task={t}
+                      currentUserId={currentUserId}
+                      canEdit={isLeader || isAssignee || isCollaborator}
+                    />
 
                     {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
                     {t.status === 'rejected' && (
@@ -1045,7 +1179,7 @@ export default function GroupDetailPage() {
                           onClick={() => handleClaimTask(t)}
                           className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition cursor-pointer"
                         >
-                          เลือกรับงานนี้
+                          {t.headcount > 1 ? 'รับเป็นผู้รับผิดชอบหลัก' : 'เลือกรับงานนี้'}
                         </button>
                       </div>
                     )}
@@ -1073,7 +1207,7 @@ export default function GroupDetailPage() {
                     )}
 
                     {/* 3. การดำเนินงานและส่งงาน (เมื่อผู้ใช้รับงานแล้ว หรือกำลังทำ) */}
-                    {isAssignee && (t.status === 'accepted' || t.status === 'in_progress') && (
+                    {(isAssignee || isCollaborator) && (t.status === 'accepted' || t.status === 'in_progress') && (
                       <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
                         {t.status === 'accepted' && (
                           <button
@@ -1083,12 +1217,16 @@ export default function GroupDetailPage() {
                             เริ่มทำงาน
                           </button>
                         )}
-                        <button
-                          onClick={() => handleCompleteTask(t)}
-                          className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
-                        >
-                          ✅ ทำเสร็จแล้ว
-                        </button>
+                        {isAssignee ? (
+                          <button
+                            onClick={() => handleCompleteTask(t)}
+                            className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
+                          >
+                            ✅ ทำเสร็จแล้ว
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400">ผู้รับผิดชอบหลักเป็นผู้กดเสร็จแล้ว</span>
+                        )}
                       </div>
                     )}
                   </div>

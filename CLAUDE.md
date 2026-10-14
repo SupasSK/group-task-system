@@ -35,6 +35,8 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 - `supabase-fix-rls.sql` — policy ของ `groups`/`group_members` รุ่นแรก (หละหลวม) **ห้ามรันซ้ำ** หลังรัน `supabase-harden-rls.sql` แล้ว
 - `supabase-harden-rls.sql` — ปิด policy หละหลวมของ `group_members` และเพิ่ม trigger `tasks_guard_leader_fields` ที่ให้เฉพาะหัวหน้าแก้ `priority`/`deadline` ได้ (ผู้รับงานแก้แล้วจะ error)
 - `supabase-peer-evaluation.sql` — ตาราง `eval_rounds`, `peer_evaluations` และ RPC ของการประเมินเพื่อน แถวคะแนนอ่านได้เฉพาะผู้ประเมินเอง หัวหน้าเห็นผลผ่าน RPC หลังปิดรอบเท่านั้น และไม่มี policy UPDATE/DELETE
+- `supabase-task-difficulty.sql` — คอลัมน์ `tasks.difficulty`
+- `supabase-task-collaborators.sql` — `tasks.headcount` (1–5 รวมคนหลัก), ตาราง `task_collaborators` (ผู้ร่วมทำ `pending`/`accepted`/`rejected`, มีได้ไม่เกิน headcount − 1 ตรวจด้วย trigger) และ `task_feedback` (ฟีดแบคเปิดชื่อหลังงานเสร็จ อ่านได้เฉพาะผู้ส่งกับหัวหน้า) พร้อมรวม trigger `tasks_guard_leader_fields` ฉบับล่าสุด: คนที่ไม่ใช่หัวหน้าแก้ priority/deadline/difficulty/headcount ไม่ได้, เปลี่ยน `assigned_to` ได้เฉพาะ claim งานว่างให้ตัวเอง, และกด completed ได้เฉพาะคนหลัก ส่วน UI ของทีมงานอยู่ใน `components/dashboard/TaskTeamPanel.tsx` ใช้ทั้งหน้ากลุ่มและหน้าสมาชิก
 - `supabase-profile.sql` — ให้ผู้ใช้แก้ `users.full_name` ของตัวเองได้ (สิทธิ์ UPDATE ระดับคอลัมน์เฉพาะ `full_name`) ชื่อที่แสดงอ่านจาก `public.users` ไม่ใช่ `user_metadata` ซึ่งถูกทับด้วยชื่อจาก Google ทุกครั้งที่ล็อกอิน
 
 - Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`, `task_comments.comment_id`

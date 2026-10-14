@@ -27,7 +27,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   task_created {title, priority, deadline}
   task_updated {title, changes: {ชื่อฟิลด์: {from, to}}}
   task_status_changed {title, from, to}
-  task_assigned {title, assigned_to, assignment_type}
+  task_assigned {title, assigned_to, assignment_type, role?} (role: 'collaborator' เมื่อเชิญผู้ร่วมทำ)
+  task_joined {title, role} (ผู้ร่วมทำรับคำเชิญ หรือเข้าร่วมงานว่างเอง)
+  task_feedback_added {title} (ห้ามใส่คะแนนหรือชื่อผู้รับ เพราะสมาชิกทุกคนอ่าน log ได้)
   task_accepted {title}
   task_declined {title, reason} (ค่าที่เก็บในฐานข้อมูลคือ 'rejected' แต่ชื่อ action ใน log ใช้ task_declined)
   task_claimed {title}

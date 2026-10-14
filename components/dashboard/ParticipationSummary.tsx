@@ -10,6 +10,8 @@ interface Member {
 }
 
 interface Task {
+  task_id?: string
+  title?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: string
   assigned_to: string | null
@@ -44,6 +46,15 @@ function ScoreBar({ label, value, max }: { label: string; value: number; max: nu
   )
 }
 
+interface TaskFeedback {
+  feedback_id: string
+  task_id: string
+  from_user: string
+  to_user: string
+  score: number
+  comment: string | null
+}
+
 interface PeerAverage {
   responsibility: number
   quality: number
@@ -71,6 +82,19 @@ export default function ParticipationSummary({
   const [logError, setLogError] = useState<string | null>(null)
   // ค่าเฉลี่ยผลประเมินเพื่อนจากทุกรอบที่ปิดแล้ว (null = ไม่มีสิทธิ์ดู หรือยังไม่โหลด)
   const [peerAverages, setPeerAverages] = useState<Record<string, PeerAverage> | null>(null)
+  // ฟีดแบคแบบเปิดชื่อจากงานที่ทำร่วมกัน (RLS ให้หัวหน้าอ่านได้ทั้งกลุ่ม)
+  const [feedback, setFeedback] = useState<TaskFeedback[]>([])
+  const [openFeedbackFor, setOpenFeedbackFor] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!showPeerEval) return
+    supabase
+      .from('task_feedback')
+      .select('feedback_id, task_id, from_user, to_user, score, comment')
+      .eq('group_id', groupId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setFeedback(data || []))
+  }, [groupId, supabase, showPeerEval])
 
   useEffect(() => {
     if (!showPeerEval) return
@@ -234,6 +258,42 @@ export default function ParticipationSummary({
                 )}
               </div>
             )}
+
+            {/* ฟีดแบคจากงานที่ทำร่วมกัน (เปิดชื่อ ใช้ประกอบการจับคู่คนทำงาน) */}
+            {showPeerEval &&
+              (() => {
+                const received = feedback.filter((f) => f.to_user === r.member.user_id)
+                if (received.length === 0) return null
+                const avg = received.reduce((sum, f) => sum + f.score, 0) / received.length
+                const nameOf = (uid: string) => {
+                  const m = members.find((item) => item.user_id === uid)
+                  return m?.full_name || m?.email || 'สมาชิก'
+                }
+                const open = openFeedbackFor === r.member.user_id
+                return (
+                  <div className="border-t border-slate-200 pt-2 text-[11px] text-gray-500 space-y-1">
+                    <button
+                      onClick={() => setOpenFeedbackFor(open ? null : r.member.user_id)}
+                      className="cursor-pointer text-left"
+                    >
+                      ฟีดแบคจากงานที่ทำร่วมกัน <strong className="text-sm text-teal-600">{avg.toFixed(1)}</strong>/5{' '}
+                      <span className="text-gray-400">({received.length} ครั้ง)</span>{' '}
+                      <span className="text-indigo-600">{open ? 'ซ่อน' : 'ดูรายละเอียด'}</span>
+                    </button>
+                    {open && (
+                      <ul className="space-y-1">
+                        {received.map((f) => (
+                          <li key={f.feedback_id} className="rounded-lg bg-white border border-slate-100 px-2 py-1">
+                            <span className="font-semibold text-gray-700">{f.score}/5</span> จาก {nameOf(f.from_user)} ·{' '}
+                            {tasks.find((t) => t.task_id === f.task_id)?.title || 'งาน'}
+                            {f.comment && <span className="block text-gray-500">“{f.comment}”</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })()}
           </div>
         ))}
       </div>

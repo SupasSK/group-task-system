@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel';
+import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel';
 import {
   UserPlus,
   Plus,
@@ -43,6 +44,7 @@ interface MemberTask {
   deadline: string | null;
   completed_at: string | null;
   work_url?: string | null;
+  headcount?: number;
   created_at: string;
   updated_at: string;
   group_name?: string;
@@ -87,6 +89,7 @@ export default function MemberPage() {
   const [realGroups, setRealGroups] = useState<RealGroup[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [tasks, setTasks] = useState<MemberTask[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
@@ -161,8 +164,15 @@ export default function MemberPage() {
           }));
           setTasks(mappedTasks);
         }
+
+        const { data: collabRows } = await supabase
+          .from('task_collaborators')
+          .select('task_id, group_id, user_id, status, note')
+          .in('group_id', groupIds);
+        setCollaborators(collabRows || []);
       } else {
         setTasks([]);
+        setCollaborators([]);
       }
     } catch (e) {
       console.error(e);
@@ -193,6 +203,11 @@ export default function MemberPage() {
     if (updateErr) {
       setActionMessage({ type: 'error', text: `เลือกรับงานไม่สำเร็จ: ${updateErr.message}` });
       return;
+    }
+
+    // ผู้ร่วมทำที่เลื่อนตัวเองเป็นผู้รับผิดชอบหลัก: เอาออกจากรายชื่อผู้ร่วมทำ
+    if (collaborators.some((c) => c.task_id === task.task_id && c.user_id === currentUserId)) {
+      await supabase.from('task_collaborators').delete().eq('task_id', task.task_id).eq('user_id', currentUserId);
     }
 
     await logActivity(supabase, {
@@ -355,16 +370,27 @@ export default function MemberPage() {
     setRejectLoading(false);
   };
 
-  // แบ่งกลุ่มงาน
+  // แบ่งกลุ่มงาน (รวมงานที่เป็นผู้ร่วมทำ)
+  const collabsOf = (taskId: string) => collaborators.filter((c) => c.task_id === taskId);
+  const myCollabStatus = (taskId: string) =>
+    collaborators.find((c) => c.task_id === taskId && c.user_id === currentUserId)?.status;
+  const isMine = (t: MemberTask) =>
+    t.assigned_to === currentUserId || myCollabStatus(t.task_id) === 'accepted';
+
   const myTasks = tasks.filter(
-    (t) => t.assigned_to === currentUserId && t.status !== 'completed' && t.status !== 'rejected'
+    (t) =>
+      (t.assigned_to === currentUserId || ['pending', 'accepted'].includes(myCollabStatus(t.task_id) ?? '')) &&
+      t.status !== 'completed' &&
+      t.status !== 'rejected'
   );
-  const openTasks = tasks.filter(
-    (t) => t.assignment_type === 'open_choice' && t.status === 'pending' && !t.assigned_to
-  );
-  const completedTasks = tasks.filter(
-    (t) => t.assigned_to === currentUserId && t.status === 'completed'
-  );
+  // งานว่าง: ยังไม่มีคนหลัก หรือยังมีที่ว่างสำหรับผู้ร่วมทำ
+  const openTasks = tasks.filter((t) => {
+    if (t.assignment_type !== 'open_choice' || t.status === 'completed' || t.status === 'rejected') return false;
+    if (t.assigned_to === currentUserId || myCollabStatus(t.task_id)) return false;
+    const taken = collabsOf(t.task_id).filter((c) => c.status !== 'rejected').length;
+    return (!t.assigned_to && t.status === 'pending') || taken < (t.headcount ?? 1) - 1;
+  });
+  const completedTasks = tasks.filter((t) => isMine(t) && t.status === 'completed');
 
   return (
     <div className="space-y-8">
@@ -557,7 +583,14 @@ export default function MemberPage() {
                         </div>
                       </div>
 
-                      <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={t.assigned_to === currentUserId} />
+                      <TaskTeamPanel
+                        task={t}
+                        collaborators={collabsOf(t.task_id)}
+                        currentUserId={currentUserId}
+                        onChanged={loadData}
+                      />
+
+                      <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isMine(t)} />
 
                       {/* ปุ่มการทำงาน: ตอบรับงาน / เริ่มทำงาน / กดยืนยันว่างานเสร็จแล้ว */}
                       <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
@@ -569,8 +602,8 @@ export default function MemberPage() {
                         </Link>
 
                         <div className="flex items-center gap-2">
-                          {/* กรณียังไม่ได้ตอบรับ (assigned) */}
-                          {t.status === 'assigned' && (
+                          {/* กรณียังไม่ได้ตอบรับ (assigned) — ผู้ร่วมทำตอบรับในส่วนทีมด้านบน */}
+                          {t.status === 'assigned' && t.assigned_to === currentUserId && (
                             <>
                               <button
                                 type="button"
@@ -593,7 +626,7 @@ export default function MemberPage() {
                           )}
 
                           {/* กรณีรับแล้วแต่ยังไม่เริ่ม (accepted) */}
-                          {t.status === 'accepted' && (
+                          {t.status === 'accepted' && isMine(t) && (
                             <button
                               type="button"
                               onClick={() => handleStartTask(t)}
@@ -604,7 +637,7 @@ export default function MemberPage() {
                           )}
 
                           {/* กรณีกำลังทำ หรือรับแล้ว สามารถกดยืนยันว่าเสร็จแล้ว */}
-                          {(t.status === 'in_progress' || t.status === 'accepted') && (
+                          {(t.status === 'in_progress' || t.status === 'accepted') && t.assigned_to === currentUserId && (
                             <button
                               type="button"
                               onClick={() => handleCompleteTask(t)}
@@ -667,18 +700,27 @@ export default function MemberPage() {
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                        <span className="text-xs text-slate-400">
-                          เมื่อกดรับ งานจะย้ายไปที่สถานะ <strong>กำลังทำ</strong> ทันที
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleClaimTask(t)}
-                          className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold hover:shadow-md transition cursor-pointer"
-                        >
-                          เลือกรับงานนี้
-                        </button>
-                      </div>
+                      <TaskTeamPanel
+                        task={t}
+                        collaborators={collabsOf(t.task_id)}
+                        currentUserId={currentUserId}
+                        onChanged={loadData}
+                      />
+
+                      {!t.assigned_to && (
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <span className="text-xs text-slate-400">
+                            เมื่อกดรับ งานจะย้ายไปที่สถานะ <strong>กำลังทำ</strong> ทันที
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleClaimTask(t)}
+                            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold hover:shadow-md transition cursor-pointer"
+                          >
+                            {(t.headcount ?? 1) > 1 ? 'รับเป็นผู้รับผิดชอบหลัก' : 'เลือกรับงานนี้'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -720,7 +762,13 @@ export default function MemberPage() {
                         {t.completed_at ? `เสร็จเมื่อ: ${formatThaiDate(t.completed_at)}` : 'เสร็จแล้ว'}
                       </span>
                     </div>
-                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={t.assigned_to === currentUserId} />
+                    <TaskTeamPanel
+                      task={t}
+                      collaborators={collabsOf(t.task_id)}
+                      currentUserId={currentUserId}
+                      onChanged={loadData}
+                    />
+                    <TaskWorkPanel task={t} currentUserId={currentUserId} canEdit={isMine(t)} />
 
                   </div>
                 ))}

@@ -164,6 +164,7 @@ export default function CatchUpDigest({
       case 'task_status_changed':
         return `เปลี่ยนสถานะจาก "${STATUS_LABEL[p.from] ?? p.from}" เป็น "${STATUS_LABEL[p.to] ?? p.to}"`
       case 'task_assigned':
+        if (p.role === 'collaborator') return `เชิญ ${getName(p.assigned_to)} เป็นผู้ร่วมทำ`
         return `มอบหมายงานให้ ${p.assigned_to ? getName(p.assigned_to) : 'สมาชิกเลือกเอง'}`
       case 'task_accepted':
         return 'รับงาน'
@@ -171,6 +172,10 @@ export default function CatchUpDigest({
         return `ปฏิเสธงาน เหตุผล: ${p.reason || 'ไม่ระบุ'}`
       case 'task_claimed':
         return 'เลือกรับงานเอง'
+      case 'task_joined':
+        return 'เข้าร่วมเป็นผู้ร่วมทำ'
+      case 'task_feedback_added':
+        return 'ส่งฟีดแบคเพื่อนร่วมงาน'
       case 'comment_added':
         return `เขียนบันทึก: ${p.preview || ''}`
       case 'decision_added':
