@@ -40,7 +40,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 - `supabase-profile.sql` — ให้ผู้ใช้แก้ `users.full_name` ของตัวเองได้ (สิทธิ์ UPDATE ระดับคอลัมน์เฉพาะ `full_name`) ชื่อที่แสดงอ่านจาก `public.users` ไม่ใช่ `user_metadata` ซึ่งถูกทับด้วยชื่อจาก Google ทุกครั้งที่ล็อกอิน
 
 - Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`, `task_comments.comment_id`
-- ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `task_comments`, `activity_logs`, `group_visits`, `eval_rounds`, `peer_evaluations`
+- ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `task_comments`, `activity_logs`, `group_visits`, `eval_rounds`, `peer_evaluations`, `task_collaborators`, `task_feedback`
 - `groups.work_mode`: `leader_all` | `member_choose` | `mixed` — `group_members.role`: `leader` | `member` — `task_comments.kind`: `comment` | `decision` — `tasks.work_url` เก็บลิงก์ผลงาน
 - `group_visits(user_id, group_id, last_seen_at)` ใช้คำนวณกิจกรรมที่ยังไม่ได้อ่าน (`lib/unreadCounts.ts`, `CatchUpDigest`)
 - RPC ที่มีอยู่: `log_activity` (เรียกผ่าน `lib/logActivity.ts` เท่านั้น), `join_group_by_code(p_code)` คืน `{joined_group_id, joined_group_name, newly_joined}`, `find_user_by_email(p_email)`, `verify_activity_chain(p_group_id)` (ตรวจว่า log ไม่ถูกแก้/ลบ), `get_peer_eval_results(p_round_id)`, `peer_eval_submitted_count(p_round_id)`
@@ -53,6 +53,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 - `projects/[project_id]` เป็นหน้าเก่าที่ยังใช้ `lib/mock-data.ts` ถ้า id เป็น UUID จะ redirect ไป `groups/[id]`
 - `lib/mock-data.ts` ยังถูกใช้แค่ `DEMO_USER` (`dashboard/layout.tsx`, `Sidebar`) และ `AVATARS` (`AvatarStack`) ส่วน `DEFAULT_LEADER_PROJECTS` ใน `leader/page.tsx` เป็นข้อมูลตัวอย่างที่ไม่ได้ถูกใช้แล้ว
 - ความคืบหน้าของโครงการคำนวณที่เดียวคือ `lib/projectProgress.ts` (งาน `completed` / งานทั้งหมด)
+- น้ำหนักงานและภาระงานอยู่ใน `lib/workload.ts`: `taskWeight` (คะแนน priority 1–4 + difficulty 1–3), `taskTeam` (คนหลัก + ผู้ร่วมทำที่ไม่ได้ปฏิเสธ) และ `openWorkload` ที่หน้า `groups/[id]` ใช้แสดงภาระงานค้างของสมาชิกแต่ละคน ถ้าจะคำนวณภาระงานที่อื่นให้ใช้ฟังก์ชันเหล่านี้ อย่าเขียนสูตรใหม่
 
 flow ของงานถูกเขียนซ้ำอยู่ทั้งใน `groups/[id]/page.tsx` และ `member/page.tsx` (update `tasks` → insert `task_responses` → `logActivity`) ถ้าแก้พฤติกรรมฝั่งหนึ่งให้ตรวจอีกฝั่งด้วย
 
