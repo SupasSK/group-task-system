@@ -154,11 +154,12 @@ export default function PeerEvaluation({
         payload: { title: round.title },
       })
       await load()
+      await handleShowResults(round)
     }
     setBusy(false)
   }
 
-  const handleShowResults = async (round: Round) => {
+  async function handleShowResults(round: Round) {
     setMessage(null)
     const { data, error } = await supabase.rpc('get_peer_eval_results', { p_round_id: round.round_id })
     if (error) {
