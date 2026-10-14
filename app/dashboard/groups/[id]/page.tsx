@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { projectProgress } from '@/lib/projectProgress'
+import { openWorkload } from '@/lib/workload'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
@@ -259,6 +260,16 @@ export default function GroupDetailPage() {
     const m = members.find((item) => item.user_id === userId)
     if (!m) return 'ไม่ทราบชื่อ'
     return m.full_name || m.email || 'ไม่ทราบชื่อ'
+  }
+
+  // ภาระงานค้างของแต่ละคน (ใช้ในแท็บสมาชิกและฟอร์มมอบหมายงาน)
+  const workloads = Object.fromEntries(members.map((m) => [m.user_id, openWorkload(m.user_id, tasks, collaborators)]))
+  const memberLoads = members.filter((m) => m.role !== 'leader').map((m) => workloads[m.user_id].load)
+  const avgLoad = memberLoads.length > 0 ? memberLoads.reduce((a, b) => a + b, 0) / memberLoads.length : 0
+  const isOverloaded = (userId: string) => avgLoad > 0 && workloads[userId]?.load > avgLoad * 1.5
+  const workloadLabel = (userId: string) => {
+    const w = workloads[userId]
+    return w ? `งานค้าง ${w.items.length} · ภาระ ${Math.round(w.load * 10) / 10}${isOverloaded(userId) ? ' ⚠️' : ''}` : ''
   }
 
   const getLatestRejection = (taskId: string) => {
@@ -1002,7 +1013,7 @@ export default function GroupDetailPage() {
                       <option value="">-- กรุณาเลือกสมาชิก --</option>
                       {members.map((m) => (
                         <option key={m.user_id} value={m.user_id}>
-                          {m.full_name || m.email} ({m.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'})
+                          {m.full_name || m.email} ({m.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}) — {workloadLabel(m.user_id)}
                         </option>
                       ))}
                     </select>
@@ -1038,6 +1049,7 @@ export default function GroupDetailPage() {
                                 }
                               />
                               {m.full_name || m.email}
+                              <span className="text-gray-400">({workloadLabel(m.user_id)})</span>
                             </label>
                           )
                         })}
@@ -1309,7 +1321,7 @@ export default function GroupDetailPage() {
                       .filter((m) => m.user_id !== reassignModalTask.assigned_to)
                       .map((m) => (
                         <option key={m.user_id} value={m.user_id}>
-                          {m.full_name || m.email} ({m.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'})
+                          {m.full_name || m.email} ({m.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}) — {workloadLabel(m.user_id)}
                         </option>
                       ))}
                   </select>
@@ -1405,6 +1417,28 @@ export default function GroupDetailPage() {
                       {m.full_name && (
                         <p className="text-xs text-gray-400">{m.email}</p>
                       )}
+                      {/* งานที่ยังไม่เสร็จของคนนี้ ช่วยให้หัวหน้าจัดสรรงานไม่ให้ใครหนักเกินไป */}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <span className="text-gray-500">
+                          งานค้าง {workloads[m.user_id]?.items.length ?? 0} งาน · ภาระ{' '}
+                          {Math.round((workloads[m.user_id]?.load ?? 0) * 10) / 10}
+                        </span>
+                        {isOverloaded(m.user_id) && (
+                          <span className="rounded-full bg-orange-100 px-2 py-0.5 font-semibold text-orange-700">
+                            งานเยอะกว่าคนอื่น
+                          </span>
+                        )}
+                        {workloads[m.user_id]?.items.map(({ task, role }) => (
+                          <span
+                            key={task.task_id}
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600"
+                            title={task.deadline ? `กำหนดส่ง ${formatThaiDateTime(task.deadline)}` : undefined}
+                          >
+                            {task.title}
+                            {role === 'collaborator' && ' (ร่วมทำ)'}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                     <span
                       className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap ${
