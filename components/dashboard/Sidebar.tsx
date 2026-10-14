@@ -52,15 +52,19 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
       </div>
 
       {/* User Card */}
-      <div className="mb-6 hidden items-center gap-3 p-2.5 rounded-2xl bg-white/10 border border-white/10 md:flex">
+      <Link
+        href="/dashboard/profile"
+        title="ตั้งค่าโปรไฟล์"
+        className="mb-6 hidden items-center gap-3 p-2.5 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition md:flex"
+      >
         <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-sm ring-2 ring-white/30">
           {name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
           <div className="truncate text-[13px] font-semibold">{name}</div>
-          <div className="text-[11px] text-white/60">ออนไลน์</div>
+          <div className="text-[11px] text-white/60">ตั้งค่าโปรไฟล์</div>
         </div>
-      </div>
+      </Link>
 
       {/* Nav — สไตล์แบบรูป: มุมมน Glassmorphism, ไอคอนเส้นสีขาว, ตัวหนังสือขาวคมชัด */}
       <nav className="flex flex-1 flex-row gap-1 md:flex-col md:gap-2">
@@ -89,12 +93,16 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
       </nav>
 
       {/* ชื่อบัญชีบนจอแคบ (จอกว้างใช้การ์ดผู้ใช้ด้านบน) */}
-      <div className="flex min-w-0 max-w-[90px] items-center gap-1.5 md:hidden">
+      <Link
+        href="/dashboard/profile"
+        aria-label="ตั้งค่าโปรไฟล์"
+        className="flex min-w-0 max-w-[90px] items-center gap-1.5 md:hidden"
+      >
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-xs font-bold ring-1 ring-white/30">
           {name.charAt(0).toUpperCase()}
         </div>
         <span className="truncate text-[11px] font-semibold">{name}</span>
-      </div>
+      </Link>
 
       {/* ออกจากระบบ — สไตล์เดียวกับเมนู */}
       <button

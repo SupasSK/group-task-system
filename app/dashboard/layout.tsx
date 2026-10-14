@@ -24,10 +24,22 @@ export default function DashboardLayout({
         router.push("/login");
         return;
       }
-      const metaName = (user.user_metadata?.full_name as string) || user.email?.split('@')[0];
+      // ชื่อที่ผู้ใช้ตั้งเองอยู่ใน public.users (user_metadata ถูกทับด้วยชื่อจาก Google ทุกครั้งที่ล็อกอิน)
+      const { data: row } = await supabase
+        .from("users")
+        .select("full_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const metaName =
+        row?.full_name || (user.user_metadata?.full_name as string) || user.email?.split('@')[0];
       setDisplayName(metaName || DEMO_USER.name);
     };
     load();
+
+    // หน้าโปรไฟล์แจ้งเมื่อบันทึกชื่อใหม่ ให้ Sidebar เปลี่ยนตามทันที
+    const onProfileUpdated = (e: Event) => setDisplayName((e as CustomEvent<string>).detail);
+    window.addEventListener("profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("profile-updated", onProfileUpdated);
   }, [router, supabase]);
 
   return (
