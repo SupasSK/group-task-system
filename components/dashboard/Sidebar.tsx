@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { loadUnreadCounts } from '@/lib/unreadCounts'
-import { LayoutGrid, Crown, User, LogOut, Check } from 'lucide-react'
+import { LayoutGrid, Crown, User, LogOut, Users } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import UserAvatar from '@/components/ui/UserAvatar'
 
@@ -46,7 +46,7 @@ export default function Sidebar({ displayName, avatarUrl }: { displayName?: stri
       {/* Brand */}
       <div className="mb-6 hidden items-center gap-2.5 md:flex">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 border border-white/25">
-          <Check size={16} strokeWidth={3} />
+          <Users size={16} strokeWidth={2.2} />
         </div>
         <span className="text-[20px] font-bold tracking-tight">GroupTask</span>
       </div>

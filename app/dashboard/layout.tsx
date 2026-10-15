@@ -51,7 +51,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#f4f6fb] md:flex-row">
-      <Suspense fallback={<aside className="gt-gradient hidden w-[260px] h-screen shrink-0 md:block" />}>
+      <Suspense fallback={<aside className="gt-gradient hidden w-[220px] h-screen shrink-0 md:block" />}>
         <Sidebar displayName={displayName} avatarUrl={avatarUrl} />
       </Suspense>
       <main className="min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-7">{children}</main>

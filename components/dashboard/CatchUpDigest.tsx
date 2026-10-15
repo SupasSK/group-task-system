@@ -34,14 +34,14 @@ interface Member {
   avatar?: string | null
 }
 
-// ไอคอนและสีของวงกลมบนเส้น timeline แยกตามหมวด: กลุ่ม/สมาชิก = ฟ้า, งาน = ม่วง, บันทึก = เขียว, ประเมิน = เหลือง, ลบ/ออก/ปฏิเสธ = แดง
+// ไอคอนและสีของวงกลมบนเส้น timeline (หน้าแดชบอร์ดใช้ร่วมกับกิจกรรมล่าสุด) แยกตามหมวด: กลุ่ม/สมาชิก = ฟ้า, งาน = ม่วง, บันทึก = เขียว, ประเมิน = เหลือง, ลบ/ออก/ปฏิเสธ = แดง
 const GROUP_STYLE = 'bg-sky-100 text-sky-600'
 const TASK_STYLE = 'bg-indigo-100 text-indigo-600'
 const NOTE_STYLE = 'bg-emerald-100 text-emerald-600'
 const EVAL_STYLE = 'bg-amber-100 text-amber-600'
 const DANGER_STYLE = 'bg-rose-100 text-rose-600'
 
-const ACTION_STYLE: Record<string, { icon: LucideIcon; className: string }> = {
+export const ACTION_STYLE: Record<string, { icon: LucideIcon; className: string }> = {
   group_created: { icon: FolderPlus, className: GROUP_STYLE },
   group_deleted: { icon: Trash2, className: DANGER_STYLE },
   member_added: { icon: UserPlus, className: GROUP_STYLE },

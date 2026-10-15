@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  Clock, CheckCircle2, AlertCircle, Plus,
+  Clock, CheckCircle2, AlertCircle, Plus, Pin,
 } from 'lucide-react';
 
 export interface EventItem {
@@ -16,6 +16,8 @@ export interface EventItem {
   type: 'deadline' | 'review' | 'meeting' | 'milestone';
   color: string; // Tailwind bg class
   completed?: boolean;
+  overdue?: boolean;
+  href?: string; // หน้ากลุ่มของงาน (คลิกรายการใต้ปฏิทินแล้วไปที่นี่)
 }
 
 const THAI_MONTHS = [
@@ -297,7 +299,7 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
       <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/40">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
-            <span>📌</span>
+            <Pin size={14} className="text-indigo-500" />
             {selectedDate.getDate()} {THAI_MONTHS[selectedDate.getMonth()]} {selectedDate.getFullYear() + 543}
           </span>
           <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 font-semibold">
@@ -312,9 +314,10 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
         ) : (
           <div className="space-y-2">
             {selectedDayEvents.map((e) => (
-              <div
+              <Link
                 key={e.id}
-                className="flex items-center justify-between p-3 rounded-2xl bg-white border border-slate-100 hover:border-indigo-100 transition-all shadow-sm"
+                href={e.href ?? '#'}
+                className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 transition-all shadow-sm"
               >
                 <div className="flex items-center gap-3">
                   <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-white ${e.color} shadow-sm text-sm flex-shrink-0`}>
@@ -329,7 +332,10 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
                         {e.project}
                       </span>
                       {e.time && (
-                        <span className="text-[11px] text-slate-400">🕒 {e.time} น.</span>
+                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                          <Clock size={11} />
+                          {e.time} น.
+                        </span>
                       )}
                     </div>
                   </div>
@@ -337,11 +343,13 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
                 <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${
                   e.completed
                     ? 'bg-emerald-100 text-emerald-700'
+                    : e.overdue
+                    ? 'bg-rose-100 text-rose-700'
                     : 'bg-amber-100 text-amber-700'
                 }`}>
-                  {e.completed ? 'เสร็จสิ้น' : 'รอดำเนินการ'}
+                  {e.completed ? 'เสร็จสิ้น' : e.overdue ? 'เลยกำหนด' : 'ยังไม่เสร็จ'}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         )}
