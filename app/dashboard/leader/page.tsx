@@ -627,7 +627,7 @@ export default function LeaderPage() {
                     </Link>
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/dashboard/groups/${g.group_id}`}
+                        href={`/dashboard/groups/${g.group_id}?tab=members`}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 transition"
                       >
                         <Users size={13} />

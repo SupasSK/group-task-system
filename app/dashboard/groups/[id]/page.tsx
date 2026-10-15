@@ -1376,7 +1376,8 @@ export default function GroupDetailPage() {
                             {isAssignee && <span className="text-gray-400 ml-1">(คุณ)</span>}
                           </span>
                         </p>
-                        {isLeader && (
+                        {/* งานที่เสร็จแล้วแก้ไม่ได้ เพื่อไม่ให้คะแนนย้ายจากคนที่ทำเสร็จ */}
+                        {isLeader && t.status !== 'completed' && (
                           <button
                             onClick={() => {
                               setTaskActionMessage(null)
