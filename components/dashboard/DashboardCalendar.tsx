@@ -43,6 +43,7 @@ function getWeekStart(date: Date) {
 export default function DashboardCalendar({ events }: { events: EventItem[] }) {
   const [today] = useState(() => new Date());
   const [weekStart, setWeekStart] = useState<Date>(getWeekStart(today));
+  const [monthStart, setMonthStart] = useState<Date>(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState<Date>(today);
 
   const todayStr = formatYMD(today);
@@ -64,6 +65,26 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
     return `${s.getDate()} ${THAI_MONTHS[s.getMonth()]} – ${e.getDate()} ${THAI_MONTHS[e.getMonth()]} ${e.getFullYear() + 543}`;
   };
 
+  // มุมมองรายเดือน (จอคอม): เริ่มที่วันอาทิตย์ก่อนวันที่ 1 จนครบสัปดาห์ที่มีวันสุดท้ายของเดือน
+  const monthGridStart = getWeekStart(monthStart);
+  const daysInMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+  const monthWeeks = Math.ceil((monthStart.getDay() + daysInMonth) / 7);
+  const monthDays = Array.from({ length: monthWeeks * 7 }, (_, i) => {
+    const d = new Date(monthGridStart);
+    d.setDate(monthGridStart.getDate() + i);
+    return d;
+  });
+  const monthLabel = `${THAI_MONTHS[monthStart.getMonth()]} ${monthStart.getFullYear() + 543}`;
+
+  const prevMonth = () => setMonthStart(new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1));
+  const nextMonth = () => setMonthStart(new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1));
+
+  const selectDay = (day: Date) => {
+    setSelectedDate(day);
+    setWeekStart(getWeekStart(day));
+    setMonthStart(new Date(day.getFullYear(), day.getMonth(), 1));
+  };
+
   const prevWeek = () => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() - 7);
@@ -76,6 +97,7 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
   };
   const goToday = () => {
     setWeekStart(getWeekStart(today));
+    setMonthStart(new Date(today.getFullYear(), today.getMonth(), 1));
     setSelectedDate(today);
   };
 
@@ -98,7 +120,8 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
           </div>
           <div>
             <h2 className="text-[17px] font-bold text-slate-800 leading-tight">ปฏิทินงาน</h2>
-            <p className="text-[12px] text-slate-400">{weekLabel()}</p>
+            <p className="text-[12px] text-slate-400 md:hidden">{weekLabel()}</p>
+            <p className="text-[12px] text-slate-400 hidden md:block">{monthLabel}</p>
           </div>
         </div>
 
@@ -112,7 +135,7 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
             สร้างงาน
           </Link>
 
-          {/* นำทางสัปดาห์ */}
+          {/* นำทางสัปดาห์ (มือถือ) / เดือน (จอคอม) */}
           <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
             <button
               onClick={goToday}
@@ -121,18 +144,24 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
               วันนี้
             </button>
             <div className="h-3.5 w-px bg-slate-200" />
-            <button onClick={prevWeek} aria-label="สัปดาห์ก่อน" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors">
+            <button onClick={prevWeek} aria-label="สัปดาห์ก่อน" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors md:hidden">
               <ChevronLeft size={16} />
             </button>
-            <button onClick={nextWeek} aria-label="สัปดาห์ถัดไป" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors">
+            <button onClick={nextWeek} aria-label="สัปดาห์ถัดไป" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors md:hidden">
+              <ChevronRight size={16} />
+            </button>
+            <button onClick={prevMonth} aria-label="เดือนก่อน" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors hidden md:block">
+              <ChevronLeft size={16} />
+            </button>
+            <button onClick={nextMonth} aria-label="เดือนถัดไป" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors hidden md:block">
               <ChevronRight size={16} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ===== Weekly Grid ===== */}
-      <div className="grid grid-cols-7 divide-x divide-slate-100">
+      {/* ===== Weekly Grid (มือถือ) ===== */}
+      <div className="grid grid-cols-7 divide-x divide-slate-100 md:hidden">
         {weekDays.map((day, i) => {
           const dStr = formatYMD(day);
           const isToday = dStr === todayStr;
@@ -144,7 +173,7 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
             <button
               key={dStr}
               type="button"
-              onClick={() => setSelectedDate(day)}
+              onClick={() => selectDay(day)}
               className={`flex flex-col items-center gap-1 py-3 px-1 min-h-[100px] sm:min-h-[120px] transition-colors text-left w-full ${
                 isSelected
                   ? 'bg-indigo-50/80'
@@ -193,6 +222,75 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
             </button>
           );
         })}
+      </div>
+
+      {/* ===== Monthly Grid (จอคอม) ===== */}
+      <div className="hidden md:block">
+        <div className="grid grid-cols-7 border-b border-slate-100">
+          {THAI_WEEKDAYS_SHORT.map((w, i) => (
+            <span
+              key={w}
+              className={`py-2 text-center text-[11px] font-semibold ${
+                i === 0 ? 'text-rose-400' : i === 6 ? 'text-indigo-400' : 'text-slate-400'
+              }`}
+            >
+              {w}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 divide-x divide-slate-100">
+          {monthDays.map((day, i) => {
+            const dStr = formatYMD(day);
+            const isToday = dStr === todayStr;
+            const isSelected = dStr === selectedStr;
+            const inMonth = day.getMonth() === monthStart.getMonth();
+            const dayEvents = events.filter((e) => e.dateStr === dStr);
+            const isWeekend = i % 7 === 0 || i % 7 === 6;
+
+            return (
+              <button
+                key={dStr}
+                type="button"
+                onClick={() => selectDay(day)}
+                className={`flex flex-col gap-1 p-1.5 min-h-[96px] border-b border-slate-100 transition-colors text-left w-full ${
+                  isSelected
+                    ? 'bg-indigo-50/80'
+                    : isWeekend || !inMonth
+                    ? 'bg-slate-50/50 hover:bg-slate-100/60'
+                    : 'bg-white hover:bg-slate-50/70'
+                }`}
+              >
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold ${
+                  isToday
+                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm'
+                    : isSelected
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : inMonth
+                    ? 'text-slate-700'
+                    : 'text-slate-300'
+                }`}>
+                  {day.getDate()}
+                </span>
+                <div className={`flex flex-col gap-1 w-full ${inMonth ? '' : 'opacity-50'}`}>
+                  {dayEvents.slice(0, 2).map((ev) => (
+                    <div
+                      key={ev.id}
+                      className={`${ev.color} text-white rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 leading-tight truncate ${ev.completed ? 'opacity-60' : ''}`}
+                    >
+                      {typeIcon(ev.type)}
+                      <span className="truncate">{ev.title}</span>
+                    </div>
+                  ))}
+                  {dayEvents.length > 2 && (
+                    <span className="text-[10px] text-slate-400 font-medium px-1">
+                      +{dayEvents.length - 2} อื่นๆ
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ===== Selected Day Events Panel ===== */}
