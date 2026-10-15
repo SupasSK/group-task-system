@@ -163,6 +163,8 @@ export default function CatchUpDigest({
         return p.via === 'join_code' ? 'เข้าร่วมกลุ่มด้วยรหัส' : `เพิ่มสมาชิก${p.email ? ` ${p.email}` : ''}`
       case 'member_removed':
         return `นำสมาชิก${p.email ? ` ${p.email}` : ''} ออกจากกลุ่ม`
+      case 'member_left':
+        return 'ออกจากกลุ่ม'
       case 'leader_transferred':
         return 'รับตำแหน่งหัวหน้ากลุ่ม'
       case 'task_created':

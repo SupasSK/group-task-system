@@ -13,6 +13,7 @@ const ACTION_LABEL: Record<string, string> = {
   group_created: '📁 สร้างกลุ่ม',
   member_added: '👋 มีสมาชิกใหม่',
   member_removed: '🚪 นำสมาชิกออก',
+  member_left: '🚪 สมาชิกออกจากกลุ่ม',
   leader_transferred: '👑 เปลี่ยนหัวหน้ากลุ่ม',
   task_created: '📝 สร้างงาน',
   task_updated: '✏️ แก้ไขงาน',

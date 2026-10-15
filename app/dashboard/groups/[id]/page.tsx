@@ -118,6 +118,10 @@ export default function GroupDetailPage() {
   // สมาชิกที่หัวหน้ากำลังยืนยันจะนำออก
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
   const [removeLoading, setRemoveLoading] = useState(false)
+  // สมาชิกกำลังยืนยันจะออกจากกลุ่มเอง
+  const [leaveConfirm, setLeaveConfirm] = useState(false)
+  const [leaveLoading, setLeaveLoading] = useState(false)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
   // สมาชิกที่หัวหน้ากำลังยืนยันจะเสนอให้เป็นหัวหน้า
   const [transferConfirmId, setTransferConfirmId] = useState<string | null>(null)
   const [transferLoading, setTransferLoading] = useState(false)
@@ -387,6 +391,31 @@ export default function GroupDetailPage() {
     await loadMembers()
     await loadTasks()
     setRemoveLoading(false)
+  }
+
+  // ===== ออกจากกลุ่มเอง (เฉพาะสมาชิก หัวหน้าต้องโอนหัวหน้าก่อน) =====
+  // บันทึก log ก่อน เพราะหลังออกแล้วจะไม่เป็นสมาชิกและบันทึก log ไม่ได้
+  const handleLeaveGroup = async () => {
+    setLeaveLoading(true)
+    setLeaveError(null)
+
+    await logActivity(supabase, {
+      groupId: id,
+      action: 'member_left',
+      entityType: 'member',
+      entityId: currentUserId ?? undefined,
+      payload: {},
+    })
+
+    const { error: rpcErr } = await supabase.rpc('leave_group', { p_group_id: id })
+
+    if (rpcErr) {
+      setLeaveError(`ออกจากกลุ่มไม่สำเร็จ: ${rpcErr.message}`)
+      setLeaveLoading(false)
+      return
+    }
+
+    router.push('/dashboard')
   }
 
   // ===== โอนตำแหน่งหัวหน้า =====
@@ -1574,6 +1603,12 @@ export default function GroupDetailPage() {
               สมาชิก ({members.length} คน)
             </h2>
 
+            {leaveError && (
+              <div className="mb-3 px-4 py-2.5 rounded-xl text-sm bg-red-50 text-red-700 border border-red-100">
+                {leaveError}
+              </div>
+            )}
+
             {members.length === 0 ? (
               <p className="text-sm text-gray-400">ยังไม่มีสมาชิก</p>
             ) : (
@@ -1686,6 +1721,34 @@ export default function GroupDetailPage() {
                           className="px-3 py-1 border border-red-200 text-red-600 rounded-lg text-xs hover:bg-red-50 whitespace-nowrap"
                         >
                           นำออก
+                        </button>
+                      )
+                    )}
+                    {!isLeader && m.user_id === currentUserId && (
+                      leaveConfirm ? (
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-red-600">ออกจากกลุ่ม? งานที่ยังไม่เสร็จจะกลับเป็นงานว่าง</span>
+                          <button
+                            onClick={handleLeaveGroup}
+                            disabled={leaveLoading}
+                            className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {leaveLoading ? 'กำลังออก...' : 'ยืนยัน'}
+                          </button>
+                          <button
+                            onClick={() => setLeaveConfirm(false)}
+                            disabled={leaveLoading}
+                            className="px-3 py-1 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setLeaveConfirm(true)}
+                          className="px-3 py-1 border border-red-200 text-red-600 rounded-lg text-xs hover:bg-red-50 whitespace-nowrap"
+                        >
+                          ออกจากกลุ่ม
                         </button>
                       )
                     )}
