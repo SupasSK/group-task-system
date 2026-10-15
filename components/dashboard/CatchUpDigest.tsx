@@ -68,7 +68,7 @@ export default function CatchUpDigest({
   groupId: string
   currentUserId: string
   members: Member[]
-  // false = แสดงอย่างเดียว ไม่บันทึกว่าเข้าดูแล้ว (ใช้ในหน้าหัวหน้า)
+  // false = แสดงอย่างเดียว ไม่มีปุ่มรับทราบ (ใช้ในหน้าหัวหน้า)
   trackVisit?: boolean
 }) {
   const supabase = createClient()
@@ -81,6 +81,7 @@ export default function CatchUpDigest({
   const [error, setError] = useState<string | null>(null)
   const [verifyText, setVerifyText] = useState<{ ok: boolean; text: string } | null>(null)
   const [verifying, setVerifying] = useState(false)
+  const [acknowledging, setAcknowledging] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -114,24 +115,25 @@ export default function CatchUpDigest({
       setSince(seen && new Date(seen) < dayAgo ? seen : dayAgo.toISOString())
       setLogs(logRows || [])
       setLoading(false)
-
-      if (!trackVisit) return
-
-      // บันทึกเวลาเข้าดูครั้งนี้ หลังจากอ่านค่าเดิมไปแล้ว
-      const { error: saveErr } = await supabase
-        .from('group_visits')
-        .upsert(
-          { user_id: currentUserId, group_id: groupId, last_seen_at: new Date().toISOString() },
-          { onConflict: 'user_id,group_id' }
-        )
-      if (saveErr && !cancelled) setError(`บันทึกเวลาเข้าดูไม่สำเร็จ: ${saveErr.message}`)
     }
 
     load()
     return () => {
       cancelled = true
     }
-  }, [groupId, currentUserId, supabase, trackVisit])
+  }, [groupId, currentUserId, supabase])
+
+  // บันทึกเวลาเข้าดูเฉพาะเมื่อผู้ใช้กดรับทราบ ป้าย "ใหม่" จะหายไป แต่รายการยังค้างแสดงตามช่วง since เดิม
+  const handleAcknowledge = async () => {
+    setAcknowledging(true)
+    const now = new Date().toISOString()
+    const { error: saveErr } = await supabase
+      .from('group_visits')
+      .upsert({ user_id: currentUserId, group_id: groupId, last_seen_at: now }, { onConflict: 'user_id,group_id' })
+    if (saveErr) setError(`บันทึกการรับทราบไม่สำเร็จ: ${saveErr.message}`)
+    else setLastSeen(now)
+    setAcknowledging(false)
+  }
 
   const getName = (userId: string) => {
     const m = members.find((item) => item.user_id === userId)
@@ -227,14 +229,15 @@ export default function CatchUpDigest({
     ? logs.filter((l) => l.actor_id !== currentUserId && new Date(l.created_at) > new Date(since))
     : []
   const topics: { key: string; title: string; items: ActivityLog[] }[] = []
-  for (const log of [...newLogs].reverse()) {
+  // วนจากใหม่ไปเก่า: หัวข้อที่มีความเคลื่อนไหวล่าสุดขึ้นก่อน ส่วนรายการในหัวข้อแทรกด้านหน้าให้อ่านเรียงตามเวลา
+  for (const log of newLogs) {
     const key = log.entity_type === 'task' && log.entity_id ? log.entity_id : 'group'
     let topic = topics.find((t) => t.key === key)
     if (!topic) {
       topic = { key, title: key === 'group' ? 'เรื่องทั่วไปของกลุ่ม' : `งาน: ${log.payload?.title || 'ไม่ทราบชื่อ'}`, items: [] }
       topics.push(topic)
     }
-    topic.items.push(log)
+    topic.items.unshift(log)
   }
 
   return (
@@ -246,17 +249,28 @@ export default function CatchUpDigest({
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="text-base font-semibold text-gray-800">มีอะไรเปลี่ยนตั้งแต่คุณเข้ามาครั้งล่าสุด</h2>
-          {onOpenTasks && (
-            <button
-              onClick={onOpenTasks}
-              className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
-            >
-              ดูงานและผลงานทั้งหมด →
-            </button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {trackVisit && newLogs.some(isNew) && (
+              <button
+                onClick={handleAcknowledge}
+                disabled={acknowledging}
+                className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {acknowledging ? 'กำลังบันทึก...' : '✓ รับทราบ'}
+              </button>
+            )}
+            {onOpenTasks && (
+              <button
+                onClick={onOpenTasks}
+                className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+              >
+                ดูงานและผลงานทั้งหมด →
+              </button>
+            )}
+          </div>
         </div>
         <p className="mt-1 text-xs text-gray-400">
-          {lastSeen ? `เข้าดูครั้งล่าสุด ${formatDateTime(lastSeen)}` : 'นี่คือการเข้าดูกลุ่มนี้ครั้งแรกของคุณ'} ·
+          {lastSeen ? `กดรับทราบครั้งล่าสุด ${formatDateTime(lastSeen)}` : 'คุณยังไม่เคยกดรับทราบในกลุ่มนี้'} ·
           รายการจะค้างแสดงอย่างน้อย 24 ชั่วโมง
         </p>
 
