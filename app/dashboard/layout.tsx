@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { DEMO_USER } from "@/lib/mock-data";
 
 export default function DashboardLayout({
   children,
@@ -13,7 +12,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const supabase = createClient();
-  const [displayName, setDisplayName] = useState(DEMO_USER.name);
+  const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export default function DashboardLayout({
         .maybeSingle();
       const metaName =
         row?.full_name || (user.user_metadata?.full_name as string) || user.email?.split('@')[0];
-      setDisplayName(metaName || DEMO_USER.name);
+      setDisplayName(metaName || "");
       setAvatarUrl(row?.custom_avatar_url || row?.avatar_url || null);
     };
     load();

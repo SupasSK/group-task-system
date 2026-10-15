@@ -6,13 +6,12 @@ import { usePathname } from 'next/navigation'
 import { loadUnreadCounts } from '@/lib/unreadCounts'
 import { LayoutGrid, Crown, User, LogOut, Check } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
-import { DEMO_USER } from '@/lib/mock-data'
 import UserAvatar from '@/components/ui/UserAvatar'
 
 export default function Sidebar({ displayName, avatarUrl }: { displayName?: string; avatarUrl?: string | null }) {
   const pathname = usePathname()
   const supabase = createClient()
-  const name = displayName || DEMO_USER.name
+  const name = displayName || ''
   // จำนวนกิจกรรมใหม่รวมทุกกลุ่ม (นับใหม่ทุกครั้งที่เปลี่ยนหน้า)
   const [unreadTotal, setUnreadTotal] = useState(0)
 
