@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { createClient } from '@/utils/supabase'
 import { taskTeam, taskWeight } from '@/lib/workload'
 
@@ -81,12 +82,14 @@ interface PeerAverage {
 
 export default function ParticipationSummary({
   groupId,
+  groupName,
   members,
   tasks,
   taskResponses,
   showPeerEval = false,
 }: {
   groupId: string
+  groupName?: string
   members: Member[]
   tasks: Task[]
   taskResponses: TaskResponse[]
@@ -105,6 +108,28 @@ export default function ParticipationSummary({
   // ฟีดแบคแบบเปิดชื่อจากงานที่ทำร่วมกัน (RLS ให้หัวหน้าอ่านได้ทั้งกลุ่ม)
   const [feedback, setFeedback] = useState<TaskFeedback[]>([])
   const [openFeedbackFor, setOpenFeedbackFor] = useState<string | null>(null)
+  // log ล่าสุดของกลุ่ม พิมพ์ hash ไว้ในรายงานเป็นหลักฐานอ้างอิงภายนอกว่าประวัติ ณ ตอนพิมพ์เป็นแบบนี้
+  const [latestLog, setLatestLog] = useState<{ seq: number; hash: string; created_at: string } | null>(null)
+  const [printedAt, setPrintedAt] = useState<Date | null>(null)
+
+  useEffect(() => {
+    if (!showPeerEval) return
+    supabase
+      .from('activity_logs')
+      .select('seq, hash, created_at')
+      .eq('group_id', groupId)
+      .order('seq', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setLatestLog(data))
+  }, [groupId, supabase, showPeerEval, tasks])
+
+  const handlePrint = () => {
+    // ทำเครื่องหมายเฉพาะการ์ดนี้ให้เป็นส่วนที่พิมพ์ (หน้า leader มีหลายการ์ด) ก่อนเปิดหน้าต่างพิมพ์
+    flushSync(() => setPrintedAt(new Date()))
+    window.addEventListener('afterprint', () => setPrintedAt(null), { once: true })
+    window.print()
+  }
 
   useEffect(() => {
     if (!showPeerEval) return
@@ -244,15 +269,42 @@ export default function ParticipationSummary({
     .sort((a, b) => b.total - a.total)
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4">
-      <div>
-        <h2 className="text-base font-semibold text-gray-800">คะแนนการมีส่วนร่วม (เต็ม 100)</h2>
-        <p className="mt-1 text-xs text-gray-500">
-          ภาระงาน {MAX_WORKLOAD} + ความตรงเวลา {MAX_PUNCTUAL} + กิจกรรม {MAX_ACTIVITY} + ความสม่ำเสมอ{' '}
-          {MAX_CONSISTENCY}
-        </p>
-        {logError && (
-          <p className="mt-2 text-xs text-rose-600">โหลดประวัติกิจกรรมไม่สำเร็จ: {logError}</p>
+    <div className={`${printedAt ? 'gt-print-area ' : ''}bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-4`}>
+      {/* หัวรายงาน แสดงเฉพาะตอนพิมพ์ */}
+      {printedAt && (
+        <div className="hidden print:block border-b border-gray-200 pb-3 text-xs text-gray-600 space-y-0.5">
+          <p className="text-lg font-bold text-gray-800">รายงานสรุปผลการทำงานกลุ่ม{groupName ? `: ${groupName}` : ''}</p>
+          <p>พิมพ์เมื่อ {printedAt.toLocaleString('th-TH')}</p>
+          {latestLog ? (
+            <p className="break-all">
+              ประวัติกิจกรรมล่าสุด ลำดับที่ {latestLog.seq} ({new Date(latestLog.created_at).toLocaleString('th-TH')})
+              <br />
+              hash: <span className="font-mono">{latestLog.hash}</span>
+            </p>
+          ) : (
+            <p>ยังไม่มีประวัติกิจกรรม</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-800">คะแนนการมีส่วนร่วม (เต็ม 100)</h2>
+          <p className="mt-1 text-xs text-gray-500">
+            ภาระงาน {MAX_WORKLOAD} + ความตรงเวลา {MAX_PUNCTUAL} + กิจกรรม {MAX_ACTIVITY} + ความสม่ำเสมอ{' '}
+            {MAX_CONSISTENCY}
+          </p>
+          {logError && (
+            <p className="mt-2 text-xs text-rose-600">โหลดประวัติกิจกรรมไม่สำเร็จ: {logError}</p>
+          )}
+        </div>
+        {showPeerEval && (
+          <button
+            onClick={handlePrint}
+            className="shrink-0 px-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 whitespace-nowrap print:hidden"
+          >
+            พิมพ์ / บันทึก PDF
+          </button>
         )}
       </div>
 
@@ -340,7 +392,7 @@ export default function ParticipationSummary({
                     >
                       ฟีดแบคจากงานที่ทำร่วมกัน <strong className="text-sm text-teal-600">{avg.toFixed(1)}</strong>/5{' '}
                       <span className="text-gray-400">({received.length} ครั้ง)</span>{' '}
-                      <span className="text-indigo-600">{open ? 'ซ่อน' : 'ดูรายละเอียด'}</span>
+                      <span className="text-indigo-600 print:hidden">{open ? 'ซ่อน' : 'ดูรายละเอียด'}</span>
                     </button>
                     {open && (
                       <ul className="space-y-1">

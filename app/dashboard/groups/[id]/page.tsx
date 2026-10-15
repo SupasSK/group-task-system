@@ -1829,6 +1829,7 @@ export default function GroupDetailPage() {
       {activeTab === 'summary' && (
         <ParticipationSummary
           groupId={id}
+          groupName={group.group_name}
           members={members}
           tasks={tasks}
           taskResponses={taskResponses}

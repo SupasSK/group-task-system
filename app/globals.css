@@ -65,3 +65,23 @@ body {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* ตอนกดพิมพ์รายงานสรุปผล พิมพ์เฉพาะการ์ดที่ติด .gt-print-area */
+@media print {
+  body:has(.gt-print-area) * {
+    visibility: hidden;
+  }
+  body .gt-print-area,
+  body .gt-print-area * {
+    visibility: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .gt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+  }
+}
