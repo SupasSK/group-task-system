@@ -19,6 +19,7 @@ interface Group {
   work_mode: string
   join_code: string
   created_by: string
+  pending_leader_id: string | null
 }
 
 interface Member {
@@ -117,6 +118,10 @@ export default function GroupDetailPage() {
   // สมาชิกที่หัวหน้ากำลังยืนยันจะนำออก
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
   const [removeLoading, setRemoveLoading] = useState(false)
+  // สมาชิกที่หัวหน้ากำลังยืนยันจะเสนอให้เป็นหัวหน้า
+  const [transferConfirmId, setTransferConfirmId] = useState<string | null>(null)
+  const [transferLoading, setTransferLoading] = useState(false)
+  const [transferMessage, setTransferMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   // ===== States สำหรับแท็บงาน =====
   const [tasks, setTasks] = useState<Task[]>([])
@@ -241,7 +246,7 @@ export default function GroupDetailPage() {
 
       const { data: groupData, error: groupErr } = await supabase
         .from('groups')
-        .select('group_id, group_name, description, work_mode, join_code, created_by')
+        .select('group_id, group_name, description, work_mode, join_code, created_by, pending_leader_id')
         .eq('group_id', id)
         .maybeSingle()
 
@@ -382,6 +387,67 @@ export default function GroupDetailPage() {
     await loadMembers()
     await loadTasks()
     setRemoveLoading(false)
+  }
+
+  // ===== โอนตำแหน่งหัวหน้า =====
+  // หัวหน้าเสนอ (หรือยกเลิกด้วย null) แล้วรอให้คนที่ถูกเสนอตอบรับเอง ไม่บังคับ
+  const handleRequestTransfer = async (member: Member | null) => {
+    setTransferLoading(true)
+    setAddMessage(null)
+
+    const { error: rpcErr } = await supabase.rpc('request_leader_transfer', {
+      p_group_id: id,
+      p_user_id: member?.user_id ?? null,
+    })
+
+    if (rpcErr) {
+      setAddMessage({ type: 'error', text: `ส่งคำขอโอนหัวหน้าไม่สำเร็จ: ${rpcErr.message}` })
+      setTransferLoading(false)
+      return
+    }
+
+    setGroup((g) => (g ? { ...g, pending_leader_id: member?.user_id ?? null } : g))
+    setAddMessage({
+      type: 'success',
+      text: member
+        ? `ส่งคำขอให้ ${member.full_name || member.email} เป็นหัวหน้าแล้ว รอการตอบรับ`
+        : 'ยกเลิกคำขอโอนหัวหน้าแล้ว',
+    })
+    setTransferConfirmId(null)
+    setTransferLoading(false)
+  }
+
+  // คนที่ถูกเสนอตอบรับหรือปฏิเสธ ถ้าตอบรับ บทบาทจะสลับกับหัวหน้าเดิมทันที
+  const handleRespondTransfer = async (accept: boolean) => {
+    setTransferLoading(true)
+    setTransferMessage(null)
+
+    const { error: rpcErr } = await supabase.rpc('respond_leader_transfer', {
+      p_group_id: id,
+      p_accept: accept,
+    })
+
+    if (rpcErr) {
+      setTransferMessage({ type: 'error', text: `ตอบคำขอไม่สำเร็จ: ${rpcErr.message}` })
+      setTransferLoading(false)
+      return
+    }
+
+    if (accept) {
+      const me = members.find((m) => m.user_id === currentUserId)
+      await logActivity(supabase, {
+        groupId: id,
+        action: 'leader_transferred',
+        entityType: 'member',
+        entityId: currentUserId ?? undefined,
+        payload: { to: me?.email ?? null },
+      })
+    }
+
+    setGroup((g) => (g ? { ...g, pending_leader_id: null, created_by: accept && currentUserId ? currentUserId : g.created_by } : g))
+    setTransferMessage({ type: 'success', text: accept ? 'คุณเป็นหัวหน้ากลุ่มแล้ว' : 'ปฏิเสธคำขอแล้ว' })
+    await loadMembers()
+    setTransferLoading(false)
   }
 
   // ===== ฟังก์ชันสร้างงานใหม่ (เฉพาะหัวหน้า) =====
@@ -809,6 +875,42 @@ export default function GroupDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* ===== คำขอให้เป็นหัวหน้า (เห็นเฉพาะคนที่ถูกเสนอ) ===== */}
+      {group.pending_leader_id === currentUserId && !isLeader && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap">
+          <p className="text-sm text-amber-800">
+            👑 หัวหน้ากลุ่มเสนอให้คุณเป็นหัวหน้ากลุ่มแทน ถ้าตอบรับ หัวหน้าเดิมจะเป็นสมาชิก
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleRespondTransfer(true)}
+              disabled={transferLoading}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+            >
+              ตอบรับ
+            </button>
+            <button
+              onClick={() => handleRespondTransfer(false)}
+              disabled={transferLoading}
+              className="px-4 py-2 border border-gray-200 bg-white text-gray-600 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
+            >
+              ปฏิเสธ
+            </button>
+          </div>
+        </div>
+      )}
+      {transferMessage && (
+        <div
+          className={`px-4 py-2.5 rounded-xl text-sm ${
+            transferMessage.type === 'success'
+              ? 'bg-green-50 text-green-700 border border-green-100'
+              : 'bg-red-50 text-red-700 border border-red-100'
+          }`}
+        >
+          {transferMessage.text}
+        </div>
+      )}
 
       {/* ===== แถบแท็บ ===== */}
       <div className="flex gap-8 border-b border-slate-200">
@@ -1520,6 +1622,45 @@ export default function GroupDetailPage() {
                     >
                       {m.role === 'leader' ? '👑 หัวหน้า' : '👤 สมาชิก'}
                     </span>
+                    {isLeader && m.role !== 'leader' && (
+                      group.pending_leader_id === m.user_id ? (
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-amber-700">รอตอบรับเป็นหัวหน้า</span>
+                          <button
+                            onClick={() => handleRequestTransfer(null)}
+                            disabled={transferLoading}
+                            className="px-3 py-1 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            ยกเลิกคำขอ
+                          </button>
+                        </div>
+                      ) : transferConfirmId === m.user_id ? (
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-indigo-600">เสนอให้เป็นหัวหน้า?</span>
+                          <button
+                            onClick={() => handleRequestTransfer(m)}
+                            disabled={transferLoading}
+                            className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-50"
+                          >
+                            {transferLoading ? 'กำลังส่ง...' : 'ยืนยัน'}
+                          </button>
+                          <button
+                            onClick={() => setTransferConfirmId(null)}
+                            disabled={transferLoading}
+                            className="px-3 py-1 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setTransferConfirmId(m.user_id)}
+                          className="px-3 py-1 border border-indigo-200 text-indigo-600 rounded-lg text-xs hover:bg-indigo-50 whitespace-nowrap"
+                        >
+                          โอนหัวหน้า
+                        </button>
+                      )
+                    )}
                     {isLeader && m.role !== 'leader' && (
                       removeConfirmId === m.user_id ? (
                         <div className="flex items-center gap-2 whitespace-nowrap">
