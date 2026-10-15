@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { ExternalLink, MessageSquare } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 
@@ -133,16 +134,16 @@ export default function TaskWorkPanel({
   }
 
   const outlineBtn =
-    'px-3 py-1.5 rounded-lg border border-indigo-200 bg-white text-indigo-700 font-semibold hover:bg-indigo-50 transition cursor-pointer'
+    'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-indigo-200 bg-white text-indigo-700 font-semibold hover:bg-indigo-50 transition cursor-pointer'
   const solidBtn =
-    'px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-60 cursor-pointer'
+    'inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-60 cursor-pointer'
 
   return (
     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-3 text-xs">
       <div className="flex items-center gap-2 flex-wrap">
         {url ? (
           <a href={url} target="_blank" rel="noopener noreferrer" className={solidBtn}>
-            🔗 เปิดผลงาน
+            <ExternalLink className="h-3.5 w-3.5" /> เปิดผลงาน
           </a>
         ) : (
           <span className="text-gray-400">ยังไม่มีลิงก์ผลงาน</span>
@@ -160,7 +161,13 @@ export default function TaskWorkPanel({
           </button>
         )}
         <button onClick={handleToggleNotes} className={outlineBtn}>
-          {showNotes ? 'ซ่อนบันทึก' : '💬 บันทึกความคืบหน้าและการตัดสินใจ'}
+          {showNotes ? (
+            'ซ่อนบันทึก'
+          ) : (
+            <>
+              <MessageSquare className="h-3.5 w-3.5" /> บันทึกความคืบหน้าและการตัดสินใจ
+            </>
+          )}
         </button>
       </div>
 

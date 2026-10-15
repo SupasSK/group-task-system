@@ -1,12 +1,70 @@
 'use client'
 import { useEffect, useState } from 'react'
+import {
+  ArrowRight,
+  Check,
+  Clock,
+  Crown,
+  FilePlus,
+  FolderPlus,
+  Hand,
+  Handshake,
+  LogOut,
+  MessageSquare,
+  MessageSquareHeart,
+  Pencil,
+  Pin,
+  RefreshCw,
+  Send,
+  Star,
+  ThumbsUp,
+  Trash2,
+  UserMinus,
+  UserPlus,
+  XCircle,
+  type LucideIcon,
+} from 'lucide-react'
 import { createClient } from '@/utils/supabase'
+import UserAvatar from '@/components/ui/UserAvatar'
 
 interface Member {
   user_id: string
   full_name: string | null
   email: string | null
+  avatar?: string | null
 }
+
+// ไอคอนและสีของวงกลมบนเส้น timeline แยกตามหมวด: กลุ่ม/สมาชิก = ฟ้า, งาน = ม่วง, บันทึก = เขียว, ประเมิน = เหลือง, ลบ/ออก/ปฏิเสธ = แดง
+const GROUP_STYLE = 'bg-sky-100 text-sky-600'
+const TASK_STYLE = 'bg-indigo-100 text-indigo-600'
+const NOTE_STYLE = 'bg-emerald-100 text-emerald-600'
+const EVAL_STYLE = 'bg-amber-100 text-amber-600'
+const DANGER_STYLE = 'bg-rose-100 text-rose-600'
+
+const ACTION_STYLE: Record<string, { icon: LucideIcon; className: string }> = {
+  group_created: { icon: FolderPlus, className: GROUP_STYLE },
+  group_deleted: { icon: Trash2, className: DANGER_STYLE },
+  member_added: { icon: UserPlus, className: GROUP_STYLE },
+  member_removed: { icon: UserMinus, className: DANGER_STYLE },
+  member_left: { icon: LogOut, className: DANGER_STYLE },
+  leader_transferred: { icon: Crown, className: GROUP_STYLE },
+  task_created: { icon: FilePlus, className: TASK_STYLE },
+  task_updated: { icon: Pencil, className: TASK_STYLE },
+  task_deleted: { icon: Trash2, className: DANGER_STYLE },
+  task_status_changed: { icon: RefreshCw, className: TASK_STYLE },
+  task_assigned: { icon: Send, className: TASK_STYLE },
+  task_accepted: { icon: ThumbsUp, className: TASK_STYLE },
+  task_declined: { icon: XCircle, className: DANGER_STYLE },
+  task_claimed: { icon: Hand, className: TASK_STYLE },
+  task_joined: { icon: Handshake, className: TASK_STYLE },
+  task_feedback_added: { icon: MessageSquareHeart, className: NOTE_STYLE },
+  comment_added: { icon: MessageSquare, className: NOTE_STYLE },
+  decision_added: { icon: Pin, className: NOTE_STYLE },
+  eval_round_opened: { icon: Star, className: EVAL_STYLE },
+  eval_round_closed: { icon: Star, className: EVAL_STYLE },
+}
+
+const PAGE_SIZE = 20
 
 interface ActivityLog {
   log_id: number
@@ -56,6 +114,24 @@ function formatDateTime(dateStr: string) {
   })
 }
 
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.'
+}
+
+// หัวคั่นวันของ timeline: วันนี้ / เมื่อวาน / วันที่ (ใส่ปีเมื่อไม่ใช่ปีนี้)
+function dayLabel(dateStr: string) {
+  const d = new Date(dateStr)
+  const today = new Date()
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
+  if (d.toDateString() === today.toDateString()) return 'วันนี้'
+  if (d.toDateString() === yesterday.toDateString()) return 'เมื่อวาน'
+  return d.toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    ...(d.getFullYear() !== today.getFullYear() && { year: 'numeric' }),
+  })
+}
+
 export default function CatchUpDigest({
   groupId,
   currentUserId,
@@ -82,6 +158,8 @@ export default function CatchUpDigest({
   const [verifyText, setVerifyText] = useState<{ ok: boolean; text: string } | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [acknowledging, setAcknowledging] = useState(false)
+  // จำนวนรายการที่แสดงในการ์ดประวัติ เพิ่มทีละ PAGE_SIZE เมื่อกด "ดูเพิ่ม"
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   useEffect(() => {
     let cancelled = false
@@ -139,6 +217,8 @@ export default function CatchUpDigest({
     const m = members.find((item) => item.user_id === userId)
     return m?.full_name || m?.email || 'สมาชิก'
   }
+
+  const getAvatar = (userId: string) => members.find((item) => item.user_id === userId)?.avatar ?? null
 
   const formatValue = (field: string, value: unknown) => {
     if (Array.isArray(value)) return value.length > 0 ? value.map((uid) => getName(String(uid))).join(', ') : 'ไม่มี'
@@ -262,17 +342,23 @@ export default function CatchUpDigest({
               <button
                 onClick={handleAcknowledge}
                 disabled={acknowledging}
-                className="text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-60"
+                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer disabled:opacity-60"
               >
-                {acknowledging ? 'กำลังบันทึก...' : '✓ รับทราบ'}
+                {acknowledging ? (
+                  'กำลังบันทึก...'
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5" /> รับทราบ
+                  </>
+                )}
               </button>
             )}
             {onOpenTasks && (
               <button
                 onClick={onOpenTasks}
-                className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
               >
-                ดูงานและผลงานทั้งหมด →
+                ดูงานและผลงานทั้งหมด <ArrowRight className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -326,17 +412,64 @@ export default function CatchUpDigest({
         {logs.length === 0 ? (
           <p className="mt-4 text-sm text-gray-500">ยังไม่มีกิจกรรมในกลุ่ม</p>
         ) : (
-          <ul className="mt-4 divide-y divide-gray-100">
-            {logs.map((log) => (
-              <li key={log.log_id} className="py-2.5 text-xs text-gray-600">
-                <span className="font-semibold text-gray-700">{getName(log.actor_id)}</span> {describe(log)}
-                {log.payload?.title && log.entity_type === 'task' && (
-                  <span className="text-gray-500"> — งาน &quot;{log.payload.title}&quot;</span>
-                )}
-                <span className="block text-[11px] text-gray-400">{formatDateTime(log.created_at)}</span>
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* timeline: เส้นแนวตั้งร้อยทุกรายการ สื่อว่าประวัติเป็นสายต่อเนื่อง แก้หรือลบไม่ได้ */}
+            <ol className="relative mt-5">
+              <div className="absolute left-4 top-2 bottom-2 w-0.5 -translate-x-1/2 rounded-full bg-gradient-to-b from-indigo-300 to-pink-300" />
+              {logs.slice(0, visibleCount).map((log, i, shown) => {
+                const style = ACTION_STYLE[log.action_type] ?? { icon: RefreshCw, className: TASK_STYLE }
+                const Icon = style.icon
+                const day = dayLabel(log.created_at)
+                const showDay = i === 0 || dayLabel(shown[i - 1].created_at) !== day
+                return (
+                  <li key={log.log_id} className="relative">
+                    {showDay && (
+                      <p className={`relative pl-11 pb-2 text-[11px] font-semibold text-gray-400 ${i > 0 ? 'pt-2' : ''}`}>
+                        {day}
+                      </p>
+                    )}
+                    <div className="relative flex gap-3 pb-3">
+                      <span
+                        className={`relative z-10 mt-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${style.className}`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-3 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar
+                            src={getAvatar(log.actor_id)}
+                            name={getName(log.actor_id)}
+                            className="h-6 w-6 rounded-full bg-indigo-100 text-[11px] text-indigo-700"
+                          />
+                          <span className="min-w-0 truncate text-xs font-semibold text-gray-800">
+                            {getName(log.actor_id)}
+                          </span>
+                          <span className="ml-auto inline-flex shrink-0 items-center gap-1 text-[11px] text-gray-400">
+                            <Clock className="h-3 w-3" />
+                            {formatTime(log.created_at)}
+                          </span>
+                        </div>
+                        <p className="mt-1 break-words text-xs text-gray-600">{describe(log)}</p>
+                        {log.payload?.title && log.entity_type === 'task' && (
+                          <p className="mt-0.5 truncate text-[11px] text-gray-400">งาน &quot;{log.payload.title}&quot;</p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+            {logs.length > visibleCount && (
+              <div className="mt-1 text-center">
+                <button
+                  onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+                  className="text-xs px-4 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors cursor-pointer"
+                >
+                  ดูเพิ่ม ({logs.length - visibleCount} รายการ)
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

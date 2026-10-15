@@ -62,7 +62,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 
 flow ของงานถูกเขียนซ้ำอยู่ทั้งใน `groups/[id]/page.tsx` และ `member/page.tsx` (update `tasks` → insert `task_responses` → `logActivity`) ถ้าแก้พฤติกรรมฝั่งหนึ่งให้ตรวจอีกฝั่งด้วย
 
-Sidebar ลิงก์ไปแค่ `/dashboard`, `/dashboard/leader`, `/dashboard/member` หน้าอื่นเข้าถึงผ่านลิงก์ในเนื้อหาหรือ `IconNavigationToolbar`
+Sidebar ลิงก์ไปแค่ `/dashboard`, `/dashboard/leader`, `/dashboard/member` หน้าอื่นเข้าถึงผ่านลิงก์ในเนื้อหา
 
 ### สไตล์
 Tailwind v4 โหลดผ่าน `@import "tailwindcss"` ใน `app/globals.css` (PostCSS plugin `@tailwindcss/postcss`) `tailwind.config.ts` ไม่ได้ถูกอ้างด้วย `@config` จึงไม่มีผล คลาสร่วมของระบบคือ `gt-card`, `gt-input`, `gt-btn`, `gt-gradient`, `gt-gradient-x` ใน `globals.css` ไอคอนใช้ `lucide-react`

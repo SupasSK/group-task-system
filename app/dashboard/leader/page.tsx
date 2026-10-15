@@ -141,15 +141,17 @@ export default function LeaderPage() {
 
         const memberUserIds = Array.from(new Set((memberRows || []).map((m: any) => m.user_id)));
         const userMap: Record<string, string> = {};
+        const avatarMap: Record<string, string | null> = {};
 
         if (memberUserIds.length > 0) {
           const { data: userRows } = await supabase
             .from('users')
-            .select('user_id, full_name, email')
+            .select('user_id, full_name, email, avatar_url, custom_avatar_url')
             .in('user_id', memberUserIds);
 
           (userRows || []).forEach((u: any) => {
             userMap[u.user_id] = u.full_name || u.email || 'สมาชิก';
+            avatarMap[u.user_id] = u.custom_avatar_url || u.avatar_url || null;
           });
         }
 
@@ -249,6 +251,7 @@ export default function LeaderPage() {
                 role: m.role,
                 full_name: userMap[m.user_id] || null,
                 email: null,
+                avatar: avatarMap[m.user_id] ?? null,
               })),
               tasks: groupTasks,
               responses: responseRows.filter((r: any) =>

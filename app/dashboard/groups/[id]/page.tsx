@@ -12,6 +12,7 @@ import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
 import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel'
 import TaskEditModal from '@/components/dashboard/TaskEditModal'
 import UserAvatar from '@/components/ui/UserAvatar'
+import { ArrowLeft, Check, CircleCheck, Crown, Pencil, User, X } from 'lucide-react'
 
 interface Group {
   group_id: string
@@ -294,7 +295,7 @@ export default function GroupDetailPage() {
   const isOverloaded = (userId: string) => avgLoad > 0 && workloads[userId]?.load > avgLoad * 1.5
   const workloadLabel = (userId: string) => {
     const w = workloads[userId]
-    return w ? `งานค้าง ${w.items.length} · ภาระ ${Math.round(w.load * 10) / 10}${isOverloaded(userId) ? ' ⚠️' : ''}` : ''
+    return w ? `งานค้าง ${w.items.length} · ภาระ ${Math.round(w.load * 10) / 10}${isOverloaded(userId) ? ' · งานเยอะ' : ''}` : ''
   }
 
   const getLatestRejection = (taskId: string) => {
@@ -887,10 +888,10 @@ export default function GroupDetailPage() {
       <div className="p-8 text-center">
         <p className="text-gray-600 mb-4">ไม่พบกลุ่มนี้ หรือคุณไม่ใช่สมาชิกของกลุ่ม</p>
         <button
-          onClick={() => router.push('/dashboard/projects/new')}
+          onClick={() => router.push('/dashboard')}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all"
         >
-          กลับไปหน้ากลุ่ม
+          กลับไปแดชบอร์ด
         </button>
       </div>
     )
@@ -905,14 +906,14 @@ export default function GroupDetailPage() {
   ]
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="md:p-6 max-w-4xl mx-auto space-y-6">
       {/* ===== Header ===== */}
       <div className="flex items-center gap-3 mb-2">
         <button
-          onClick={() => router.push('/dashboard/projects/new')}
-          className="text-gray-400 hover:text-gray-600 transition-colors text-sm"
+          onClick={() => router.push(isLeader ? '/dashboard/leader' : '/dashboard/member')}
+          className="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors text-sm"
         >
-          ← กลับ
+          <ArrowLeft className="h-4 w-4" /> กลับ
         </button>
       </div>
 
@@ -932,9 +933,15 @@ export default function GroupDetailPage() {
             </div>
             <button
               onClick={handleCopy}
-              className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
             >
-              {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอก'}
+              {copied ? (
+                <>
+                  คัดลอกแล้ว <Check className="h-3.5 w-3.5" />
+                </>
+              ) : (
+                'คัดลอก'
+              )}
             </button>
           </div>
         </div>
@@ -976,8 +983,9 @@ export default function GroupDetailPage() {
       {/* ===== คำขอให้เป็นหัวหน้า (เห็นเฉพาะคนที่ถูกเสนอ) ===== */}
       {group.pending_leader_id === currentUserId && !isLeader && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-sm text-amber-800">
-            👑 หัวหน้ากลุ่มเสนอให้คุณเป็นหัวหน้ากลุ่มแทน ถ้าตอบรับ หัวหน้าเดิมจะเป็นสมาชิก
+          <p className="flex items-start gap-2 text-sm text-amber-800">
+            <Crown className="mt-0.5 h-4 w-4 shrink-0" />
+            หัวหน้ากลุ่มเสนอให้คุณเป็นหัวหน้ากลุ่มแทน ถ้าตอบรับ หัวหน้าเดิมจะเป็นสมาชิก
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -1010,12 +1018,12 @@ export default function GroupDetailPage() {
       )}
 
       {/* ===== แถบแท็บ ===== */}
-      <div className="flex gap-8 border-b border-slate-200">
+      <div className="flex gap-5 sm:gap-8 overflow-x-auto border-b border-slate-200">
         {tabs.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`-mb-px pb-3 text-[14px] transition-colors ${
+            className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-colors ${
               activeTab === item.id
                 ? 'border-b-2 border-indigo-500 font-semibold text-indigo-600'
                 : 'border-b-2 border-transparent text-slate-400 hover:text-slate-600'
@@ -1034,7 +1042,15 @@ export default function GroupDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-400">รูปแบบการทำงาน</p>
-                <p className="text-sm font-semibold text-gray-800 mt-1">{group.work_mode}</p>
+                <p className="text-sm font-semibold text-gray-800 mt-1">
+                  {group.work_mode === 'leader_all'
+                    ? 'หัวหน้าคุม'
+                    : group.work_mode === 'member_choose'
+                    ? 'สมาชิกเลือก'
+                    : group.work_mode === 'mixed'
+                    ? 'แบบผสม'
+                    : group.work_mode}
+                </p>
               </div>
               <div className="bg-gray-50 rounded-xl p-4">
                 <p className="text-xs text-gray-400">บทบาทของฉันในกลุ่ม</p>
@@ -1121,9 +1137,9 @@ export default function GroupDetailPage() {
                 <h3 className="text-base font-bold text-gray-800">สร้างงานใหม่</h3>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
+                  className="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 text-sm"
                 >
-                  ✕ ปิด
+                  <X className="h-4 w-4" /> ปิด
                 </button>
               </div>
 
@@ -1343,6 +1359,7 @@ export default function GroupDetailPage() {
                 )
                 const isAwaitingResponse = t.assignment_type === 'leader_assign' && isAssignee && t.status === 'assigned'
                 const latestRejection = t.status === 'rejected' ? getLatestRejection(t.task_id) : null
+                const isOverdue = t.status !== 'completed' && !!t.deadline && new Date(t.deadline) < new Date()
 
                 return (
                   <div
@@ -1368,9 +1385,17 @@ export default function GroupDetailPage() {
                         )}
                       </div>
 
-                      <div className="text-right text-xs space-y-1 min-w-fit">
+                      <div className="sm:text-right text-xs space-y-1 min-w-fit">
                         <p className="text-gray-500">
-                          กำหนดส่ง: <span className="font-semibold text-gray-700">{formatThaiDateTime(t.deadline)}</span>
+                          กำหนดส่ง:{' '}
+                          <span className={`font-semibold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}`}>
+                            {formatThaiDateTime(t.deadline)}
+                          </span>
+                          {isOverdue && (
+                            <span className="ml-1.5 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                              เลยกำหนด
+                            </span>
+                          )}
                         </p>
                         <p className="text-gray-500">
                           ผู้รับผิดชอบ:{' '}
@@ -1386,9 +1411,9 @@ export default function GroupDetailPage() {
                               setTaskActionMessage(null)
                               setEditModalTask(t)
                             }}
-                            className="px-3 py-1 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition whitespace-nowrap cursor-pointer"
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition whitespace-nowrap cursor-pointer"
                           >
-                            ✏️ แก้ไขงาน
+                            <Pencil className="h-3.5 w-3.5" /> แก้ไขงาน
                           </button>
                         )}
                       </div>
@@ -1487,9 +1512,9 @@ export default function GroupDetailPage() {
                         {isAssignee ? (
                           <button
                             onClick={() => handleCompleteTask(t)}
-                            className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
+                            className="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
                           >
-                            ✅ ทำเสร็จแล้ว
+                            <CircleCheck className="h-3.5 w-3.5" /> ทำเสร็จแล้ว
                           </button>
                         ) : (
                           <span className="text-xs text-gray-400">ผู้รับผิดชอบหลักเป็นผู้กดเสร็จแล้ว</span>
@@ -1683,8 +1708,8 @@ export default function GroupDetailPage() {
             ) : (
               <ul className="space-y-3">
                 {members.map((m) => (
-                  <li key={m.user_id} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
-                    <div className="flex items-start gap-3 min-w-0">
+                  <li key={m.user_id} className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-3 gap-y-2 py-2 border-b border-gray-50 last:border-0">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                     <UserAvatar
                       src={m.avatar}
                       name={m.full_name || m.email || '?'}
@@ -1696,6 +1721,16 @@ export default function GroupDetailPage() {
                         {m.user_id === currentUserId && (
                           <span className="ml-2 text-xs text-gray-400">(คุณ)</span>
                         )}
+                        <span
+                          className={`ml-2 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full align-middle whitespace-nowrap ${
+                            m.role === 'leader'
+                              ? 'bg-indigo-100 text-indigo-700 font-semibold'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {m.role === 'leader' ? <Crown className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                          {m.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}
+                        </span>
                       </p>
                       {m.full_name && (
                         <p className="text-xs text-gray-400">{m.email}</p>
@@ -1724,18 +1759,10 @@ export default function GroupDetailPage() {
                       </div>
                     </div>
                     </div>
-                    <span
-                      className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap ${
-                        m.role === 'leader'
-                          ? 'bg-indigo-100 text-indigo-700 font-semibold'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {m.role === 'leader' ? '👑 หัวหน้า' : '👤 สมาชิก'}
-                    </span>
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
                     {isLeader && m.role !== 'leader' && (
                       group.pending_leader_id === m.user_id ? (
-                        <div className="flex items-center gap-2 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-amber-700">รอตอบรับเป็นหัวหน้า</span>
                           <button
                             onClick={() => handleRequestTransfer(null)}
@@ -1746,7 +1773,7 @@ export default function GroupDetailPage() {
                           </button>
                         </div>
                       ) : transferConfirmId === m.user_id ? (
-                        <div className="flex items-center gap-2 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-indigo-600">เสนอให้เป็นหัวหน้า?</span>
                           <button
                             onClick={() => handleRequestTransfer(m)}
@@ -1774,7 +1801,7 @@ export default function GroupDetailPage() {
                     )}
                     {isLeader && m.role !== 'leader' && (
                       removeConfirmId === m.user_id ? (
-                        <div className="flex items-center gap-2 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-red-600">นำออกจากกลุ่ม?</span>
                           <button
                             onClick={() => handleRemoveMember(m)}
@@ -1802,7 +1829,7 @@ export default function GroupDetailPage() {
                     )}
                     {!isLeader && m.user_id === currentUserId && (
                       leaveConfirm ? (
-                        <div className="flex items-center gap-2 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="text-xs text-red-600">ออกจากกลุ่ม? งานที่ยังไม่เสร็จจะกลับเป็นงานว่าง</span>
                           <button
                             onClick={handleLeaveGroup}
@@ -1828,6 +1855,7 @@ export default function GroupDetailPage() {
                         </button>
                       )
                     )}
+                    </div>
                   </li>
                 ))}
               </ul>
