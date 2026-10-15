@@ -20,6 +20,7 @@ interface Group {
   join_code: string
   created_by: string
   pending_leader_id: string | null
+  archived_at: string | null
 }
 
 interface Member {
@@ -126,6 +127,10 @@ export default function GroupDetailPage() {
   const [transferConfirmId, setTransferConfirmId] = useState<string | null>(null)
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferMessage, setTransferMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  // หัวหน้าพิมพ์ชื่อกลุ่มเพื่อยืนยันการลบกลุ่ม
+  const [deleteGroupName, setDeleteGroupName] = useState('')
+  const [deleteGroupLoading, setDeleteGroupLoading] = useState(false)
+  const [deleteGroupError, setDeleteGroupError] = useState<string | null>(null)
 
   // ===== States สำหรับแท็บงาน =====
   const [tasks, setTasks] = useState<Task[]>([])
@@ -250,11 +255,12 @@ export default function GroupDetailPage() {
 
       const { data: groupData, error: groupErr } = await supabase
         .from('groups')
-        .select('group_id, group_name, description, work_mode, join_code, created_by, pending_leader_id')
+        .select('group_id, group_name, description, work_mode, join_code, created_by, pending_leader_id, archived_at')
         .eq('group_id', id)
         .maybeSingle()
 
-      if (groupErr || !groupData) {
+      // กลุ่มที่ถูกลบ (archive) แล้วให้ทำเหมือนไม่พบกลุ่ม
+      if (groupErr || !groupData || groupData.archived_at) {
         setNotFound(true)
         setLoading(false)
         return
@@ -414,6 +420,32 @@ export default function GroupDetailPage() {
       setLeaveLoading(false)
       return
     }
+
+    router.push('/dashboard')
+  }
+
+  // ===== ลบกลุ่ม (เฉพาะหัวหน้า) =====
+  // เก็บเข้าคลังด้วย archived_at ข้อมูลและประวัติกิจกรรมยังอยู่ครบ แต่กลุ่มจะถูกซ่อนทุกที่
+  const handleDeleteGroup = async () => {
+    if (!group || deleteGroupName.trim() !== group.group_name) return
+    setDeleteGroupLoading(true)
+    setDeleteGroupError(null)
+
+    const { error: rpcErr } = await supabase.rpc('archive_group', { p_group_id: id })
+
+    if (rpcErr) {
+      setDeleteGroupError(`ลบกลุ่มไม่สำเร็จ: ${rpcErr.message}`)
+      setDeleteGroupLoading(false)
+      return
+    }
+
+    await logActivity(supabase, {
+      groupId: id,
+      action: 'group_deleted',
+      entityType: 'group',
+      entityId: id,
+      payload: { group_name: group.group_name },
+    })
 
     router.push('/dashboard')
   }
@@ -1757,6 +1789,39 @@ export default function GroupDetailPage() {
               </ul>
             )}
           </div>
+
+          {/* ลบกลุ่ม (เฉพาะหัวหน้า) */}
+          {isLeader && (
+            <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-6">
+              <h2 className="text-base font-semibold text-red-700 mb-1">ลบกลุ่ม</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                กลุ่มจะถูกซ่อนจากสมาชิกทุกคน งานและประวัติกิจกรรมยังถูกเก็บไว้ในระบบ พิมพ์ชื่อกลุ่ม
+                <span className="font-semibold text-gray-700"> {group.group_name} </span>
+                เพื่อยืนยัน
+              </p>
+              {deleteGroupError && (
+                <div className="mb-3 px-4 py-2.5 rounded-xl text-sm bg-red-50 text-red-700 border border-red-100">
+                  {deleteGroupError}
+                </div>
+              )}
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  type="text"
+                  value={deleteGroupName}
+                  onChange={(e) => setDeleteGroupName(e.target.value)}
+                  placeholder="พิมพ์ชื่อกลุ่ม"
+                  className="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                />
+                <button
+                  onClick={handleDeleteGroup}
+                  disabled={deleteGroupLoading || deleteGroupName.trim() !== group.group_name}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteGroupLoading ? 'กำลังลบ...' : 'ลบกลุ่ม'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

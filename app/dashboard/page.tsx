@@ -83,14 +83,15 @@ export default function DashboardPage() {
             group_name,
             description,
             work_mode,
-            join_code
+            join_code,
+            archived_at
           )
         `)
         .eq('user_id', user.id);
 
       if (!error && memberGroups) {
         const groups: SupabaseGroup[] = memberGroups
-          .filter((item: any) => item.groups)
+          .filter((item: any) => item.groups && !item.groups.archived_at)
           .map((item: any) => ({
             group_id: item.groups.group_id,
             group_name: item.groups.group_name,

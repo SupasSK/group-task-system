@@ -370,6 +370,7 @@ export default function LeaderPage() {
           created_by
         `)
         .eq('created_by', user.id)
+        .is('archived_at', null)
         .order('created_at', { ascending: false });
 
       if (error || !groupRows) {
