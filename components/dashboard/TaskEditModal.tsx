@@ -62,6 +62,7 @@ export default function TaskEditModal({
   const [collabIds, setCollabIds] = useState<string[]>(initialCollabs)
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x))
@@ -159,6 +160,29 @@ export default function TaskEditModal({
       type: teamError ? 'error' : 'success',
       text: `บันทึกการแก้ไขงาน "${newTitle}" แล้ว${teamError}`,
     })
+  }
+
+  // ลบงานจริง ผู้ร่วมทำ ฟีดแบค คำตอบรับ และบันทึกความคืบหน้าถูกลบตาม ส่วนประวัติกิจกรรมยังอยู่
+  const handleDelete = async () => {
+    setSaving(true)
+    setError(null)
+    const { data, error: delErr } = await supabase.from('tasks').delete().eq('task_id', task.task_id).select('task_id')
+    if (delErr || !data || data.length === 0) {
+      setError(`ลบงานไม่สำเร็จ: ${delErr?.message ?? 'ไม่มีสิทธิ์ลบงานนี้'}`)
+      setSaving(false)
+      return
+    }
+
+    await logActivity(supabase, {
+      groupId: task.group_id,
+      action: 'task_deleted',
+      entityType: 'task',
+      entityId: task.task_id,
+      payload: { title: task.title },
+    })
+
+    setSaving(false)
+    await onSaved({ type: 'success', text: `ลบงาน "${task.title}" แล้ว` })
   }
 
   return (
@@ -301,23 +325,60 @@ export default function TaskEditModal({
 
         {error && <p className="text-xs text-rose-600">{error}</p>}
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-xs hover:bg-gray-50 transition"
-          >
-            ยกเลิก
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition disabled:opacity-50"
-          >
-            {saving ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
-          </button>
-        </div>
+        {confirmDelete ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 space-y-2">
+            <p className="text-xs text-rose-700">
+              ยืนยันลบงาน &quot;{task.title}&quot;? ผู้ร่วมทำ ฟีดแบค และบันทึกความคืบหน้าของงานนี้จะถูกลบด้วย
+              และกู้คืนไม่ได้ (ประวัติกิจกรรมยังอยู่)
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                disabled={saving}
+                className="px-4 py-2 border border-gray-200 bg-white text-gray-600 rounded-xl text-xs hover:bg-gray-50 transition"
+              >
+                ไม่ลบ
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={saving}
+                className="px-5 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-700 transition disabled:opacity-50"
+              >
+                {saving ? 'กำลังลบ...' : 'ยืนยันลบงาน'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-between gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              disabled={saving}
+              className="px-4 py-2 border border-rose-200 text-rose-600 rounded-xl text-xs hover:bg-rose-50 transition disabled:opacity-50"
+            >
+              ลบงาน
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-xs hover:bg-gray-50 transition"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition disabled:opacity-50"
+              >
+                {saving ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

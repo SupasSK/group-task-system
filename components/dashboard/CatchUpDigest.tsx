@@ -174,6 +174,8 @@ export default function CatchUpDigest({
             .join(', ') +
           (p.reason ? ` เหตุผล: ${p.reason}` : '')
         )
+      case 'task_deleted':
+        return 'ลบงาน'
       case 'task_status_changed':
         return `เปลี่ยนสถานะจาก "${STATUS_LABEL[p.from] ?? p.from}" เป็น "${STATUS_LABEL[p.to] ?? p.to}"`
       case 'task_assigned':

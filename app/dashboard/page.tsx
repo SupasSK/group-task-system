@@ -14,6 +14,7 @@ const ACTION_LABEL: Record<string, string> = {
   member_added: '👋 มีสมาชิกใหม่',
   task_created: '📝 สร้างงาน',
   task_updated: '✏️ แก้ไขงาน',
+  task_deleted: '🗑️ ลบงาน',
   task_status_changed: '🔄 เปลี่ยนสถานะงาน',
   task_assigned: '📤 มอบหมายงาน',
   task_accepted: '👍 รับงาน',
