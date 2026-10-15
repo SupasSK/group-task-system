@@ -11,6 +11,7 @@ import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel'
 import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
 import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel'
 import TaskEditModal from '@/components/dashboard/TaskEditModal'
+import UserAvatar from '@/components/ui/UserAvatar'
 
 interface Group {
   group_id: string
@@ -29,6 +30,7 @@ interface Member {
   joined_at: string
   full_name: string | null
   email: string | null
+  avatar: string | null
 }
 
 interface Task {
@@ -183,12 +185,12 @@ export default function GroupDetailPage() {
     const userIds = memberRows.map((m: { user_id: string }) => m.user_id)
     const { data: userRows } = await supabase
       .from('users')
-      .select('user_id, full_name, email')
+      .select('user_id, full_name, email, avatar_url, custom_avatar_url')
       .in('user_id', userIds)
 
-    const userMap: Record<string, { full_name: string | null; email: string | null }> = {}
+    const userMap: Record<string, { full_name: string | null; email: string | null; avatar: string | null }> = {}
     for (const u of (userRows || [])) {
-      userMap[u.user_id] = { full_name: u.full_name, email: u.email }
+      userMap[u.user_id] = { full_name: u.full_name, email: u.email, avatar: u.custom_avatar_url || u.avatar_url || null }
     }
 
     setMembers(
@@ -198,6 +200,7 @@ export default function GroupDetailPage() {
         joined_at: m.joined_at,
         full_name: userMap[m.user_id]?.full_name ?? null,
         email: userMap[m.user_id]?.email ?? null,
+        avatar: userMap[m.user_id]?.avatar ?? null,
       }))
     )
   }, [id, supabase])
@@ -1681,6 +1684,12 @@ export default function GroupDetailPage() {
               <ul className="space-y-3">
                 {members.map((m) => (
                   <li key={m.user_id} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
+                    <div className="flex items-start gap-3 min-w-0">
+                    <UserAvatar
+                      src={m.avatar}
+                      name={m.full_name || m.email || '?'}
+                      className="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 text-sm"
+                    />
                     <div>
                       <p className="text-sm font-medium text-gray-800">
                         {m.full_name || m.email || 'ไม่ทราบชื่อ'}
@@ -1713,6 +1722,7 @@ export default function GroupDetailPage() {
                           </span>
                         ))}
                       </div>
+                    </div>
                     </div>
                     <span
                       className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap ${

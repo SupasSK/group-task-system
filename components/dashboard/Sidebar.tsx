@@ -7,8 +7,9 @@ import { loadUnreadCounts } from '@/lib/unreadCounts'
 import { LayoutGrid, Crown, User, LogOut, Check } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import { DEMO_USER } from '@/lib/mock-data'
+import UserAvatar from '@/components/ui/UserAvatar'
 
-export default function Sidebar({ displayName }: { displayName?: string }) {
+export default function Sidebar({ displayName, avatarUrl }: { displayName?: string; avatarUrl?: string | null }) {
   const pathname = usePathname()
   const supabase = createClient()
   const name = displayName || DEMO_USER.name
@@ -57,9 +58,7 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
         title="ตั้งค่าโปรไฟล์"
         className="mb-6 hidden items-center gap-3 p-2.5 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition md:flex"
       >
-        <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center font-bold text-sm ring-2 ring-white/30">
-          {name.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar src={avatarUrl} name={name} className="h-9 w-9 rounded-xl bg-white/20 text-sm ring-2 ring-white/30" />
         <div className="min-w-0">
           <div className="truncate text-[13px] font-semibold">{name}</div>
           <div className="text-[11px] text-white/60">ตั้งค่าโปรไฟล์</div>
@@ -98,9 +97,7 @@ export default function Sidebar({ displayName }: { displayName?: string }) {
         aria-label="ตั้งค่าโปรไฟล์"
         className="flex min-w-0 max-w-[90px] items-center gap-1.5 md:hidden"
       >
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20 text-xs font-bold ring-1 ring-white/30">
-          {name.charAt(0).toUpperCase()}
-        </div>
+        <UserAvatar src={avatarUrl} name={name} className="h-7 w-7 rounded-lg bg-white/20 text-xs ring-1 ring-white/30" />
         <span className="truncate text-[11px] font-semibold">{name}</span>
       </Link>
 
