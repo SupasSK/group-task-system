@@ -127,8 +127,8 @@ export default function GroupDetailPage() {
   const [transferConfirmId, setTransferConfirmId] = useState<string | null>(null)
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferMessage, setTransferMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  // หัวหน้าพิมพ์ชื่อกลุ่มเพื่อยืนยันการลบกลุ่ม
-  const [deleteGroupName, setDeleteGroupName] = useState('')
+  // หัวหน้ากำลังยืนยันจะลบกลุ่ม
+  const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(false)
   const [deleteGroupLoading, setDeleteGroupLoading] = useState(false)
   const [deleteGroupError, setDeleteGroupError] = useState<string | null>(null)
 
@@ -427,7 +427,7 @@ export default function GroupDetailPage() {
   // ===== ลบกลุ่ม (เฉพาะหัวหน้า) =====
   // เก็บเข้าคลังด้วย archived_at ข้อมูลและประวัติกิจกรรมยังอยู่ครบ แต่กลุ่มจะถูกซ่อนทุกที่
   const handleDeleteGroup = async () => {
-    if (!group || deleteGroupName.trim() !== group.group_name) return
+    if (!group) return
     setDeleteGroupLoading(true)
     setDeleteGroupError(null)
 
@@ -935,6 +935,39 @@ export default function GroupDetailPage() {
             </button>
           </div>
         </div>
+
+        {/* ลบกลุ่ม (เฉพาะหัวหน้า) */}
+        {isLeader && (
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end gap-2 flex-wrap">
+            {deleteGroupError && <span className="text-xs text-red-600 mr-auto">{deleteGroupError}</span>}
+            {deleteGroupConfirm ? (
+              <>
+                <span className="text-xs text-red-600">ลบกลุ่ม? กลุ่มจะถูกซ่อนจากสมาชิกทุกคน งานและประวัติยังเก็บไว้</span>
+                <button
+                  onClick={handleDeleteGroup}
+                  disabled={deleteGroupLoading}
+                  className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteGroupLoading ? 'กำลังลบ...' : 'ยืนยัน'}
+                </button>
+                <button
+                  onClick={() => setDeleteGroupConfirm(false)}
+                  disabled={deleteGroupLoading}
+                  className="px-3 py-1 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50 disabled:opacity-50"
+                >
+                  ยกเลิก
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setDeleteGroupConfirm(true)}
+                className="px-3 py-1 border border-red-200 text-red-600 rounded-lg text-xs hover:bg-red-50 whitespace-nowrap"
+              >
+                ลบกลุ่ม
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ===== คำขอให้เป็นหัวหน้า (เห็นเฉพาะคนที่ถูกเสนอ) ===== */}
@@ -1789,39 +1822,6 @@ export default function GroupDetailPage() {
               </ul>
             )}
           </div>
-
-          {/* ลบกลุ่ม (เฉพาะหัวหน้า) */}
-          {isLeader && (
-            <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-6">
-              <h2 className="text-base font-semibold text-red-700 mb-1">ลบกลุ่ม</h2>
-              <p className="text-xs text-gray-500 mb-3">
-                กลุ่มจะถูกซ่อนจากสมาชิกทุกคน งานและประวัติกิจกรรมยังถูกเก็บไว้ในระบบ พิมพ์ชื่อกลุ่ม
-                <span className="font-semibold text-gray-700"> {group.group_name} </span>
-                เพื่อยืนยัน
-              </p>
-              {deleteGroupError && (
-                <div className="mb-3 px-4 py-2.5 rounded-xl text-sm bg-red-50 text-red-700 border border-red-100">
-                  {deleteGroupError}
-                </div>
-              )}
-              <div className="flex items-center gap-2 flex-wrap">
-                <input
-                  type="text"
-                  value={deleteGroupName}
-                  onChange={(e) => setDeleteGroupName(e.target.value)}
-                  placeholder="พิมพ์ชื่อกลุ่ม"
-                  className="flex-1 min-w-[200px] px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
-                />
-                <button
-                  onClick={handleDeleteGroup}
-                  disabled={deleteGroupLoading || deleteGroupName.trim() !== group.group_name}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
-                >
-                  {deleteGroupLoading ? 'กำลังลบ...' : 'ลบกลุ่ม'}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
