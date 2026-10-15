@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ActivityAction =
-  | 'group_created' | 'member_added'
+  | 'group_created' | 'member_added' | 'member_removed'
   | 'task_created' | 'task_updated' | 'task_deleted' | 'task_status_changed'
   | 'task_assigned' | 'task_accepted' | 'task_declined' | 'task_claimed'
   | 'task_joined' | 'task_feedback_added'

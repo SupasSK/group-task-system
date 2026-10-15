@@ -161,6 +161,8 @@ export default function CatchUpDigest({
         return 'สร้างกลุ่ม'
       case 'member_added':
         return p.via === 'join_code' ? 'เข้าร่วมกลุ่มด้วยรหัส' : `เพิ่มสมาชิก${p.email ? ` ${p.email}` : ''}`
+      case 'member_removed':
+        return `นำสมาชิก${p.email ? ` ${p.email}` : ''} ออกจากกลุ่ม`
       case 'task_created':
         return `สร้างงาน (ความสำคัญ${PRIORITY_LABEL[p.priority] ?? 'ไม่ระบุ'}, กำหนดส่ง ${formatValue('deadline', p.deadline)})`
       case 'task_updated':

@@ -114,6 +114,9 @@ export default function GroupDetailPage() {
   const [emailInput, setEmailInput] = useState('')
   const [addLoading, setAddLoading] = useState(false)
   const [addMessage, setAddMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
+  // สมาชิกที่หัวหน้ากำลังยืนยันจะนำออก
+  const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null)
+  const [removeLoading, setRemoveLoading] = useState(false)
 
   // ===== States สำหรับแท็บงาน =====
   const [tasks, setTasks] = useState<Task[]>([])
@@ -342,6 +345,43 @@ export default function GroupDetailPage() {
     setEmailInput('')
     await loadMembers()
     setAddLoading(false)
+  }
+
+  // ===== นำสมาชิกออก (เฉพาะหัวหน้า) =====
+  // RPC คืนงานที่ยังไม่เสร็จของคนนี้เป็นงานว่าง และลบการร่วมทำงานที่ยังไม่เสร็จ ในธุรกรรมเดียว
+  const handleRemoveMember = async (member: Member) => {
+    setRemoveLoading(true)
+    setAddMessage(null)
+
+    const { data: unassigned, error: rpcErr } = await supabase.rpc('remove_group_member', {
+      p_group_id: id,
+      p_user_id: member.user_id,
+    })
+
+    if (rpcErr) {
+      setAddMessage({ type: 'error', text: `นำสมาชิกออกไม่สำเร็จ: ${rpcErr.message}` })
+      setRemoveLoading(false)
+      return
+    }
+
+    await logActivity(supabase, {
+      groupId: id,
+      action: 'member_removed',
+      entityType: 'member',
+      entityId: member.user_id,
+      payload: { email: member.email },
+    })
+
+    setAddMessage({
+      type: 'success',
+      text: `นำ ${member.full_name || member.email} ออกจากกลุ่มแล้ว${
+        unassigned ? ` งานที่ยังไม่เสร็จ ${unassigned} งานกลับเป็นงานว่าง` : ''
+      }`,
+    })
+    setRemoveConfirmId(null)
+    await loadMembers()
+    await loadTasks()
+    setRemoveLoading(false)
   }
 
   // ===== ฟังก์ชันสร้างงานใหม่ (เฉพาะหัวหน้า) =====
@@ -1480,6 +1520,34 @@ export default function GroupDetailPage() {
                     >
                       {m.role === 'leader' ? '👑 หัวหน้า' : '👤 สมาชิก'}
                     </span>
+                    {isLeader && m.role !== 'leader' && (
+                      removeConfirmId === m.user_id ? (
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-red-600">นำออกจากกลุ่ม?</span>
+                          <button
+                            onClick={() => handleRemoveMember(m)}
+                            disabled={removeLoading}
+                            className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {removeLoading ? 'กำลังนำออก...' : 'ยืนยัน'}
+                          </button>
+                          <button
+                            onClick={() => setRemoveConfirmId(null)}
+                            disabled={removeLoading}
+                            className="px-3 py-1 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            ยกเลิก
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setRemoveConfirmId(m.user_id)}
+                          className="px-3 py-1 border border-red-200 text-red-600 rounded-lg text-xs hover:bg-red-50 whitespace-nowrap"
+                        >
+                          นำออก
+                        </button>
+                      )
+                    )}
                   </li>
                 ))}
               </ul>

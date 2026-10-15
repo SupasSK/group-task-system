@@ -24,6 +24,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - รูปแบบ payload ของ log ที่ต้องตรงกันทุกที่:
   group_created {group_name, work_mode}
   member_added {role, email?}
+  member_removed {email} (หัวหน้าเท่านั้น บันทึกหลัง RPC remove_group_member สำเร็จ)
   task_created {title, priority, deadline}
   task_updated {title, changes: {ชื่อฟิลด์: {from, to}}, reason?} (reason บังคับเมื่อหัวหน้าเปลี่ยน deadline, assigned_to, collaborators หรือ difficulty; changes.collaborators เก็บ from/to เป็นอาร์เรย์ user_id)
   task_deleted {title} (บันทึกหลังลบงานสำเร็จ หัวหน้าเท่านั้น)
