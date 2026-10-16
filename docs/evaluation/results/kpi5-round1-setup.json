@@ -1,0 +1,48 @@
+{
+  "kpi": "KPI-5",
+  "round": 1,
+  "at": "2026-10-16T12:02:12.095Z",
+  "commit": "26ab97e",
+  "groups": {
+    "control": {
+      "group_id": "3f1b2755-969a-448a-b48a-7b72db1a5d1c",
+      "name": "[TEST] KPI-5 control r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    },
+    "edit": {
+      "group_id": "2ff05f6c-c4b6-4650-8730-408ca661e5e1",
+      "name": "[TEST] KPI-5 edit r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    },
+    "delete": {
+      "group_id": "c7c0f0d0-ccdd-4762-8d5e-4cc9e74fcc28",
+      "name": "[TEST] KPI-5 delete r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    },
+    "insert": {
+      "group_id": "dcfdd327-1ea1-4eec-83d1-300db832c472",
+      "name": "[TEST] KPI-5 insert r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    }
+  }
+}
