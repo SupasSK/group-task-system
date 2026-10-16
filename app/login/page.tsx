@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import {
   Mail,
   Lock,
   User,
   Eye,
   EyeOff,
-  Check,
+  Hand,
+  Sparkles,
+  KeyRound,
   AlertCircle,
   CheckCircle2,
   X,
@@ -61,7 +62,7 @@ function getThaiAuthErrorMessage(error: any): string {
     return 'ระบบปิดรับการลงทะเบียนชั่วคราว'
   }
   if (msg.includes('not enabled') || msg.includes('provider')) {
-    return '⚠️ ยังไม่ได้เปิดใช้งาน Facebook Login ใน Supabase Dashboard (Authentication > Providers > Facebook)'
+    return 'ยังไม่ได้เปิดใช้งาน Google Login ใน Supabase Dashboard (Authentication > Providers > Google)'
   }
 
   return error.message || 'เกิดข้อผิดพลาดในการทำรายการ'
@@ -77,7 +78,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
@@ -231,7 +231,7 @@ export default function LoginPage() {
         if (data.session) {
           setMessage({
             type: 'success',
-            text: '🎉 สมัครสมาชิกสำเร็จ! กำลังนำคุณไปยังแดชบอร์ด...',
+            text: 'สมัครสมาชิกสำเร็จ! กำลังนำคุณไปยังแดชบอร์ด...',
           })
           window.location.href = '/dashboard'
         } else {
@@ -244,13 +244,13 @@ export default function LoginPage() {
           if (loginData?.session) {
             setMessage({
               type: 'success',
-              text: '🎉 สมัครสมาชิกสำเร็จ! กำลังนำคุณไปยังแดชบอร์ด...',
+              text: 'สมัครสมาชิกสำเร็จ! กำลังนำคุณไปยังแดชบอร์ด...',
             })
             window.location.href = '/dashboard'
           } else {
             setMessage({
               type: 'success',
-              text: '🎉 สมัครสมาชิกสำเร็จ! ระบบต้องการยืนยันตัวตน กรุณาตรวจสอบกล่องจดหมายของคุณ',
+              text: 'สมัครสมาชิกสำเร็จ! ระบบต้องการยืนยันตัวตน กรุณาตรวจสอบกล่องจดหมายของคุณ',
             })
             setIsLogin(true)
             setLoading(false)
@@ -263,18 +263,17 @@ export default function LoginPage() {
     }
   }
 
-  // เข้าสู่ระบบด้วย Facebook OAuth
-  const handleFacebookLogin = async () => {
+  // เข้าสู่ระบบด้วย Google OAuth
+  const handleGoogleLogin = async () => {
     setLoading(true)
     setMessage(null)
 
     try {
       const redirectUrl = `${window.location.origin}/auth/callback?next=/dashboard`
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
+        provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          scopes: 'email,public_profile',
         },
       })
 
@@ -330,7 +329,7 @@ export default function LoginPage() {
       {/* ======================================================== */}
       {/* ฝั่งซ้าย — Branding & Live Interactive Preview (ตรงตามภาพ) */}
       {/* ======================================================== */}
-      <div className="relative w-full lg:w-[48%] xl:w-[50%] min-h-[460px] lg:min-h-screen bg-[linear-gradient(135deg,#4F46E5_0%,#6366F1_25%,#7C3AED_55%,#C026D3_85%,#E11D48_100%)] p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden">
+      <div className="relative w-full lg:w-[48%] xl:w-[50%] lg:min-h-screen bg-[linear-gradient(135deg,#4F46E5_0%,#6366F1_25%,#7C3AED_55%,#C026D3_85%,#E11D48_100%)] p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden">
         {/* Decorative soft glow background orbs */}
         <div className="absolute top-[-10%] left-[-10%] w-[380px] h-[380px] rounded-full bg-white/10 blur-[80px] pointer-events-none" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[420px] h-[420px] rounded-full bg-pink-500/20 blur-[90px] pointer-events-none" />
@@ -378,7 +377,7 @@ export default function LoginPage() {
           </p>
 
           {/* Mini Kanban Board Mockup Card (ตามแบบภาพ) */}
-          <div className="bg-white rounded-[26px] p-4 sm:p-5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] border border-white/40 max-w-[490px] w-full text-slate-800 transition-transform duration-300 hover:scale-[1.01]">
+          <div className="hidden lg:block bg-white rounded-[26px] p-4 sm:p-5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] border border-white/40 max-w-[490px] w-full text-slate-800 transition-transform duration-300 hover:scale-[1.01]">
             <div className="flex flex-col sm:flex-row gap-3.5">
               {/* Mini Sidebar */}
               <div className="sm:w-[130px] shrink-0 border-b sm:border-b-0 sm:border-r border-slate-100 pb-3 sm:pb-0 sm:pr-3">
@@ -462,10 +461,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bottom Note */}
-        <div className="relative z-10 text-white/75 text-xs font-light pt-6">
-          ทีมกว่า 2,000 ทีม วางใจให้ GroupTask ดูแลทุกโปรเจกต์
-        </div>
+        {/* ช่องว่างด้านล่าง ให้เนื้อหากลางยังอยู่กึ่งกลางบนจอใหญ่ */}
+        <div className="hidden lg:block" />
       </div>
 
       {/* ======================================================== */}
@@ -481,12 +478,12 @@ export default function LoginPage() {
                 {isLogin ? (
                   <>
                     <span>ยินดีต้อนรับกลับมา</span>
-                    <span className="text-2xl animate-pulse">👋</span>
+                    <Hand className="w-6 h-6 text-amber-500" />
                   </>
                 ) : (
                   <>
                     <span>สร้างบัญชีใหม่</span>
-                    <span className="text-2xl">✨</span>
+                    <Sparkles className="w-6 h-6 text-indigo-500" />
                   </>
                 )}
               </h2>
@@ -522,17 +519,20 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* ปุ่มเข้าสู่ระบบด้วย Facebook (ตรงตามภาพ) */}
+            {/* ปุ่มเข้าสู่ระบบด้วย Google */}
             <button
               type="button"
-              onClick={handleFacebookLogin}
+              onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-2xl font-medium text-sm transition-all shadow-[0_4px_12px_rgba(24,119,242,0.2)] hover:shadow-[0_6px_16px_rgba(24,119,242,0.3)] active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+              className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl font-medium text-sm transition-all shadow-sm hover:shadow-md active:scale-[0.99] disabled:opacity-50 cursor-pointer"
             >
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
-              <span>{isLogin ? 'เข้าสู่ระบบด้วย Facebook' : 'สมัครสมาชิกด้วย Facebook'}</span>
+              <span>{isLogin ? 'เข้าสู่ระบบด้วย Google' : 'สมัครสมาชิกด้วย Google'}</span>
             </button>
 
             {/* เส้นคั่น "หรือเข้าสู่ระบบด้วยอีเมล" */}
@@ -638,26 +638,9 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* แถว "จดจำฉัน" และ "ลืมรหัสผ่าน?" (เฉพาะโหมดเข้าสู่ระบบ - ตามภาพ) */}
+              {/* ลิงก์ "ลืมรหัสผ่าน?" (เฉพาะโหมดเข้าสู่ระบบ) */}
               {isLogin && (
-                <div className="flex items-center justify-between pt-1">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={rememberMe}
-                      onClick={() => setRememberMe(!rememberMe)}
-                      className={`w-4 h-4 rounded-md flex items-center justify-center transition-colors ${
-                        rememberMe
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'border border-slate-300 bg-white hover:border-slate-400'
-                      }`}
-                    >
-                      {rememberMe && <Check className="w-3 h-3 stroke-[3]" />}
-                    </button>
-                    <span className="text-xs sm:text-sm text-slate-600">จดจำฉัน</span>
-                  </label>
-
+                <div className="flex items-center justify-end pt-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -722,18 +705,6 @@ export default function LoginPage() {
               )}
             </div>
           </div>
-
-          {/* ข้อความข้อตกลงและนโยบายความเป็นส่วนตัว ด้านล่างการ์ด (ตรงตามภาพ) */}
-          <p className="mt-6 text-center text-[11px] text-slate-400 leading-relaxed px-4">
-            การเข้าสู่ระบบถือว่าคุณยอมรับ{' '}
-            <Link href="#" className="underline hover:text-slate-600">
-              เงื่อนไขการใช้งาน
-            </Link>{' '}
-            และ{' '}
-            <Link href="#" className="underline hover:text-slate-600">
-              นโยบายความเป็นส่วนตัว
-            </Link>
-          </p>
         </div>
       </div>
 
@@ -750,7 +721,10 @@ export default function LoginPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-slate-900 mb-2">ลืมรหัสผ่านใช่ไหม? 🔐</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+              ลืมรหัสผ่านใช่ไหม?
+              <KeyRound className="w-5 h-5 text-indigo-500" />
+            </h3>
             <p className="text-xs sm:text-sm text-slate-500 mb-5 leading-relaxed">
               กรอกอีเมลที่คุณใช้สมัครสมาชิก เราจะส่งลิงก์สำหรับรีเซ็ตรหัสผ่านใหม่ไปยังอีเมลของคุณ
             </p>

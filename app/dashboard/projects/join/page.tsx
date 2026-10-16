@@ -3,12 +3,13 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase";
-import { Users, ArrowLeft } from "lucide-react";
+import { Users, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 export default function JoinProjectPage() {
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const inputs = useRef<Array<HTMLInputElement | null>>([]);
   const router = useRouter();
   const supabase = createClient();
@@ -53,8 +54,9 @@ export default function JoinProjectPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = digits.join("").toUpperCase();
+    setMessage(null);
     if (code.length !== 6) {
-      alert("กรุณากรอกรหัสกลุ่ม 6 ตัวอักษรให้ครบถ้วน");
+      setMessage({ type: "error", text: "กรุณากรอกรหัสกลุ่ม 6 ตัวอักษรให้ครบถ้วน" });
       return;
     }
 
@@ -62,7 +64,7 @@ export default function JoinProjectPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert("กรุณาเข้าสู่ระบบก่อนเข้าร่วมกลุ่ม");
+        setMessage({ type: "error", text: "กรุณาเข้าสู่ระบบก่อนเข้าร่วมกลุ่ม" });
         router.push("/login");
         return;
       }
@@ -73,13 +75,13 @@ export default function JoinProjectPage() {
       );
 
       if (rpcError) {
-        alert("เข้าร่วมกลุ่มไม่สำเร็จ: " + rpcError.message);
+        setMessage({ type: "error", text: "เข้าร่วมกลุ่มไม่สำเร็จ: " + rpcError.message });
         setLoading(false);
         return;
       }
 
       if (!rows || rows.length === 0) {
-        alert("ไม่พบกลุ่มที่ตรงกับรหัสนี้ หรือรหัสไม่ถูกต้อง");
+        setMessage({ type: "error", text: "ไม่พบกลุ่มที่ตรงกับรหัสนี้ หรือรหัสไม่ถูกต้อง" });
         setLoading(false);
         return;
       }
@@ -90,15 +92,16 @@ export default function JoinProjectPage() {
         newly_joined: boolean;
       };
 
-      if (result.newly_joined) {
-        alert(`🎉 เข้าร่วมกลุ่ม "${result.joined_group_name}" สำเร็จแล้ว!`);
-      } else {
-        alert(`คุณเป็นสมาชิกของกลุ่ม "${result.joined_group_name}" อยู่แล้ว`);
-      }
+      setMessage({
+        type: "success",
+        text: result.newly_joined
+          ? `เข้าร่วมกลุ่ม "${result.joined_group_name}" สำเร็จแล้ว กำลังพาไปที่กลุ่ม...`
+          : `คุณเป็นสมาชิกของกลุ่ม "${result.joined_group_name}" อยู่แล้ว กำลังพาไปที่กลุ่ม...`,
+      });
 
       router.push(`/dashboard/groups/${result.joined_group_id}`);
     } catch (err: any) {
-      alert("เกิดข้อผิดพลาด: " + err.message);
+      setMessage({ type: "error", text: "เกิดข้อผิดพลาด: " + err.message });
     } finally {
       setLoading(false);
     }
@@ -126,8 +129,24 @@ export default function JoinProjectPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="gt-card px-8 py-10 text-center rounded-3xl">
-        <div className="my-8 flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+      <form onSubmit={handleSubmit} className="gt-card px-4 sm:px-8 py-10 text-center rounded-3xl">
+        {message && (
+          <div
+            className={`flex items-start gap-2 p-3 rounded-xl text-left text-sm ${
+              message.type === "success"
+                ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+                : "bg-rose-50 border border-rose-200 text-rose-700"
+            }`}
+          >
+            {message.type === "success" ? (
+              <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            )}
+            <span>{message.text}</span>
+          </div>
+        )}
+        <div className="my-8 flex justify-center gap-1.5 sm:gap-3" onPaste={handlePaste}>
           {digits.map((digit, index) => (
             <input
               key={index}
@@ -139,7 +158,7 @@ export default function JoinProjectPage() {
               onKeyDown={(e) => handleKeyDown(index, e)}
               maxLength={1}
               autoFocus={index === 0}
-              className={`h-14 w-12 sm:w-14 rounded-2xl bg-slate-50 text-center text-[22px] font-bold text-slate-800 shadow-sm outline-none transition-all ${
+              className={`h-12 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-slate-50 text-center text-[22px] font-bold text-slate-800 shadow-sm outline-none transition-all ${
                 digit
                   ? "border-2 border-indigo-500 bg-white shadow-indigo-100"
                   : "border border-slate-200 focus:border-indigo-400 focus:bg-white"
