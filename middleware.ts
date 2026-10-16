@@ -23,8 +23,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // ถ้ายังไม่ล็อกอิน และไม่ใช่หน้าเข้าสู่ระบบ หรือหน้า callback auth → เด้งไปล็อกอิน
-  if (!user && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/auth')) {
+  // ถ้ายังไม่ล็อกอิน และไม่ใช่หน้าเข้าสู่ระบบ หน้า callback auth หรือหน้านโยบายความเป็นส่วนตัว → เด้งไปล็อกอิน
+  if (!user && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/auth') && request.nextUrl.pathname !== '/privacy') {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
