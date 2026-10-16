@@ -1,0 +1,948 @@
+{
+  "kpi": "KPI-4",
+  "round": 2,
+  "at": "2026-10-16T12:45:07.725Z",
+  "commit": "a48c5cb",
+  "group_id": "24732e29-01c6-483e-b3d2-5212596aaf05",
+  "passed": 40,
+  "total": 40,
+  "pass": true,
+  "actionsCovered": [
+    "group_created",
+    "member_added",
+    "task_created",
+    "task_assigned",
+    "task_accepted",
+    "task_status_changed",
+    "comment_added",
+    "decision_added",
+    "task_updated",
+    "task_declined",
+    "task_claimed",
+    "task_joined",
+    "task_feedback_added",
+    "task_deleted",
+    "eval_round_opened",
+    "eval_round_closed",
+    "member_removed",
+    "member_left",
+    "leader_transferred",
+    "group_deleted"
+  ],
+  "results": [
+    {
+      "id": "S01",
+      "desc": "หัวหน้าสร้างกลุ่ม",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "group_created",
+        "member_added"
+      ],
+      "logs": [
+        {
+          "seq": 1,
+          "action": "group_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "work_mode": "mixed",
+            "group_name": "[TEST] KPI-4 r2"
+          }
+        },
+        {
+          "seq": 2,
+          "action": "member_added",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "role": "leader"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S02",
+      "desc": "สมาชิกเข้ากลุ่มด้วยรหัส",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "member_added"
+      ],
+      "logs": [
+        {
+          "seq": 3,
+          "action": "member_added",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "via": "join_code",
+            "role": "member"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": [
+        "member_added: คีย์เสริม via=\"join_code\""
+      ]
+    },
+    {
+      "id": "S03",
+      "desc": "หัวหน้าเพิ่มสมาชิกด้วยอีเมล",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "member_added"
+      ],
+      "logs": [
+        {
+          "seq": 6,
+          "action": "member_added",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "role": "member",
+            "email": "gt.test.k4member2@gt-eval.test"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S04",
+      "desc": "หัวหน้าสร้างงานและมอบหมาย",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created",
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 7,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T1 r2",
+            "deadline": "2026-11-20T10:00:00+00:00",
+            "priority": "high"
+          }
+        },
+        {
+          "seq": 8,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T1 r2",
+            "assigned_to": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S05",
+      "desc": "สมาชิกรับงาน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_accepted"
+      ],
+      "logs": [
+        {
+          "seq": 9,
+          "action": "task_accepted",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "title": "K4-T1 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S06",
+      "desc": "สมาชิกเริ่มทำงาน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_status_changed"
+      ],
+      "logs": [
+        {
+          "seq": 10,
+          "action": "task_status_changed",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "to": "in_progress",
+            "from": "accepted",
+            "title": "K4-T1 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S07",
+      "desc": "สมาชิกเขียนความเห็น",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "comment_added"
+      ],
+      "logs": [
+        {
+          "seq": 11,
+          "action": "comment_added",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "title": "K4-T1 r2",
+            "preview": "ความเห็นทดสอบ KPI-4"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S08",
+      "desc": "สมาชิกบันทึกการตัดสินใจ",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "decision_added"
+      ],
+      "logs": [
+        {
+          "seq": 12,
+          "action": "decision_added",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "title": "K4-T1 r2",
+            "preview": "การตัดสินใจทดสอบ KPI-4"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S09",
+      "desc": "สมาชิกแนบลิงก์ผลงาน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_updated"
+      ],
+      "logs": [
+        {
+          "seq": 13,
+          "action": "task_updated",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "title": "K4-T1 r2",
+            "changes": {
+              "work_url": {
+                "to": "https://docs.google.com/document/d/kpi4",
+                "from": null
+              }
+            }
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S10",
+      "desc": "สมาชิกกดงานเสร็จ",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_status_changed"
+      ],
+      "logs": [
+        {
+          "seq": 14,
+          "action": "task_status_changed",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "to": "completed",
+            "from": "in_progress",
+            "title": "K4-T1 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S11",
+      "desc": "หัวหน้าสร้างงานมอบหมายให้สมาชิกสอง",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created",
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 15,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T2 r2",
+            "deadline": null,
+            "priority": "medium"
+          }
+        },
+        {
+          "seq": 16,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T2 r2",
+            "assigned_to": "71212d67-4c1c-4fba-8453-4aafc452608c",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S12",
+      "desc": "สมาชิกปฏิเสธงานพร้อมเหตุผล",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_declined"
+      ],
+      "logs": [
+        {
+          "seq": 17,
+          "action": "task_declined",
+          "actor": "71212d67-4c1c-4fba-8453-4aafc452608c",
+          "payload": {
+            "title": "K4-T2 r2",
+            "reason": "เหตุผลทดสอบ S12"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S13",
+      "desc": "หัวหน้ามอบหมายงานที่ถูกปฏิเสธให้คนใหม่",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 18,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T2 r2",
+            "assigned_to": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S14",
+      "desc": "หัวหน้าสร้างงานให้สมาชิกเลือกเอง",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created"
+      ],
+      "logs": [
+        {
+          "seq": 19,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T3 r2",
+            "deadline": null,
+            "priority": "medium"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S15",
+      "desc": "สมาชิกเลือกรับงานเอง",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_claimed"
+      ],
+      "logs": [
+        {
+          "seq": 20,
+          "action": "task_claimed",
+          "actor": "71212d67-4c1c-4fba-8453-4aafc452608c",
+          "payload": {
+            "title": "K4-T3 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S16",
+      "desc": "หัวหน้าสร้างงานสำหรับทดสอบการแก้ไข",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created",
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 21,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T4 r2",
+            "deadline": "2026-11-10T05:00:00+00:00",
+            "priority": "medium"
+          }
+        },
+        {
+          "seq": 22,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T4 r2",
+            "assigned_to": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S17",
+      "desc": "บล็อก: แก้กำหนดส่งโดยไม่ใส่เหตุผล",
+      "blocked": true,
+      "pass": true,
+      "expected": [],
+      "logs": [],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S18",
+      "desc": "บล็อก: เปลี่ยนคนทำโดยไม่ใส่เหตุผล",
+      "blocked": true,
+      "pass": true,
+      "expected": [],
+      "logs": [],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S19",
+      "desc": "บล็อก: เปลี่ยนความยากโดยไม่ใส่เหตุผล",
+      "blocked": true,
+      "pass": true,
+      "expected": [],
+      "logs": [],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S20",
+      "desc": "บล็อก: เพิ่มผู้ร่วมทำโดยไม่ใส่เหตุผล",
+      "blocked": true,
+      "pass": true,
+      "expected": [],
+      "logs": [],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S21",
+      "desc": "หัวหน้าแก้กำหนดส่งพร้อมเหตุผล",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_updated"
+      ],
+      "logs": [
+        {
+          "seq": 23,
+          "action": "task_updated",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T4 r2",
+            "reason": "เหตุผลทดสอบ S21",
+            "changes": {
+              "deadline": {
+                "to": "2026-11-15T05:00:00.000Z",
+                "from": "2026-11-10T05:00:00+00:00"
+              }
+            }
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S22",
+      "desc": "หัวหน้าแก้ชื่องาน (ไม่บังคับเหตุผล)",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_updated"
+      ],
+      "logs": [
+        {
+          "seq": 24,
+          "action": "task_updated",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T4 r2 แก้ชื่อ",
+            "changes": {
+              "title": {
+                "to": "K4-T4 r2 แก้ชื่อ",
+                "from": "K4-T4 r2"
+              }
+            }
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S23",
+      "desc": "หัวหน้าสร้างงานสองคนพร้อมเชิญผู้ร่วมทำ",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created",
+        "task_assigned",
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 25,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T5 r2",
+            "deadline": null,
+            "priority": "medium"
+          }
+        },
+        {
+          "seq": 26,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T5 r2",
+            "assigned_to": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+            "assignment_type": "leader_assign"
+          }
+        },
+        {
+          "seq": 27,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "role": "collaborator",
+            "title": "K4-T5 r2",
+            "assigned_to": "2c8987b5-0bff-467b-b3c3-a7918363d0b2",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S24",
+      "desc": "ผู้ร่วมทำรับคำเชิญ",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_joined"
+      ],
+      "logs": [
+        {
+          "seq": 28,
+          "action": "task_joined",
+          "actor": "2c8987b5-0bff-467b-b3c3-a7918363d0b2",
+          "payload": {
+            "role": "collaborator",
+            "title": "K4-T5 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S25",
+      "desc": "หัวหน้าสร้างงานสองคน (ยังไม่เชิญ)",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created",
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 29,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T6 r2",
+            "deadline": null,
+            "priority": "medium"
+          }
+        },
+        {
+          "seq": 30,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T6 r2",
+            "assigned_to": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S26",
+      "desc": "หัวหน้าเชิญผู้ร่วมทำจากการ์ดงาน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_assigned"
+      ],
+      "logs": [
+        {
+          "seq": 31,
+          "action": "task_assigned",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "role": "collaborator",
+            "title": "K4-T6 r2",
+            "assigned_to": "71212d67-4c1c-4fba-8453-4aafc452608c",
+            "assignment_type": "leader_assign"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S27",
+      "desc": "ผู้ถูกเชิญปฏิเสธพร้อมเหตุผล",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_declined"
+      ],
+      "logs": [
+        {
+          "seq": 32,
+          "action": "task_declined",
+          "actor": "71212d67-4c1c-4fba-8453-4aafc452608c",
+          "payload": {
+            "title": "K4-T6 r2",
+            "reason": "เหตุผลทดสอบ S27"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S28",
+      "desc": "หัวหน้าสร้างงานเลือกเองสองคน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_created"
+      ],
+      "logs": [
+        {
+          "seq": 33,
+          "action": "task_created",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T7 r2",
+            "deadline": null,
+            "priority": "medium"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S29",
+      "desc": "สมาชิกเข้าร่วมงานว่างเป็นผู้ร่วมทำ",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_joined"
+      ],
+      "logs": [
+        {
+          "seq": 34,
+          "action": "task_joined",
+          "actor": "2c8987b5-0bff-467b-b3c3-a7918363d0b2",
+          "payload": {
+            "role": "collaborator",
+            "title": "K4-T7 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S30",
+      "desc": "สมาชิกรับงานสองคน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_accepted"
+      ],
+      "logs": [
+        {
+          "seq": 35,
+          "action": "task_accepted",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "title": "K4-T5 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S31",
+      "desc": "คนหลักกดงานสองคนเสร็จ",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_status_changed"
+      ],
+      "logs": [
+        {
+          "seq": 36,
+          "action": "task_status_changed",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "to": "completed",
+            "from": "accepted",
+            "title": "K4-T5 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S32",
+      "desc": "ผู้ร่วมทำส่งฟีดแบค (ห้ามมีคะแนนใน log)",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_feedback_added"
+      ],
+      "logs": [
+        {
+          "seq": 37,
+          "action": "task_feedback_added",
+          "actor": "2c8987b5-0bff-467b-b3c3-a7918363d0b2",
+          "payload": {
+            "title": "K4-T5 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S33",
+      "desc": "หัวหน้าลบงาน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "task_deleted"
+      ],
+      "logs": [
+        {
+          "seq": 38,
+          "action": "task_deleted",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "K4-T4 r2 แก้ชื่อ"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S34",
+      "desc": "หัวหน้าเปิดรอบประเมินเพื่อน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "eval_round_opened"
+      ],
+      "logs": [
+        {
+          "seq": 39,
+          "action": "eval_round_opened",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "รอบทดสอบ r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S35",
+      "desc": "หัวหน้าปิดรอบประเมินเพื่อน",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "eval_round_closed"
+      ],
+      "logs": [
+        {
+          "seq": 40,
+          "action": "eval_round_closed",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "title": "รอบทดสอบ r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S36",
+      "desc": "หัวหน้านำสมาชิกออก",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "member_removed"
+      ],
+      "logs": [
+        {
+          "seq": 41,
+          "action": "member_removed",
+          "actor": "b527b741-1925-43af-9fc4-ec5dd8b32bb6",
+          "payload": {
+            "email": "gt.test.k4removed@gt-eval.test"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S37",
+      "desc": "สมาชิกออกจากกลุ่มเอง",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "member_left"
+      ],
+      "logs": [
+        {
+          "seq": 42,
+          "action": "member_left",
+          "actor": "71212d67-4c1c-4fba-8453-4aafc452608c",
+          "payload": {}
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S38",
+      "desc": "หัวหน้าเสนอโอนหัวหน้า (ไม่มี log จนกว่าจะตอบรับ)",
+      "blocked": false,
+      "pass": true,
+      "expected": [],
+      "logs": [],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S39",
+      "desc": "สมาชิกตอบรับเป็นหัวหน้า",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "leader_transferred"
+      ],
+      "logs": [
+        {
+          "seq": 43,
+          "action": "leader_transferred",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "to": "gt.test.k4member@gt-eval.test"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    },
+    {
+      "id": "S40",
+      "desc": "หัวหน้าคนใหม่ลบกลุ่ม (เก็บเข้าคลัง)",
+      "blocked": false,
+      "pass": true,
+      "expected": [
+        "group_deleted"
+      ],
+      "logs": [
+        {
+          "seq": 44,
+          "action": "group_deleted",
+          "actor": "bc5a3da0-60b4-42e4-971d-80bf71626031",
+          "payload": {
+            "group_name": "[TEST] KPI-4 r2"
+          }
+        }
+      ],
+      "problems": [],
+      "notes": []
+    }
+  ]
+}

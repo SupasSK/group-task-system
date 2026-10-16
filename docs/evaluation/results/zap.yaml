@@ -27,14 +27,14 @@ jobs:
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: kpi9-round3-zap-run2.html
+    reportFile: kpi9-round4-zap-run2.html
     reportTitle: ZAP Scanning Report
     template: traditional-html
   type: report
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: kpi9-round3-zap-run2.json
+    reportFile: kpi9-round4-zap-run2.json
     reportTitle: ZAP Scanning Report
     template: traditional-json
   type: report

@@ -1,0 +1,214 @@
+{
+  "kpi": "KPI-9",
+  "criterion": 5,
+  "round": 4,
+  "at": "2026-10-16T12:40:58.132Z",
+  "commit": "a48c5cb",
+  "passed": 25,
+  "total": 25,
+  "results": [
+    {
+      "cat": "A02",
+      "id": "HDR/",
+      "desc": "header ครบที่ / (หน้าสุดท้าย /login)",
+      "pass": true,
+      "detail": "ครบ"
+    },
+    {
+      "cat": "A02",
+      "id": "HDR/login",
+      "desc": "header ครบที่ /login (หน้าสุดท้าย /login)",
+      "pass": true,
+      "detail": "ครบ"
+    },
+    {
+      "cat": "A02",
+      "id": "HDR/dashboard",
+      "desc": "header ครบที่ /dashboard (หน้าสุดท้าย /login)",
+      "pass": true,
+      "detail": "ครบ"
+    },
+    {
+      "cat": "A03",
+      "id": "AUDIT",
+      "desc": "npm audit --omit=dev ไม่มี High/Critical",
+      "pass": true,
+      "detail": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    {
+      "cat": "A03",
+      "id": "LOCK",
+      "desc": "package-lock.json อยู่ใน repo",
+      "pass": true,
+      "detail": "package-lock.json"
+    },
+    {
+      "cat": "A03",
+      "id": "NPM-CI",
+      "desc": "npm ci ติดตั้งจาก lockfile ได้ (ในโฟลเดอร์ชั่วคราว)",
+      "pass": true,
+      "detail": "added 373 packages in 1m"
+    },
+    {
+      "cat": "A04",
+      "id": "HTTPS",
+      "desc": "http:// redirect ไป https://",
+      "pass": true,
+      "detail": "308 -> https://group-task-system.vercel.app/"
+    },
+    {
+      "cat": "A04",
+      "id": "HSTS",
+      "desc": "มี HSTS",
+      "pass": true,
+      "detail": "max-age=63072000; includeSubDomains; preload"
+    },
+    {
+      "cat": "A04",
+      "id": "SECRETS",
+      "desc": "ไฟล์ JS ที่ build แล้ว 23 ไฟล์ไม่มี service_role",
+      "pass": true,
+      "detail": "23 files clean"
+    },
+    {
+      "cat": "A05",
+      "id": "SQLI-STORE",
+      "desc": "ข้อความ SQL injection ถูกเก็บเป็นข้อความ และตาราง tasks ยังอยู่",
+      "pass": true,
+      "detail": {
+        "stored": true,
+        "tasksTableOk": true
+      }
+    },
+    {
+      "cat": "A05",
+      "id": "XSS",
+      "desc": "ข้อความ XSS แสดงเป็นข้อความ ไม่มี script ทำงาน",
+      "pass": true,
+      "detail": {
+        "shownAsText": 2,
+        "xssRan": false,
+        "dialog": false
+      }
+    },
+    {
+      "cat": "A05",
+      "id": "JOIN-CODE",
+      "desc": "รหัสเข้ากลุ่มแบบ injection ไม่ทำให้เข้ากลุ่มใด",
+      "pass": true,
+      "detail": "กรอกได้ \"OR11\" | กรุณากรอกรหัสกลุ่ม 6 ตัวอักษรให้ครบถ้วน (17->17)"
+    },
+    {
+      "cat": "A05",
+      "id": "FILTER",
+      "desc": "ตัวกรอง title = \"x' or '1'='1\" ไม่คืนแถว",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "cat": "A06",
+      "id": "DEADLINE",
+      "desc": "หัวหน้าแก้กำหนดส่งผ่าน API โดยไม่มีเหตุผล ถูกปฏิเสธ",
+      "pass": true,
+      "detail": "a reason is required to change the deadline, assignee or difficulty"
+    },
+    {
+      "cat": "A06",
+      "id": "ASSIGNEE",
+      "desc": "หัวหน้าเปลี่ยนคนทำผ่าน API โดยไม่มีเหตุผล ถูกปฏิเสธ",
+      "pass": true,
+      "detail": "a reason is required to change the deadline, assignee or difficulty"
+    },
+    {
+      "cat": "A06",
+      "id": "DIFFICULTY",
+      "desc": "หัวหน้าเปลี่ยนความยากผ่าน API โดยไม่มีเหตุผล ถูกปฏิเสธ",
+      "pass": true,
+      "detail": "a reason is required to change the deadline, assignee or difficulty"
+    },
+    {
+      "cat": "A06",
+      "id": "WITH-REASON",
+      "desc": "หัวหน้าแก้กำหนดส่งพร้อมเหตุผลผ่าน API ได้ และไม่เก็บเหตุผลค้าง",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "cat": "A06",
+      "id": "REASSIGN",
+      "desc": "มอบหมายงานที่ถูกปฏิเสธใหม่ได้โดยไม่ต้องใส่เหตุผล (ข้อยกเว้น)",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "cat": "A07",
+      "id": "CONFIRM",
+      "desc": "เปิดยืนยันอีเมล (mailer_autoconfirm = false)",
+      "pass": true,
+      "detail": "mailer_autoconfirm=false"
+    },
+    {
+      "cat": "A07",
+      "id": "PWLEN",
+      "desc": "สมัครด้วยรหัสผ่าน 7 ตัวไม่สำเร็จ",
+      "pass": true,
+      "detail": "Password should be at least 8 characters."
+    },
+    {
+      "cat": "A07",
+      "id": "RESET-LINK",
+      "desc": "อีเมลรีเซ็ตพาไป /auth/callback?next=/auth/reset-password",
+      "pass": true,
+      "detail": "https://group-task-system.vercel.app/auth/callback?next=/auth/reset-password"
+    },
+    {
+      "cat": "A07",
+      "id": "RESET-PAGE",
+      "desc": "หน้าตั้งรหัสผ่านใหม่มีอยู่ และปฏิเสธเมื่อไม่มี session จากลิงก์",
+      "pass": true,
+      "detail": "200 noSessionMessage=true"
+    },
+    {
+      "cat": "A07",
+      "id": "RESET-FORM",
+      "desc": "เมื่อมี session หน้าตั้งรหัสผ่านใหม่แสดงฟอร์ม",
+      "pass": true,
+      "detail": "form=true"
+    },
+    {
+      "cat": "A10",
+      "id": "OFFLINE-DASH",
+      "desc": "ตัดการเชื่อมต่อ Supabase แล้ว /dashboard ไม่ค้างที่กำลังโหลด ไม่ใช่หน้า error ของ Next.js และแจ้งข้อผิดพลาดในหน้าเดิม",
+      "pass": true,
+      "detail": {
+        "stuck": false,
+        "nextError": false,
+        "stayed": true,
+        "message": true,
+        "after": "0s",
+        "text": "GroupTask ? ตั้งค่าโปรไฟล์ แดชบอร์ด หัวหน้า สมาชิก ออกจากระบบ v2.0 • GroupTask เชื่อมต่อระบบไม่สำเร็จ ข้อมูลที่แสดงอาจไม่ครบ กรุณาตรวจสอบอิน"
+      }
+    },
+    {
+      "cat": "A10",
+      "id": "OFFLINE-GROUP",
+      "desc": "ตัดการเชื่อมต่อ Supabase แล้ว /dashboard/groups/a14a212b ไม่ค้างที่กำลังโหลด ไม่ใช่หน้า error ของ Next.js และแจ้งข้อผิดพลาดในหน้าเดิม",
+      "pass": true,
+      "detail": {
+        "stuck": false,
+        "nextError": false,
+        "stayed": true,
+        "message": true,
+        "after": "0s",
+        "text": "GroupTask ? ตั้งค่าโปรไฟล์ แดชบอร์ด หัวหน้า สมาชิก ออกจากระบบ v2.0 • GroupTask เชื่อมต่อระบบไม่สำเร็จ ข้อมูลที่แสดงอาจไม่ครบ กรุณาตรวจสอบอิน"
+      }
+    }
+  ]
+}
