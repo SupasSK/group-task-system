@@ -1,0 +1,244 @@
+{
+  "kpi": "KPI-2",
+  "round": 2,
+  "at": "2026-10-16T11:30:21.598Z",
+  "commit": "3c47fa4",
+  "group_id": "74004492-ebb9-4414-a52a-de18f105c738",
+  "archived_group_id": "94114ee9-1205-4f7a-b01f-e18d85db549b",
+  "clockSkewMs": 267,
+  "lastSeenAt": "2026-10-16T11:30:02.946+00:00",
+  "passed": 17,
+  "total": 17,
+  "pass": true,
+  "checks": [
+    {
+      "id": "B-01",
+      "desc": "comment_added แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-02",
+      "desc": "decision_added แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-03",
+      "desc": "task_updated แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-04",
+      "desc": "task_declined แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-05",
+      "desc": "task_status_changed แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-06",
+      "desc": "task_created แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-07",
+      "desc": "task_assigned แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-08",
+      "desc": "task_claimed แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-09",
+      "desc": "task_feedback_added แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "B-10",
+      "desc": "eval_round_opened แสดงเป็นรายการใหม่",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "A-01",
+      "desc": "comment_added ก่อนรับทราบต้องไม่มีป้ายใหม่",
+      "pass": true,
+      "detail": "shown, isNew=false"
+    },
+    {
+      "id": "A-02",
+      "desc": "decision_added ก่อนรับทราบต้องไม่มีป้ายใหม่",
+      "pass": true,
+      "detail": "shown, isNew=false"
+    },
+    {
+      "id": "A-03",
+      "desc": "comment_added ก่อนรับทราบต้องไม่มีป้ายใหม่",
+      "pass": true,
+      "detail": "shown, isNew=false"
+    },
+    {
+      "id": "OWN",
+      "desc": "กิจกรรมของผู้ดูเองต้องไม่แสดง",
+      "pass": true,
+      "detail": "not shown"
+    },
+    {
+      "id": "NEW-N",
+      "desc": "จำนวนรายการที่มีป้ายใหม่ = 10",
+      "pass": true,
+      "detail": "10"
+    },
+    {
+      "id": "UNREAD-CARD",
+      "desc": "ป้ายบนการ์ดกลุ่ม = 10",
+      "pass": true,
+      "detail": "10"
+    },
+    {
+      "id": "UNREAD-SIDEBAR",
+      "desc": "ตัวเลขบน Sidebar = 10",
+      "pass": true,
+      "detail": "10"
+    }
+  ],
+  "topics": [
+    {
+      "title": "เรื่องทั่วไปของกลุ่ม",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ หัวหน้า KPI2 สร้างกลุ่ม · 16 ต.ค. 18:29",
+          "isNew": false
+        },
+        {
+          "text": "ผู้ทดสอบ สมาชิก KPI2 เข้าร่วมกลุ่มด้วยรหัส · 16 ต.ค. 18:29",
+          "isNew": false
+        },
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 เปิดรอบประเมินเพื่อน \"B10\" · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T12",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 ส่งฟีดแบคเพื่อนร่วมงาน · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T11",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 เลือกรับงานเอง · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T10",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 มอบหมายงานให้ ผู้ทดสอบ สมาชิก KPI2 · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T9",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 สร้างงาน (ความสำคัญสูง, กำหนดส่ง ไม่ระบุ) · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T8",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 เปลี่ยนสถานะจาก \"รับแล้ว\" เป็น \"กำลังทำ\" · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T7",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 ปฏิเสธงาน เหตุผล: B04-reason · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T6",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 แก้ไขงาน: กำหนดส่ง จาก \"ไม่ระบุ\" เป็น \"25 พ.ย. 17:00\" เหตุผล: B03-reason · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T5",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 บันทึกการตัดสินใจ: B02 · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T4",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 เขียนบันทึก: B01 · 16 ต.ค. 18:30",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T3",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ สมาชิก KPI2 เขียนบันทึก: A03 · 16 ต.ค. 18:29",
+          "isNew": false
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T2",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ หัวหน้า KPI2 บันทึกการตัดสินใจ: A02 · 16 ต.ค. 18:29",
+          "isNew": false
+        }
+      ]
+    },
+    {
+      "title": "งาน: K2-T1",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ สมาชิก KPI2 เขียนบันทึก: A01 · 16 ต.ค. 18:29",
+          "isNew": false
+        }
+      ]
+    }
+  ]
+}
