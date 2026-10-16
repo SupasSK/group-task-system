@@ -106,6 +106,8 @@ export default function TaskEditModal({
       headcount,
       assigned_to: newAssignee,
       updated_at: new Date().toISOString(),
+      // ฐานข้อมูลตรวจเหตุผลซ้ำ (supabase-task-change-reason.sql) ไม่ได้บังคับแค่ที่หน้าเว็บ
+      change_reason: needsReason ? reason.trim() : null,
     }
     // เปลี่ยนคนหลักของงานที่ยังไม่เสร็จ: คนใหม่ต้องกดรับงานเอง / ล้างคนหลักของงานเลือกเอง: กลับเป็นงานว่าง
     if (assigneeChanged && task.status !== 'completed') {
