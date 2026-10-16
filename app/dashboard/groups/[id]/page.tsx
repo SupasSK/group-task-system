@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
 import CatchUpDigest from '@/components/dashboard/CatchUpDigest'
+import IntegrityAlert from '@/components/dashboard/IntegrityAlert'
 import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel'
 import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
 import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel'
@@ -979,6 +980,8 @@ export default function GroupDetailPage() {
           </div>
         )}
       </div>
+
+      <IntegrityAlert groupId={id} />
 
       {/* ===== คำขอให้เป็นหัวหน้า (เห็นเฉพาะคนที่ถูกเสนอ) ===== */}
       {group.pending_leader_id === currentUserId && !isLeader && (
