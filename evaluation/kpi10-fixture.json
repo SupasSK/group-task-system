@@ -1,0 +1,19 @@
+{
+  "group_id": "775f0da3-2c2c-4a96-ace5-ac8c0070cfa5",
+  "join_code": "CRSR3R",
+  "leader": "gt.test.k6leader@gt-eval.test",
+  "accounts": [
+    "gt.test.k6leader@gt-eval.test",
+    "gt.test.member@gt-eval.test",
+    "gt.test.member2@gt-eval.test",
+    "gt.test.collab@gt-eval.test",
+    "gt.test.k1member@gt-eval.test",
+    "gt.test.k1member2@gt-eval.test",
+    "gt.test.k2member@gt-eval.test",
+    "gt.test.k2viewer@gt-eval.test",
+    "gt.test.k4member@gt-eval.test",
+    "gt.test.k4member2@gt-eval.test",
+    "gt.test.k4collab@gt-eval.test"
+  ],
+  "createdAt": "2026-10-16T12:55:18.824Z"
+}
