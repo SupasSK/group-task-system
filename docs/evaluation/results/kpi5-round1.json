@@ -1,0 +1,134 @@
+{
+  "kpi": "KPI-5",
+  "round": 1,
+  "at": "2026-10-16T12:02:12.095Z",
+  "commit": "26ab97e",
+  "groups": {
+    "control": {
+      "group_id": "3f1b2755-969a-448a-b48a-7b72db1a5d1c",
+      "name": "[TEST] KPI-5 control r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    },
+    "edit": {
+      "group_id": "2ff05f6c-c4b6-4650-8730-408ca661e5e1",
+      "name": "[TEST] KPI-5 edit r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    },
+    "delete": {
+      "group_id": "c7c0f0d0-ccdd-4762-8d5e-4cc9e74fcc28",
+      "name": "[TEST] KPI-5 delete r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    },
+    "insert": {
+      "group_id": "dcfdd327-1ea1-4eec-83d1-300db832c472",
+      "name": "[TEST] KPI-5 insert r1",
+      "logCount": 14,
+      "maxSeq": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      }
+    }
+  },
+  "checkedAt": "2026-10-16T12:08:07.745Z",
+  "checkCommit": "40dc849",
+  "pass": true,
+  "a09BannerPass": true,
+  "results": [
+    {
+      "kind": "control",
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "expectedBroken": null,
+      "uiText": "ประวัติครบถ้วน ไม่มีรายการใดถูกแก้ไขหรือลบ",
+      "banner": false,
+      "checks": {
+        "rpc": true,
+        "ui": true,
+        "a09Banner": true
+      },
+      "pass": true
+    },
+    {
+      "kind": "edit",
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "expectedBroken": 5,
+      "uiText": "พบความผิดปกติของประวัติที่ลำดับ 5",
+      "banner": true,
+      "checks": {
+        "rpc": true,
+        "ui": true,
+        "a09Banner": true
+      },
+      "pass": true
+    },
+    {
+      "kind": "delete",
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "expectedBroken": 6,
+      "uiText": "พบความผิดปกติของประวัติที่ลำดับ 6",
+      "banner": true,
+      "checks": {
+        "rpc": true,
+        "ui": true,
+        "a09Banner": true
+      },
+      "pass": true
+    },
+    {
+      "kind": "insert",
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 15
+      },
+      "expectedBroken": 15,
+      "uiText": "พบความผิดปกติของประวัติที่ลำดับ 15",
+      "banner": true,
+      "checks": {
+        "rpc": true,
+        "ui": true,
+        "a09Banner": true
+      },
+      "pass": true
+    }
+  ]
+}
