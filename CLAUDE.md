@@ -17,6 +17,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 
 - `npm run lint` เรียก `next lint` ซึ่งถูกถอดออกใน Next.js 16 แล้ว จึงใช้ไม่ได้ ให้เรียก ESLint ตรง ๆ
 - โปรเจกต์ยังไม่มีชุดทดสอบและไม่มี test runner
+- `package.json` ยังมี `@supabase/auth-helpers-nextjs` แต่ไม่มีโค้ดไหนใช้ ให้ใช้ `@supabase/ssr` ตามที่ใช้อยู่
 - ต้องมี `.env.local` ที่กำหนด `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## สถาปัตยกรรม
@@ -42,7 +43,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 - `supabase-member-leave.sql` — RPC `leave_group(p_group_id)` ให้สมาชิกออกเอง (หัวหน้าต้องโอนหัวหน้าก่อน) จัดการงานแบบเดียวกับ `remove_group_member` และล้าง `pending_leader_id` ถ้าคำขอค้างอยู่ที่คนนี้ หน้าเว็บบันทึก `member_left` ก่อนเรียก RPC ปุ่มอยู่ที่แถวของตัวเองในแท็บสมาชิก
 - `supabase-leader-transfer.sql` — คอลัมน์ `groups.pending_leader_id` (คำขอโอนหัวหน้าที่รอตอบรับ ทีละคน) กับ RPC `request_leader_transfer(p_group_id, p_user_id)` (หัวหน้าเท่านั้น ส่ง null เพื่อยกเลิก) และ `respond_leader_transfer(p_group_id, p_accept)` (คนที่ถูกเสนอเท่านั้น ถ้าตอบรับจะสลับ role กับหัวหน้าเดิมและเปลี่ยน `groups.created_by` เป็นหัวหน้าคนใหม่ เพราะ policy แก้ไขกลุ่มและหน้า `leader` อิง `created_by`) ปุ่มอยู่ในแท็บสมาชิก แถบตอบรับอยู่ใต้การ์ดข้อมูลกลุ่มของ `groups/[id]`
 - `supabase-profile.sql` — ให้ผู้ใช้แก้ `users.full_name` ของตัวเองได้ (สิทธิ์ UPDATE ระดับคอลัมน์เฉพาะ `full_name`) ชื่อที่แสดงอ่านจาก `public.users` ไม่ใช่ `user_metadata` ซึ่งถูกทับด้วยชื่อจาก Google ทุกครั้งที่ล็อกอิน
-- `supabase-avatar.sql` — รูปโปรไฟล์: `users.avatar_url` คือรูปจาก Google (trigger `zz_sync_google_avatar` บน `auth.users` คัดลอกให้) ส่วน `users.custom_avatar_url` คือรูปที่อัปโหลดเองใน bucket `avatars` (โฟลเดอร์ `<user_id>/`, ไม่เกิน 2 MB) แสดง `custom_avatar_url ?? avatar_url` ผ่าน `components/ui/UserAvatar.tsx` (ไม่มีรูปจะแสดงตัวอักษรแรกของชื่อ) ตอนนี้ใช้ใน Sidebar, หน้า `profile` และแท็บสมาชิกของ `groups/[id]`
+- `supabase-avatar.sql` — รูปโปรไฟล์: `users.avatar_url` คือรูปจาก Google (trigger `zz_sync_google_avatar` บน `auth.users` คัดลอกให้) ส่วน `users.custom_avatar_url` คือรูปที่อัปโหลดเองใน bucket `avatars` (โฟลเดอร์ `<user_id>/`, ไม่เกิน 2 MB) แสดง `custom_avatar_url ?? avatar_url` ผ่าน `components/ui/UserAvatar.tsx` (ไม่มีรูปจะแสดงตัวอักษรแรกของชื่อ) ตอนนี้ใช้ใน Sidebar, หน้า `profile`, `CatchUpDigest` และแท็บสมาชิกของ `groups/[id]`
 - `supabase-group-archive.sql` — คอลัมน์ `groups.archived_at` กับ RPC `archive_group(p_group_id)` (หัวหน้าเท่านั้น) ลบกลุ่มแบบเก็บเข้าคลัง ข้อมูลและ log อยู่ครบ หน้า `dashboard`, `leader`, `member` กรองกลุ่มที่มี `archived_at` ออก และ `groups/[id]` แสดงว่าไม่พบกลุ่ม ปุ่มลบ (กดยืนยันครั้งเดียว) อยู่ในการ์ดข้อมูลกลุ่มด้านบนของ `groups/[id]` ถ้าเพิ่มหน้าใหม่ที่ดึงรายชื่อกลุ่มต้องกรองด้วย
 
 - Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`, `task_comments.comment_id`
@@ -54,7 +55,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 
 ### หน้าต่าง ๆ
 - **ข้อมูลจริง:** `dashboard/page.tsx`, `leader`, `member`, `profile` (แก้ชื่อที่แสดง), `projects/new` (สร้างกลุ่ม), `projects/join` (เข้ากลุ่มด้วยรหัส 6 ตัว) และ `groups/[id]` ซึ่งเป็นหน้าหลักของกลุ่ม มีแท็บ ภาพรวม/งาน/สมาชิก/สรุป/ประเมินเพื่อน (เลือกแท็บได้ด้วย query `?tab=`) และ flow งานทั้งหมด — สร้าง, มอบหมาย, รับ, ปฏิเสธ, claim, เปลี่ยนสถานะ
-- ส่วนประกอบของหน้ากลุ่มแยกไว้ใน `components/dashboard/`: `CatchUpDigest` (สรุปสิ่งที่พลาดไป + ตรวจ log, ใช้ใน `leader` ด้วย), `TaskWorkPanel` (ลิงก์ผลงาน + ความเห็น/การตัดสินใจของงาน), `ParticipationSummary` (คะแนนการมีส่วนร่วม, ใช้ใน `leader` ด้วย), `PeerEvaluation`, `TaskEditModal` (หัวหน้าแก้ไขงาน ต้องใส่เหตุผลเมื่อเปลี่ยนกำหนดส่ง/คนทำ/ความยาก)
+- ส่วนประกอบของหน้ากลุ่มแยกไว้ใน `components/dashboard/`: `CatchUpDigest` (สรุปสิ่งที่พลาดไป + ตรวจ log, ใช้ใน `leader` ด้วย), `TaskWorkPanel` (ลิงก์ผลงาน + ความเห็น/การตัดสินใจของงาน), `ParticipationSummary` (คะแนนการมีส่วนร่วม, ใช้ใน `leader` ด้วย, ปุ่มพิมพ์รายงานเรียก `window.print()` และ `@media print` ใน `globals.css` จะพิมพ์เฉพาะองค์ประกอบที่มีคลาส `gt-print-area`), `PeerEvaluation`, `TaskEditModal` (หัวหน้าแก้ไขงาน ต้องใส่เหตุผลเมื่อเปลี่ยนกำหนดส่ง/คนทำ/ความยาก)
 - **redirect ทิ้ง:** `tasks`, `tasks/new` → `/dashboard/leader`; `projects`, `activity`, `contributions` → `/dashboard`
 - ไม่มีข้อมูลตัวอย่าง (mock) เหลือในโค้ดแล้ว ทุกหน้าดึงข้อมูลจริงจาก Supabase
 - ความคืบหน้าของโครงการคำนวณที่เดียวคือ `lib/projectProgress.ts` (งาน `completed` / งานทั้งหมด)
@@ -65,4 +66,4 @@ flow ของงานถูกเขียนซ้ำอยู่ทั้ง
 Sidebar ลิงก์ไปแค่ `/dashboard`, `/dashboard/leader`, `/dashboard/member` หน้าอื่นเข้าถึงผ่านลิงก์ในเนื้อหา
 
 ### สไตล์
-Tailwind v4 โหลดผ่าน `@import "tailwindcss"` ใน `app/globals.css` (PostCSS plugin `@tailwindcss/postcss`) `tailwind.config.ts` ไม่ได้ถูกอ้างด้วย `@config` จึงไม่มีผล คลาสร่วมของระบบคือ `gt-card`, `gt-input`, `gt-btn`, `gt-gradient`, `gt-gradient-x` ใน `globals.css` ไอคอนใช้ `lucide-react`
+Tailwind v4 โหลดผ่าน `@import "tailwindcss"` ใน `app/globals.css` (PostCSS plugin `@tailwindcss/postcss`) `tailwind.config.ts` ไม่ได้ถูกอ้างด้วย `@config` จึงไม่มีผล คลาสร่วมของระบบคือ `gt-card`, `gt-input`, `gt-btn`, `gt-gradient`, `gt-gradient-x` ใน `globals.css` ไอคอนใช้ `lucide-react` (`components/ui/ProgressBar.tsx` มีอยู่แต่ยังไม่มีหน้าไหนใช้)
