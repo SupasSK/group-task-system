@@ -1,0 +1,243 @@
+{
+  "kpi": "KPI-1",
+  "round": 1,
+  "at": "2026-10-16T11:02:25.965Z",
+  "commit": "de90763",
+  "groups": [
+    "85807b16-b4e6-4fd6-a1fe-2b436beba086",
+    "9568cec3-6ee6-43ce-8b21-3430e4aeccf5",
+    "98a5f819-856e-401f-a673-6d0ea5aad3a2"
+  ],
+  "tasks": 15,
+  "transitions": 30,
+  "statusesCovered": [
+    "accepted",
+    "in_progress",
+    "completed",
+    "rejected",
+    "pending",
+    "assigned"
+  ],
+  "matched": 1085,
+  "values": 1085,
+  "pass": true,
+  "checkpoints": [
+    {
+      "checkpoint": 0,
+      "change": "สถานะเริ่มต้น",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 1,
+      "change": "G1-T1 -> accepted",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 2,
+      "change": "G2-T2 -> in_progress",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 3,
+      "change": "G3-T4 -> completed",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 4,
+      "change": "G2-T1 -> rejected",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 5,
+      "change": "G3-T3 -> pending",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 6,
+      "change": "G1-T6 -> assigned",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 7,
+      "change": "G3-T2 -> accepted",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 8,
+      "change": "G1-T5 -> in_progress",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 9,
+      "change": "G3-T1 -> completed",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 10,
+      "change": "G1-T4 -> rejected",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 11,
+      "change": "G2-T5 -> pending",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 12,
+      "change": "G1-T3 -> assigned",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 13,
+      "change": "G2-T4 -> accepted",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 14,
+      "change": "G1-T2 -> in_progress",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 15,
+      "change": "G2-T3 -> completed",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 16,
+      "change": "G1-T1 -> rejected",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 17,
+      "change": "G2-T2 -> pending",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 18,
+      "change": "G3-T4 -> assigned",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 19,
+      "change": "G2-T1 -> accepted",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 20,
+      "change": "G3-T3 -> in_progress",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 21,
+      "change": "G1-T6 -> completed",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 22,
+      "change": "G3-T2 -> rejected",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 23,
+      "change": "G1-T5 -> pending",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 24,
+      "change": "G3-T1 -> assigned",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 25,
+      "change": "G1-T4 -> accepted",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 26,
+      "change": "G2-T5 -> in_progress",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 27,
+      "change": "G1-T3 -> completed",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 28,
+      "change": "G2-T4 -> rejected",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 29,
+      "change": "G1-T2 -> pending",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    },
+    {
+      "checkpoint": 30,
+      "change": "G2-T3 -> assigned",
+      "values": 35,
+      "pass": true,
+      "mismatches": []
+    }
+  ]
+}

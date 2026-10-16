@@ -1,0 +1,33 @@
+PASS # 0 สถานะเริ่มต้น          35/35
+PASS # 1 G1-T1 -> accepted      35/35
+PASS # 2 G2-T2 -> in_progress   35/35
+PASS # 3 G3-T4 -> completed     35/35
+PASS # 4 G2-T1 -> rejected      35/35
+PASS # 5 G3-T3 -> pending       35/35
+PASS # 6 G1-T6 -> assigned      35/35
+PASS # 7 G3-T2 -> accepted      35/35
+PASS # 8 G1-T5 -> in_progress   35/35
+PASS # 9 G3-T1 -> completed     35/35
+PASS #10 G1-T4 -> rejected      35/35
+PASS #11 G2-T5 -> pending       35/35
+PASS #12 G1-T3 -> assigned      35/35
+PASS #13 G2-T4 -> accepted      35/35
+PASS #14 G1-T2 -> in_progress   35/35
+PASS #15 G2-T3 -> completed     35/35
+PASS #16 G1-T1 -> rejected      35/35
+PASS #17 G2-T2 -> pending       35/35
+PASS #18 G3-T4 -> assigned      35/35
+PASS #19 G2-T1 -> accepted      35/35
+PASS #20 G3-T3 -> in_progress   35/35
+PASS #21 G1-T6 -> completed     35/35
+PASS #22 G3-T2 -> rejected      35/35
+PASS #23 G1-T5 -> pending       35/35
+PASS #24 G3-T1 -> assigned      35/35
+PASS #25 G1-T4 -> accepted      35/35
+PASS #26 G2-T5 -> in_progress   35/35
+PASS #27 G1-T3 -> completed     35/35
+PASS #28 G2-T4 -> rejected      35/35
+PASS #29 G1-T2 -> pending       35/35
+PASS #30 G2-T3 -> assigned      35/35
+
+KPI-1 r1: 1085/1085 values matched over 31 checkpoints; statuses covered: accepted, in_progress, completed, rejected, pending, assigned

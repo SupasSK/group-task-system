@@ -1,0 +1,334 @@
+{
+  "kpi": "KPI-6",
+  "round": 1,
+  "at": "2026-10-16T10:59:44.305Z",
+  "commit": "de90763",
+  "group_id": "c7d508b0-0487-49f4-82a6-4d1468d7695f",
+  "passed": 4,
+  "total": 4,
+  "pass": true,
+  "results": [
+    {
+      "name": "ผู้ทดสอบ หัวหน้า KPI6",
+      "exactTotal": 15,
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "doneCount",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "onTime",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "rejected",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "activity",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "activeWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "totalWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "ผู้ทดสอบ เอ KPI6",
+      "exactTotal": 87.5,
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 87.5,
+          "shown": 88,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 40,
+          "shown": 40,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 13,
+          "shown": 13,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 20,
+          "shown": 20,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "doneCount",
+          "expected": 2,
+          "shown": 2,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 35,
+          "shown": 35,
+          "pass": true
+        },
+        {
+          "field": "onTime",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "rejected",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "activity",
+          "expected": 5,
+          "shown": 5,
+          "pass": true
+        },
+        {
+          "field": "activeWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "totalWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "ผู้ทดสอบ บี KPI6",
+      "exactTotal": 88.66666666666666,
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 88.667,
+          "shown": 89,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 37,
+          "shown": 37,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 25,
+          "shown": 25,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 12,
+          "shown": 12,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "doneCount",
+          "expected": 2,
+          "shown": 2,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 23,
+          "shown": 23,
+          "pass": true
+        },
+        {
+          "field": "onTime",
+          "expected": 2,
+          "shown": 2,
+          "pass": true
+        },
+        {
+          "field": "rejected",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "activity",
+          "expected": 3,
+          "shown": 3,
+          "pass": true
+        },
+        {
+          "field": "activeWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "totalWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "ผู้ทดสอบ ซี KPI6",
+      "exactTotal": 67.5,
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 67.5,
+          "shown": 68,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 40,
+          "shown": 40,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 13,
+          "shown": 13,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "doneCount",
+          "expected": 2,
+          "shown": 2,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 42,
+          "shown": 42,
+          "pass": true
+        },
+        {
+          "field": "onTime",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "rejected",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "activity",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "activeWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        },
+        {
+          "field": "totalWeeks",
+          "expected": 1,
+          "shown": 1,
+          "pass": true
+        }
+      ]
+    }
+  ],
+  "rawCards": [
+    "ผู้ทดสอบ บี KPI6\n\nสมาชิก\n\n89/100\n\nภาระงาน\n37/40\nตรงเวลา\n25/25\nกิจกรรม\n12/20\nสม่ำเสมอ\n15/15\nเสร็จ 2 งาน\n23% ของกลุ่ม\nทันกำหนด 2/2\nปฏิเสธ 0\nกิจกรรม 3 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์\n\nผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ",
+    "ผู้ทดสอบ เอ KPI6\n\nสมาชิก\n\n88/100\n\nภาระงาน\n40/40\nตรงเวลา\n13/25\nกิจกรรม\n20/20\nสม่ำเสมอ\n15/15\nเสร็จ 2 งาน\n35% ของกลุ่ม\nทันกำหนด 1/2\nปฏิเสธ 1\nกิจกรรม 5 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์\n\nผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ",
+    "ผู้ทดสอบ ซี KPI6\n\nสมาชิก\n\n68/100\n\nภาระงาน\n40/40\nตรงเวลา\n13/25\nกิจกรรม\n0/20\nสม่ำเสมอ\n15/15\nเสร็จ 2 งาน\n42% ของกลุ่ม\nทันกำหนด 1/2\nปฏิเสธ 1\nกิจกรรม 0 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์\n\nผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ",
+    "ผู้ทดสอบ หัวหน้า KPI6\n\nหัวหน้า\n\n15/100\n\nภาระงาน\n0/40\nตรงเวลา\n0/25\nกิจกรรม\n0/20\nสม่ำเสมอ\n15/15\nเสร็จ 0 งาน\n0% ของกลุ่ม\nทันกำหนด 0/0\nปฏิเสธ 0\nกิจกรรม 0 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์"
+  ]
+}
