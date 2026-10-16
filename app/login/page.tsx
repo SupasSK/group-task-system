@@ -56,7 +56,7 @@ function getThaiAuthErrorMessage(error: any): string {
     return 'อีเมลนี้ยังไม่ได้ยืนยันตัวตน กรุณาตรวจสอบกล่องจดหมายของคุณ หรือกดลิงก์ยืนยัน'
   }
   if (msg.includes('password') && (msg.includes('6 characters') || msg.includes('short') || msg.includes('least'))) {
-    return 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร'
+    return 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร'
   }
   if (msg.includes('signup disabled') || code === 'signup_disabled') {
     return 'ระบบปิดรับการลงทะเบียนชั่วคราว'
@@ -192,8 +192,8 @@ export default function LoginPage() {
     }
 
     // 2. ตรวจสอบความยาวรหัสผ่าน
-    if (password.length < 6) {
-      setMessage({ type: 'error', text: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' })
+    if (password.length < 8) {
+      setMessage({ type: 'error', text: 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' })
       setLoading(false)
       return
     }
@@ -306,7 +306,8 @@ export default function LoginPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(cleanForgotEmail, {
-        redirectTo: `${window.location.origin}/login?reset=true`,
+        // ลิงก์ในอีเมลผ่าน callback เพื่อแลก code เป็น session แล้วไปหน้าตั้งรหัสผ่านใหม่
+        redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
       })
 
       if (error) {
@@ -602,7 +603,7 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder={isLogin ? 'กรอกรหัสผ่านของคุณ' : 'ตั้งรหัสผ่านอย่างน้อย 6 ตัวอักษร'}
+                    placeholder={isLogin ? 'กรอกรหัสผ่านของคุณ' : 'ตั้งรหัสผ่านอย่างน้อย 8 ตัวอักษร'}
                     className="w-full pl-11 pr-11 py-3 bg-white border border-slate-200 rounded-2xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   />
                   <button
