@@ -14,8 +14,13 @@ import {
   Activity,
   Award,
   CheckCircle2,
-  AlertCircle,
-  Tag,
+  Crown,
+  FolderOpen,
+  ClipboardList,
+  CircleDashed,
+  PlayCircle,
+  User,
+  Lightbulb,
   ArrowRight,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase';
@@ -35,17 +40,14 @@ interface RealLeaderGroup {
 
 interface KanbanTask {
   id: string;
-  emoji: string;
   title: string;
   tag: string;
   tagColor: string;
   status: 'todo' | 'doing' | 'done';
-  startDate: string;
+  statusLabel: string;
+  statusClass: string;
   deadline: string;
-  periodLabel: string; // เช่น '12 ต.ค. - 20 ต.ค.'
-  timeStatus: 'early' | 'urgent' | 'completed' | 'normal';
-  timeStatusLabel: string; // เช่น 'เหลืออีก 2 วัน (ช่วงเร่งด่วน)', 'เสร็จตรงเวลา'
-  timeProgressPercent: number; // % ของช่วงเวลาที่ผ่านไป
+  overdue: boolean;
   assignee: string;
 }
 
@@ -56,25 +58,28 @@ interface LeaderProject {
   progress: number;
   totalTasks: number;
   tasks: KanbanTask[];
-  members: {
-    name: string;
-    initials: string;
-    color: string;
-    assigned: number;
-    done: number;
-    pending: number;
-    lastActivity: string;
-  }[];
-  activity: {
-    icon: string;
-    text: string;
-    time: string;
-  }[];
-  // ข้อมูลดิบจากฐานข้อมูล สำหรับคำนวณคะแนนการมีส่วนร่วม (โครงการตัวอย่างไม่มี)
-  raw?: { members: any[]; tasks: any[]; responses: any[] };
+  memberCount: number;
+  // ข้อมูลดิบจากฐานข้อมูล สำหรับคำนวณคะแนนการมีส่วนร่วม
+  raw: { members: any[]; tasks: any[]; responses: any[] };
 }
 
 type ProjectTab = 'tasks' | 'activity' | 'contributions';
+
+// ป้ายสถานะตามค่าจริงในฐานข้อมูล
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  pending: { label: 'รอผู้รับ', className: 'bg-slate-100 text-slate-600' },
+  assigned: { label: 'รอตอบรับ', className: 'bg-amber-100 text-amber-800' },
+  rejected: { label: 'ถูกปฏิเสธ', className: 'bg-rose-100 text-rose-700' },
+  accepted: { label: 'รับแล้ว', className: 'bg-indigo-100 text-indigo-700' },
+  in_progress: { label: 'กำลังทำ', className: 'bg-blue-100 text-blue-700' },
+  completed: { label: 'เสร็จแล้ว', className: 'bg-emerald-100 text-emerald-700' },
+};
+
+const COLUMNS = [
+  { key: 'todo', label: 'รอเริ่ม', headClass: 'bg-amber-100 text-amber-800', icon: CircleDashed, iconClass: 'text-slate-400', cardClass: 'border-slate-200/80 hover:border-slate-300' },
+  { key: 'doing', label: 'กำลังทำ', headClass: 'bg-blue-100 text-blue-800', icon: PlayCircle, iconClass: 'text-blue-500', cardClass: 'border-blue-200/80 hover:border-blue-300' },
+  { key: 'done', label: 'เสร็จแล้ว', headClass: 'bg-emerald-100 text-emerald-800', icon: CheckCircle2, iconClass: 'text-emerald-500', cardClass: 'border-slate-200/80 hover:border-emerald-300 opacity-90 hover:opacity-100' },
+] as const;
 
 export default function LeaderPage() {
   const supabase = createClient();
@@ -166,6 +171,8 @@ export default function LeaderPage() {
           responseRows = data || [];
         }
 
+        const now = new Date();
+
         // 4. แปลงกลุ่มจริงเป็น LeaderProject พร้อม Kanban Board
         const mappedProjects: LeaderProject[] = groupRows.map((g: any) => {
           const groupTasks = (taskRows || []).filter((t: any) => t.group_id === g.group_id);
@@ -184,67 +191,33 @@ export default function LeaderPage() {
             const deadlineText = t.deadline
               ? new Date(t.deadline).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' })
               : 'ไม่ระบุ';
+            const badge = STATUS_BADGE[t.status] || STATUS_BADGE.pending;
 
             return {
               id: t.task_id,
-              emoji: status === 'done' ? '✅' : status === 'doing' ? '⚡' : '📋',
               title: t.title,
               tag: t.assignment_type === 'open_choice' ? 'เปิดให้เลือก' : 'มอบหมาย',
               tagColor: t.assignment_type === 'open_choice' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800',
               status,
-              startDate: new Date(t.created_at).toLocaleDateString('th-TH', { month: 'short', day: 'numeric' }),
+              statusLabel: badge.label,
+              statusClass: badge.className,
               deadline: deadlineText,
-              periodLabel: `กำหนดส่ง: ${deadlineText}`,
-              timeStatus: status === 'done' ? 'completed' : status === 'doing' ? 'urgent' : 'normal',
-              timeStatusLabel:
-                status === 'done'
-                  ? '✅ เสร็จสมบูรณ์แล้ว'
-                  : status === 'doing'
-                  ? '⚡ กำลังดำเนินงาน'
-                  : '⏳ รอเริ่มงาน / รอคนรับ',
-              timeProgressPercent: status === 'done' ? 100 : status === 'doing' ? 65 : 15,
+              overdue:
+                !!t.deadline && new Date(t.deadline) < now && t.status !== 'completed' && t.status !== 'rejected',
               assignee: assigneeName,
             };
           });
 
           const groupMembers = (memberRows || []).filter((m: any) => m.group_id === g.group_id);
-          const membersList = groupMembers.map((m: any) => {
-            const mName = userMap[m.user_id] || 'สมาชิก';
-            const initials = mName.substring(0, 2);
-            const mAssignedTasks = groupTasks.filter((t: any) => t.assigned_to === m.user_id);
-            const mDone = mAssignedTasks.filter((t: any) => t.status === 'completed').length;
-            const mPending = mAssignedTasks.filter((t: any) => t.status !== 'completed').length;
-
-            return {
-              name: mName,
-              initials,
-              color: 'bg-indigo-500',
-              assigned: mAssignedTasks.length,
-              done: mDone,
-              pending: mPending,
-              lastActivity: 'ร่วมงานในกลุ่ม',
-            };
-          });
-
-          const total = kanbanTasks.length;
-          const progress = projectProgress(groupTasks);
 
           return {
             id: g.group_id,
             title: g.group_name,
             description: g.description || 'โครงการบริหารงานกลุ่ม',
-            progress,
-            totalTasks: total,
+            progress: projectProgress(groupTasks),
+            totalTasks: kanbanTasks.length,
             tasks: kanbanTasks,
-            members: membersList,
-            activity: [
-              { icon: '📁', text: `สร้างกลุ่ม "${g.group_name}" สำเร็จ`, time: 'ระบบ' },
-              ...kanbanTasks.slice(0, 3).map((t) => ({
-                icon: t.status === 'done' ? '✅' : '📝',
-                text: `งาน "${t.title}" (${t.assignee})`,
-                time: t.status === 'done' ? 'เสร็จแล้ว' : 'กำลังดำเนินการ',
-              })),
-            ],
+            memberCount: groupMembers.length,
             raw: {
               members: groupMembers.map((m: any) => ({
                 user_id: m.user_id,
@@ -288,7 +261,10 @@ export default function LeaderPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-slate-800">👑 มุมมองหัวหน้า</h1>
+          <h1 className="flex items-center gap-2.5 text-[28px] font-bold text-slate-800">
+            <Crown size={26} className="text-amber-500" />
+            มุมมองหัวหน้า
+          </h1>
           <p className="text-[13px] text-slate-500 mt-1">
             จัดการกลุ่ม มอบหมายงาน ติดตามความคืบหน้ารูปแบบบอร์ด และสรุปผลการมีส่วนร่วม
           </p>
@@ -299,9 +275,35 @@ export default function LeaderPage() {
           className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 px-5 py-2.5 text-[14px] font-semibold text-white shadow-lg shadow-indigo-200 hover:opacity-90 hover:scale-[1.02] transition-all"
         >
           <Plus size={18} />
-          <span>+ สร้างกลุ่มใหม่</span>
+          <span>สร้างกลุ่มใหม่</span>
         </Link>
       </div>
+
+      {loading && (
+        <div className="gt-card flex h-[320px] items-center justify-center animate-pulse text-[13px] text-slate-400">
+          กำลังโหลดข้อมูล...
+        </div>
+      )}
+
+      {/* ยังไม่มีกลุ่มที่เป็นหัวหน้า */}
+      {!loading && realLeaderGroups.length === 0 && (
+        <section className="gt-card p-8 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+            <Crown size={24} />
+          </div>
+          <h2 className="text-[18px] font-bold text-slate-800">ยังไม่มีกลุ่มที่คุณเป็นหัวหน้า</h2>
+          <p className="mx-auto mt-1 max-w-sm text-[13px] text-slate-500">
+            สร้างกลุ่มใหม่แล้วแชร์รหัสเข้าร่วม 6 ตัวให้เพื่อนในทีม
+          </p>
+          <Link
+            href="/dashboard/projects/new"
+            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 px-5 py-2.5 text-[14px] font-semibold text-white shadow-lg shadow-indigo-200 hover:opacity-90 transition-all"
+          >
+            <Plus size={18} />
+            สร้างกลุ่ม
+          </Link>
+        </section>
+      )}
 
       {/* รายการกลุ่มจริงที่คุณสร้าง (Real Supabase Groups) */}
       {realLeaderGroups.length > 0 && (
@@ -322,7 +324,8 @@ export default function LeaderPage() {
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 flex items-center gap-1">
-                      👑 คุณเป็นหัวหน้า
+                      <Crown size={12} />
+                      คุณเป็นหัวหน้า
                     </span>
                     <span className="text-[11px] text-slate-400">
                       {g.work_mode === 'leader_all' ? 'หัวหน้าคุม' : g.work_mode === 'member_choose' ? 'สมาชิกเลือก' : 'แบบผสม'}
@@ -364,12 +367,12 @@ export default function LeaderPage() {
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between text-[13px]">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
                     <Link
                       href={`/dashboard/groups/${g.group_id}`}
-                      className="text-indigo-600 font-semibold hover:underline"
+                      className="inline-flex items-center gap-1 text-indigo-600 font-semibold hover:underline"
                     >
-                      เข้าสู่ห้องกลุ่ม →
+                      เข้าสู่ห้องกลุ่ม <ArrowRight size={14} />
                     </Link>
                     <div className="flex items-center gap-2">
                       <Link
@@ -381,9 +384,10 @@ export default function LeaderPage() {
                       </Link>
                       <Link
                         href={`/dashboard/groups/${g.group_id}?tab=tasks&new=1`}
-                        className="text-slate-500 hover:text-indigo-600 font-medium text-[12px]"
+                        className="inline-flex items-center gap-1 text-slate-500 hover:text-indigo-600 font-medium text-[12px]"
                       >
-                        + มอบหมายงาน
+                        <Plus size={13} />
+                        มอบหมายงาน
                       </Link>
                     </div>
                   </div>
@@ -395,6 +399,7 @@ export default function LeaderPage() {
       )}
 
       {/* โครงการและเครื่องมือจัดการงาน */}
+      {realProjects.length > 0 && (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="text-[20px] font-bold text-slate-800">
@@ -402,32 +407,29 @@ export default function LeaderPage() {
           </h2>
         </div>
 
-        {!loading && realProjects.length === 0 && (
-          <div className="gt-card p-8 text-center text-[14px] text-slate-500">
-            ยังไม่มีกลุ่มที่คุณเป็นหัวหน้า กด &quot;สร้างกลุ่มใหม่&quot; เพื่อเริ่มต้น
-          </div>
-        )}
-
         {realProjects.map((proj) => {
           const currentTab = activeTabs[proj.id] || 'tasks';
-
-          const todoTasks = proj.tasks.filter((t) => t.status === 'todo');
-          const doingTasks = proj.tasks.filter((t) => t.status === 'doing');
-          const doneTasks = proj.tasks.filter((t) => t.status === 'done');
+          const newTaskHref = `/dashboard/groups/${proj.id}?tab=tasks&new=1`;
 
           return (
-            <section key={proj.id} className="gt-card p-6 space-y-6 border border-slate-100 shadow-sm">
+            <section key={proj.id} className="gt-card p-4 sm:p-6 space-y-6 border border-slate-100 shadow-sm">
               {/* Project Header */}
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
-                <div className="flex-1 min-w-[260px]">
+                <div className="flex-1 min-w-[220px]">
                   <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">📁</span>
+                    <FolderOpen size={24} className="shrink-0 text-indigo-500" />
                     <h2 className="text-[22px] font-bold text-slate-800">{proj.title}</h2>
                   </div>
                   <p className="mt-1 text-[13px] text-slate-500 leading-relaxed">{proj.description}</p>
-                  <div className="mt-3 flex items-center gap-4 text-[13px] text-slate-600">
-                    <span className="font-medium text-slate-700">📋 {proj.totalTasks} งานทั้งหมด</span>
-                    <span className="font-medium text-slate-700">👥 {proj.members.length} สมาชิก</span>
+                  <div className="mt-3 flex items-center gap-4 text-[13px] font-medium text-slate-700">
+                    <span className="flex items-center gap-1.5">
+                      <ClipboardList size={15} className="text-slate-400" />
+                      {proj.totalTasks} งานทั้งหมด
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Users size={15} className="text-slate-400" />
+                      {proj.memberCount} สมาชิก
+                    </span>
                   </div>
                 </div>
 
@@ -448,284 +450,172 @@ export default function LeaderPage() {
               </div>
 
               {/* แถบแท็บ 3 เมนูในแต่ละโครงการ */}
-              <div className="flex items-center justify-between border-b border-slate-200">
-                <div className="flex gap-6">
-                  <button
-                    type="button"
-                    onClick={() => handleTabChange(proj.id, 'tasks')}
-                    className={`-mb-px pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
-                      currentTab === 'tasks'
-                        ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
-                        : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
-                    }`}
-                  >
-                    <LayoutGrid size={16} />
-                    <span>งานทั้งหมดในโครงการ</span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-                      currentTab === 'tasks' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {proj.tasks.length}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabChange(proj.id, 'activity')}
-                    className={`-mb-px pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
-                      currentTab === 'activity'
-                        ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
-                        : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
-                    }`}
-                  >
-                    <Activity size={16} />
-                    <span>ประวัติกิจกรรม</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleTabChange(proj.id, 'contributions')}
-                    className={`-mb-px pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
-                      currentTab === 'contributions'
-                        ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
-                        : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
-                    }`}
-                  >
-                    <Award size={16} />
-                    <span>ผลการมีส่วนร่วม</span>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-                      currentTab === 'contributions' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {proj.members.length} สมาชิก
-                    </span>
-                  </button>
-                </div>
-
-                <Link
-                  href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                  className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-600 hover:text-indigo-700 -mb-2"
+              <div className="flex gap-5 sm:gap-6 overflow-x-auto border-b border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => handleTabChange(proj.id, 'tasks')}
+                  className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
+                    currentTab === 'tasks'
+                      ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
+                      : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
+                  }`}
                 >
-                  <Plus size={15} />
-                  <span>สร้างงานใหม่ในโครงการ</span>
-                </Link>
+                  <LayoutGrid size={16} />
+                  <span>งานทั้งหมดในโครงการ</span>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full ${
+                    currentTab === 'tasks' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {proj.tasks.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange(proj.id, 'activity')}
+                  className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
+                    currentTab === 'activity'
+                      ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
+                      : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
+                  }`}
+                >
+                  <Activity size={16} />
+                  <span>ประวัติกิจกรรม</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange(proj.id, 'contributions')}
+                  className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
+                    currentTab === 'contributions'
+                      ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
+                      : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
+                  }`}
+                >
+                  <Award size={16} />
+                  <span>ผลการมีส่วนร่วม</span>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full ${
+                    currentTab === 'contributions' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {proj.memberCount} สมาชิก
+                  </span>
+                </button>
               </div>
 
-              {/* ===== แท็บที่ 1: งานทั้งหมดในโครงการ (Notion Board View สไตล์ภาพที่ 1) ===== */}
+              {/* ===== แท็บที่ 1: งานทั้งหมดในโครงการ (บอร์ดงาน) ===== */}
               {currentTab === 'tasks' && (
                 <div className="space-y-4">
-                  {/* แถบหัวบอร์ดแบบ Notion */}
-                  <div className="flex items-center justify-between bg-slate-50/70 p-3 rounded-xl border border-slate-100">
-                    <div className="flex items-center gap-2">
+                  {/* แถบหัวบอร์ด */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 p-3 rounded-xl border border-slate-100">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       <span className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                         <LayoutGrid size={15} className="text-slate-500" />
-                        Board View
+                        บอร์ดงาน
                       </span>
-                      <span className="text-[12px] text-slate-400">| จัดการระยะเวลาและสถานะงานแต่ละช่วง</span>
+                      <span className="text-[12px] text-slate-400">แยกตามสถานะ แก้ไขงานได้ในห้องกลุ่ม</span>
                     </div>
                     <Link
-                      href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
+                      href={newTaskHref}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[12px] font-semibold hover:bg-indigo-700 shadow-sm transition"
                     >
                       <Plus size={14} />
-                      <span>New</span>
+                      <span>สร้างงาน</span>
                     </Link>
                   </div>
 
-                  {/* คอลัมน์ Kanban บอร์ด สไตล์ Notion */}
+                  {/* คอลัมน์บอร์ดงาน */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* คอลัมน์ 1: To Do */}
-                    <div className="bg-slate-50/80 rounded-2xl p-3 border border-slate-200/70 flex flex-col min-h-[350px]">
-                      {/* Column Header */}
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-md text-[12px] font-bold bg-amber-100 text-amber-800">
-                            To Do
-                          </span>
-                          <span className="text-[12px] text-slate-400 font-medium">{todoTasks.length}</span>
-                        </div>
-                        <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                          className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
-                          title="เพิ่มงานใหม่"
+                    {COLUMNS.map((col) => {
+                      const colTasks = proj.tasks.filter((t) => t.status === col.key);
+                      const CardIcon = col.icon;
+
+                      return (
+                        <div
+                          key={col.key}
+                          className="bg-slate-50/80 rounded-2xl p-3 border border-slate-200/70 flex flex-col md:min-h-[350px]"
                         >
-                          <Plus size={15} />
-                        </Link>
-                      </div>
-
-                      {/* Cards List */}
-                      <div className="space-y-3 flex-1">
-                        {todoTasks.map((t) => (
-                          <div
-                            key={t.id}
-                            className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 space-y-2.5"
-                          >
-                            <div className="flex items-start gap-2">
-                              <span className="text-lg leading-tight flex-shrink-0">{t.emoji}</span>
-                              <h4 className="text-[13px] font-semibold text-slate-800 leading-snug">{t.title}</h4>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${t.tagColor}`}>
-                                {t.tag}
-                              </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
-                                👤 {t.assignee}
-                              </span>
-                            </div>
-
-                            {/* กำหนดระยะเวลางานในแต่ละช่วง (Period & Timeline) */}
-                            <div className="pt-2 border-t border-slate-100 space-y-1.5 text-[11px]">
-                              <div className="flex items-center justify-between text-slate-500">
-                                <span className="flex items-center gap-1 font-medium">
-                                  <Calendar size={12} className="text-indigo-500" />
-                                  {t.periodLabel}
-                                </span>
-                                <span className="text-slate-400 font-mono text-[10px]">
-                                  {t.timeStatusLabel}
-                                </span>
-                              </div>
-                            </div>
+                          {/* Column Header */}
+                          <div className="flex items-center gap-2 mb-3 px-1">
+                            <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${col.headClass}`}>
+                              {col.label}
+                            </span>
+                            <span className="text-[12px] text-slate-400 font-medium">{colTasks.length}</span>
                           </div>
-                        ))}
 
-                        <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                          className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
-                        >
-                          <Plus size={14} />
-                          <span>+ New</span>
-                        </Link>
-                      </div>
-                    </div>
+                          {/* Cards List */}
+                          <div className="space-y-3 flex-1">
+                            {colTasks.length === 0 && col.key !== 'todo' && (
+                              <p className="py-4 text-center text-[12px] text-slate-400">ไม่มีงาน</p>
+                            )}
 
-                    {/* คอลัมน์ 2: Doing */}
-                    <div className="bg-slate-50/80 rounded-2xl p-3 border border-slate-200/70 flex flex-col min-h-[350px]">
-                      {/* Column Header */}
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-md text-[12px] font-bold bg-blue-100 text-blue-800">
-                            Doing
-                          </span>
-                          <span className="text-[12px] text-slate-400 font-medium">{doingTasks.length}</span>
-                        </div>
-                        <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                          className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
-                          title="เพิ่มงานใหม่"
-                        >
-                          <Plus size={15} />
-                        </Link>
-                      </div>
+                            {colTasks.map((t) => (
+                              <div
+                                key={t.id}
+                                className={`bg-white rounded-xl p-3.5 border shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200 space-y-2.5 ${col.cardClass}`}
+                              >
+                                <div className="flex items-start gap-2">
+                                  <CardIcon size={16} className={`mt-0.5 shrink-0 ${col.iconClass}`} />
+                                  <h4
+                                    className={`text-[13px] font-semibold leading-snug ${
+                                      col.key === 'done' ? 'text-slate-700 line-through' : 'text-slate-800'
+                                    }`}
+                                  >
+                                    {t.title}
+                                  </h4>
+                                </div>
 
-                      {/* Cards List */}
-                      <div className="space-y-3 flex-1">
-                        {doingTasks.map((t) => (
-                          <div
-                            key={t.id}
-                            className="bg-white rounded-xl p-3.5 border border-blue-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-blue-300 transition-all duration-200 space-y-2.5"
-                          >
-                            <div className="flex items-start gap-2">
-                              <span className="text-lg leading-tight flex-shrink-0">{t.emoji}</span>
-                              <h4 className="text-[13px] font-semibold text-slate-800 leading-snug">{t.title}</h4>
-                            </div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${t.tagColor}`}>
+                                    {t.tag}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+                                    <User size={10} />
+                                    {t.assignee}
+                                  </span>
+                                </div>
 
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${t.tagColor}`}>
-                                {t.tag}
-                              </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">
-                                👤 {t.assignee}
-                              </span>
-                            </div>
-
-                            {/* กำหนดระยะเวลางานในแต่ละช่วง (Period & Timeline) */}
-                            <div className="pt-2 border-t border-slate-100 space-y-1.5 text-[11px]">
-                              <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-1 font-medium text-slate-600">
-                                  <Clock size={12} className="text-blue-500" />
-                                  {t.periodLabel}
-                                </span>
-                                <span className="font-semibold text-[10px] text-rose-600">
-                                  {t.timeStatusLabel}
-                                </span>
+                                {/* กำหนดส่งและสถานะ */}
+                                <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1.5 text-[11px]">
+                                  <span
+                                    className={`flex items-center gap-1 font-medium ${
+                                      t.overdue ? 'text-rose-600' : 'text-slate-500'
+                                    }`}
+                                  >
+                                    {col.key === 'done' ? (
+                                      <CheckCircle2 size={12} className="text-emerald-500" />
+                                    ) : col.key === 'doing' ? (
+                                      <Clock size={12} className="text-blue-500" />
+                                    ) : (
+                                      <Calendar size={12} className="text-indigo-500" />
+                                    )}
+                                    กำหนดส่ง: {t.deadline}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    {t.overdue && (
+                                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                                        เลยกำหนด
+                                      </span>
+                                    )}
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${t.statusClass}`}>
+                                      {t.statusLabel}
+                                    </span>
+                                  </span>
+                                </div>
                               </div>
-                            </div>
+                            ))}
+
+                            {col.key === 'todo' && (
+                              <Link
+                                href={newTaskHref}
+                                className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
+                              >
+                                <Plus size={14} />
+                                <span>สร้างงาน</span>
+                              </Link>
+                            )}
                           </div>
-                        ))}
-
-                        <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                          className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
-                        >
-                          <Plus size={14} />
-                          <span>+ New</span>
-                        </Link>
-                      </div>
-                    </div>
-
-                    {/* คอลัมน์ 3: Done */}
-                    <div className="bg-slate-50/80 rounded-2xl p-3 border border-slate-200/70 flex flex-col min-h-[350px]">
-                      {/* Column Header */}
-                      <div className="flex items-center justify-between mb-3 px-1">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-md text-[12px] font-bold bg-emerald-100 text-emerald-800">
-                            Done
-                          </span>
-                          <span className="text-[12px] text-slate-400 font-medium">{doneTasks.length}</span>
                         </div>
-                        <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                          className="h-6 w-6 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition"
-                          title="เพิ่มงานใหม่"
-                        >
-                          <Plus size={15} />
-                        </Link>
-                      </div>
-
-                      {/* Cards List */}
-                      <div className="space-y-3 flex-1">
-                        {doneTasks.map((t) => (
-                          <div
-                            key={t.id}
-                            className="bg-white rounded-xl p-3.5 border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-emerald-300 transition-all duration-200 space-y-2.5 opacity-90 hover:opacity-100"
-                          >
-                            <div className="flex items-start gap-2">
-                              <span className="text-lg leading-tight flex-shrink-0">{t.emoji}</span>
-                              <h4 className="text-[13px] font-semibold text-slate-700 line-through leading-snug">{t.title}</h4>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${t.tagColor}`}>
-                                {t.tag}
-                              </span>
-                              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">
-                                👤 {t.assignee}
-                              </span>
-                            </div>
-
-                            {/* กำหนดระยะเวลางานในแต่ละช่วง (Period & Timeline) */}
-                            <div className="pt-2 border-t border-slate-100 space-y-1.5 text-[11px]">
-                              <div className="flex items-center justify-between text-slate-500">
-                                <span className="flex items-center gap-1 font-medium">
-                                  <CheckCircle2 size={12} className="text-emerald-500" />
-                                  {t.periodLabel}
-                                </span>
-                                <span className="text-emerald-600 font-semibold text-[10px]">
-                                  {t.timeStatusLabel}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-
-                        <Link
-                          href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                          className="w-full py-2 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 text-[12px] font-medium flex items-center justify-center gap-1 transition"
-                        >
-                          <Plus size={14} />
-                          <span>+ New</span>
-                        </Link>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -745,7 +635,7 @@ export default function LeaderPage() {
                     </div>
                   </div>
 
-                  {currentUserId && proj.raw && (
+                  {currentUserId && (
                     <CatchUpDigest
                       groupId={proj.id}
                       currentUserId={currentUserId}
@@ -761,48 +651,39 @@ export default function LeaderPage() {
                 <div className="space-y-5">
                   <div className="grid gap-5 lg:grid-cols-3">
                     {/* รายงานสมาชิก (Members Report) */}
-                    {proj.raw && (
-                      <div className="lg:col-span-2">
-                        <ParticipationSummary
-                          groupId={proj.id}
-                          members={proj.raw.members}
-                          tasks={proj.raw.tasks}
-                          taskResponses={proj.raw.responses}
-                          showPeerEval
-                        />
-                      </div>
-                    )}
+                    <div className="lg:col-span-2">
+                      <ParticipationSummary
+                        groupId={proj.id}
+                        members={proj.raw.members}
+                        tasks={proj.raw.tasks}
+                        taskResponses={proj.raw.responses}
+                        showPeerEval
+                      />
+                    </div>
 
                     {/* เครื่องมือมอบหมายงานและสรุปยอด */}
                     <div className="space-y-4">
                       <div className="bg-slate-50/80 rounded-xl p-4 border border-slate-100 space-y-3">
-                        <h4 className="text-[13px] font-bold text-slate-700">⚡ จัดการและมอบหมายงาน</h4>
-                        <div className="flex flex-col gap-2">
-                          <Link
-                            href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                            className="w-full text-center rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2.5 text-[12px] font-semibold text-white hover:opacity-90 transition block shadow-sm"
-                          >
-                            + สร้างงานใหม่
-                          </Link>
-                          <Link
-                            href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                            className="w-full text-center rounded-xl border border-indigo-200 bg-white px-4 py-2 text-[12px] font-semibold text-indigo-700 hover:bg-indigo-50 transition block"
-                          >
-                            📤 มอบหมายงานให้สมาชิก
-                          </Link>
-                          <Link
-                            href={`/dashboard/groups/${proj.id}?tab=tasks&new=1`}
-                            className="w-full text-center rounded-xl border border-purple-200 bg-white px-4 py-2 text-[12px] font-semibold text-purple-700 hover:bg-purple-50 transition block"
-                          >
-                            📋 สร้างงานว่าง (สมาชิกเลือกเอง)
-                          </Link>
-                        </div>
+                        <h4 className="text-[13px] font-bold text-slate-700">จัดการและมอบหมายงาน</h4>
+                        <Link
+                          href={newTaskHref}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 px-4 py-2.5 text-[12px] font-semibold text-white hover:opacity-90 transition shadow-sm"
+                        >
+                          <Plus size={14} />
+                          สร้างงาน / มอบหมายงาน
+                        </Link>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
+                          เลือกได้ในฟอร์มว่าจะมอบหมายให้สมาชิก หรือเปิดให้สมาชิกเลือกรับเอง
+                        </p>
                       </div>
 
                       <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white space-y-2">
-                        <h4 className="text-[13px] font-bold">💡 คำแนะนำสำหรับหัวหน้า</h4>
+                        <h4 className="text-[13px] font-bold flex items-center gap-1.5">
+                          <Lightbulb size={15} />
+                          คำแนะนำสำหรับหัวหน้า
+                        </h4>
                         <p className="text-[11px] text-indigo-100 leading-relaxed">
-                          ควรกำหนดช่วงเวลา (Start date & Deadline) ให้ชัดเจนในแต่ละขั้นตอน เพื่อช่วยให้สมาชิกลำดับความสำคัญของงานได้ตรงตามไทม์ไลน์
+                          กำหนดส่งและความยากของงานให้ชัดเจน และกระจายงานให้สมาชิกใกล้เคียงกัน ดูภาระงานค้างของแต่ละคนได้ที่แท็บสมาชิกในห้องกลุ่ม
                         </p>
                       </div>
                     </div>
@@ -813,6 +694,7 @@ export default function LeaderPage() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

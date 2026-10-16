@@ -18,6 +18,9 @@ import {
   Calendar,
   Sparkles,
   ArrowRight,
+  Crown,
+  User,
+  LockOpen,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase';
 import { logActivity } from '@/lib/logActivity';
@@ -91,6 +94,8 @@ export default function MemberPage() {
   const [tasks, setTasks] = useState<MemberTask[]>([]);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [loading, setLoading] = useState(true);
+  // โหลดครั้งแรกเสร็จแล้วหรือยัง (โหลดซ้ำหลังกดปุ่มจะไม่แสดงหน้าโหลด)
+  const [loaded, setLoaded] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   const [activeTab, setActiveTab] = useState<MemberTabType>('my_tasks');
@@ -179,6 +184,7 @@ export default function MemberPage() {
       console.error(e);
     } finally {
       setLoading(false);
+      setLoaded(true);
     }
   }, [supabase]);
 
@@ -392,13 +398,19 @@ export default function MemberPage() {
     return (!t.assigned_to && t.status === 'pending') || taken < (t.headcount ?? 1) - 1;
   });
   const completedTasks = tasks.filter((t) => isMine(t) && t.status === 'completed');
+  const now = new Date();
+  const isOverdue = (t: MemberTask) =>
+    !!t.deadline && new Date(t.deadline) < now && t.status !== 'completed' && t.status !== 'rejected';
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-slate-800">👤 มุมมองสมาชิก</h1>
+          <h1 className="flex items-center gap-2.5 text-[28px] font-bold text-slate-800">
+            <User size={26} className="text-indigo-500" />
+            มุมมองสมาชิก
+          </h1>
           <p className="text-[13px] text-slate-500 mt-1">
             เลือกรับงานใหม่ ดำเนินงานที่ได้รับมอบหมาย และส่งงานเมื่อเสร็จสิ้น
           </p>
@@ -410,7 +422,7 @@ export default function MemberPage() {
             className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-[14px] font-semibold text-white shadow-lg shadow-indigo-200 hover:opacity-90 hover:scale-[1.02] transition-all"
           >
             <UserPlus size={18} />
-            <span>+ เข้าร่วมกลุ่มด้วยรหัส</span>
+            <span>เข้าร่วมกลุ่มด้วยรหัส</span>
           </Link>
         </div>
       </div>
@@ -430,6 +442,34 @@ export default function MemberPage() {
         </div>
       )}
 
+      {!loaded && (
+        <div className="gt-card flex h-[320px] items-center justify-center animate-pulse text-[13px] text-slate-400">
+          กำลังโหลดข้อมูล...
+        </div>
+      )}
+
+      {/* ยังไม่ได้เข้าร่วมกลุ่มใด */}
+      {loaded && realGroups.length === 0 && (
+        <section className="gt-card p-8 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+            <Users size={24} />
+          </div>
+          <h2 className="text-[18px] font-bold text-slate-800">ยังไม่ได้เข้าร่วมกลุ่ม</h2>
+          <p className="mx-auto mt-1 max-w-sm text-[13px] text-slate-500">
+            กรอกรหัส 6 ตัวที่ได้จากหัวหน้ากลุ่ม แล้วงานของคุณจะแสดงที่หน้านี้
+          </p>
+          <Link
+            href="/dashboard/projects/join"
+            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-[14px] font-semibold text-white shadow-lg shadow-indigo-200 hover:opacity-90 transition-all"
+          >
+            <UserPlus size={18} />
+            เข้าร่วมกลุ่มด้วยรหัส
+          </Link>
+        </section>
+      )}
+
+      {loaded && realGroups.length > 0 && (
+      <>
       {/* สรุปสถิติงานของลูกทีม */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="gt-card p-5 border border-slate-100 flex items-center gap-4">
@@ -465,11 +505,11 @@ export default function MemberPage() {
 
       {/* แท็บสำหรับสมาชิก (แท็บงานที่ลูกทีมต้องรู้) */}
       <div className="gt-card p-6 space-y-6 border border-slate-100">
-        <div className="flex gap-6 border-b border-slate-200">
+        <div className="flex gap-5 sm:gap-6 overflow-x-auto border-b border-slate-200">
           <button
             type="button"
             onClick={() => setActiveTab('my_tasks')}
-            className={`-mb-px pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'my_tasks'
                 ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
                 : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
@@ -491,7 +531,7 @@ export default function MemberPage() {
           <button
             type="button"
             onClick={() => setActiveTab('open_tasks')}
-            className={`-mb-px pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'open_tasks'
                 ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
                 : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
@@ -513,7 +553,7 @@ export default function MemberPage() {
           <button
             type="button"
             onClick={() => setActiveTab('completed_tasks')}
-            className={`-mb-px pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
+            className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'completed_tasks'
                 ? 'border-b-2 border-indigo-600 font-bold text-indigo-600'
                 : 'border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium'
@@ -542,9 +582,9 @@ export default function MemberPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('open_tasks')}
-                  className="mt-3 text-xs font-semibold text-indigo-600 hover:underline"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:underline"
                 >
-                  ไปเลือกดูงานว่างในกลุ่ม →
+                  ไปเลือกดูงานว่างในกลุ่ม <ArrowRight size={12} />
                 </button>
               </div>
             ) : (
@@ -561,8 +601,9 @@ export default function MemberPage() {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
-                              📁 {t.group_name}
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
+                              <FolderKanban size={12} />
+                              {t.group_name}
                             </span>
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${priority.className}`}>
                               {priority.label}
@@ -570,6 +611,11 @@ export default function MemberPage() {
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${status.className}`}>
                               {status.label}
                             </span>
+                            {isOverdue(t) && (
+                              <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-rose-100 text-rose-700">
+                                เลยกำหนด
+                              </span>
+                            )}
                           </div>
                           <h3 className="text-[15px] font-bold text-slate-800">{t.title}</h3>
                           {t.description && (
@@ -579,7 +625,10 @@ export default function MemberPage() {
 
                         <div className="text-right text-xs space-y-1">
                           <p className="text-slate-400">
-                            กำหนดส่ง: <strong className="text-slate-700">{formatThaiDate(t.deadline)}</strong>
+                            กำหนดส่ง:{' '}
+                            <strong className={isOverdue(t) ? 'text-rose-600' : 'text-slate-700'}>
+                              {formatThaiDate(t.deadline)}
+                            </strong>
                           </p>
                         </div>
                       </div>
@@ -645,7 +694,7 @@ export default function MemberPage() {
                               className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer shadow-xs flex items-center gap-1.5"
                             >
                               <CheckCircle2 size={14} />
-                              <span>✅ งานเสร็จแล้ว</span>
+                              <span>งานเสร็จแล้ว</span>
                             </button>
                           )}
                         </div>
@@ -678,14 +727,16 @@ export default function MemberPage() {
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
-                              📁 {t.group_name}
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
+                              <FolderKanban size={12} />
+                              {t.group_name}
                             </span>
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${priority.className}`}>
                               {priority.label}
                             </span>
-                            <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800">
-                              🔓 รอสมาชิกเลือกทำ
+                            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800">
+                              <LockOpen size={11} />
+                              รอสมาชิกเลือกทำ
                             </span>
                           </div>
                           <h3 className="text-[15px] font-bold text-slate-800">{t.title}</h3>
@@ -709,7 +760,7 @@ export default function MemberPage() {
                       />
 
                       {!t.assigned_to && (
-                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs text-slate-400">
                             เมื่อกดรับ งานจะย้ายไปที่สถานะ <strong>กำลังทำ</strong> ทันที
                           </span>
@@ -745,14 +796,16 @@ export default function MemberPage() {
                     key={t.task_id}
                     className="p-4 rounded-2xl bg-emerald-50/30 border border-emerald-100 space-y-2"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
-                            📁 {t.group_name}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold">
+                            <FolderKanban size={12} />
+                            {t.group_name}
                           </span>
-                          <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800">
-                            ✅ เสร็จสมบูรณ์
+                          <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800">
+                            <CheckCircle2 size={11} />
+                            เสร็จสมบูรณ์
                           </span>
                         </div>
                         <h3 className="text-[14px] font-bold text-slate-800 mt-1 line-through opacity-85">
@@ -778,6 +831,8 @@ export default function MemberPage() {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* กลุ่มจริงที่คุณเข้าร่วม */}
       {realGroups.length > 0 && (
@@ -798,8 +853,13 @@ export default function MemberPage() {
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h3 className="text-[16px] font-bold text-slate-800 line-clamp-1">{g.group_name}</h3>
-                    <span className="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-indigo-100 text-indigo-700 flex-shrink-0">
-                      {g.role === 'leader' ? '👑 หัวหน้า' : '👤 สมาชิก'}
+                    <span
+                      className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold flex-shrink-0 flex items-center gap-1 ${
+                        g.role === 'leader' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-700'
+                      }`}
+                    >
+                      {g.role === 'leader' ? <Crown size={12} /> : <User size={12} />}
+                      {g.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}
                     </span>
                   </div>
                   <p className="text-[12px] text-slate-500 line-clamp-2">
@@ -813,9 +873,9 @@ export default function MemberPage() {
                   </span>
                   <Link
                     href={`/dashboard/groups/${g.group_id}`}
-                    className="text-indigo-600 font-semibold hover:underline"
+                    className="inline-flex items-center gap-1 text-indigo-600 font-semibold hover:underline"
                   >
-                    ดูห้องกลุ่ม →
+                    ดูห้องกลุ่ม <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>
