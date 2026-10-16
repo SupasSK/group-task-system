@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { projectProgress } from '@/lib/projectProgress'
 import { openWorkload } from '@/lib/workload'
+import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
 import ParticipationSummary from '@/components/dashboard/ParticipationSummary'
@@ -108,6 +109,8 @@ export default function GroupDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  // โหลดไม่สำเร็จเพราะเชื่อมต่อไม่ได้ (ไม่ใช่ไม่พบกลุ่ม)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   // เปิดแท็บตามพารามิเตอร์ ?tab= (เช่น มาจากปุ่มสร้างงานในหน้าหัวหน้า)
   const searchParams = useSearchParams()
@@ -251,8 +254,14 @@ export default function GroupDetailPage() {
     const load = async () => {
       setLoading(true)
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user }, error: userErr } = await supabase.auth.getUser()
       if (!user) {
+        // เชื่อมต่อไม่ได้ ต่างจากยังไม่ล็อกอิน: แสดงข้อความแทนการเด้งไปหน้า login
+        if (isAuthRetryableFetchError(userErr)) {
+          setLoadFailed(true)
+          setLoading(false)
+          return
+        }
         router.push('/login')
         return
       }
@@ -264,8 +273,14 @@ export default function GroupDetailPage() {
         .eq('group_id', id)
         .maybeSingle()
 
+      if (groupErr) {
+        setLoadFailed(true)
+        setLoading(false)
+        return
+      }
+
       // กลุ่มที่ถูกลบ (archive) แล้วให้ทำเหมือนไม่พบกลุ่ม
-      if (groupErr || !groupData || groupData.archived_at) {
+      if (!groupData || groupData.archived_at) {
         setNotFound(true)
         setLoading(false)
         return
@@ -882,6 +897,20 @@ export default function GroupDetailPage() {
 
   if (loading) {
     return <div className="p-8 text-center text-gray-500">กำลังโหลด...</div>
+  }
+
+  if (loadFailed) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-gray-600 mb-4">เชื่อมต่อระบบไม่สำเร็จ โหลดข้อมูลกลุ่มไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all"
+        >
+          ลองใหม่
+        </button>
+      </div>
+    )
   }
 
   if (notFound || !group) {

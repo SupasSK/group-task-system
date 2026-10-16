@@ -9,8 +9,9 @@ import { execSync } from 'node:child_process'
 import { signInAs, newClient, nowIso, ROOT, SUPABASE_URL, ANON_KEY, emailFor } from './lib.mjs'
 import { pageAs, launch, closeBrowser, BASE_URL } from './browser.mjs'
 
-const round = Number(process.argv[2])
-if (!round) throw new Error('ใช้: node kpi9-owasp.mjs <round>')
+const pilot = process.argv[2] === 'pilot'
+const round = pilot ? 0 : Number(process.argv[2])
+if (!pilot && !round) throw new Error('ใช้: node kpi9-owasp.mjs <round> หรือ pilot')
 const code6 = () => Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, 'X')
 const must = (res, what) => { if (res.error) throw new Error(`${what}: ${res.error.message}`); return res.data }
 const results = []
@@ -64,7 +65,13 @@ async function a04() {
   // สแกนไฟล์ JS ที่ build ในเครื่อง (commit เดียวกับที่ deploy) หา service_role
   const root = join(ROOT, '.next', 'static')
   const files = []
-  const walk = (d) => { for (const f of readdirSync(d)) { const p = join(d, f); statSync(p).isDirectory() ? walk(p) : p.endsWith('.js') && files.push(p) } }
+  const walk = (d) => {
+    for (const f of readdirSync(d)) {
+      const p = join(d, f)
+      if (statSync(p).isDirectory()) walk(p)
+      else if (p.endsWith('.js')) files.push(p)
+    }
+  }
   walk(root)
   const hits = []
   for (const f of files) {
@@ -123,10 +130,11 @@ async function a05(L, M) {
   const boxes = mp.locator('input[maxlength="1"]')
   const inj = "'OR1=1"
   for (let i = 0; i < 6; i++) await boxes.nth(i).fill(inj[i])
+  const typed = (await Promise.all([0, 1, 2, 3, 4, 5].map((i) => boxes.nth(i).inputValue()))).join('')
   await mp.getByRole('button', { name: 'เข้าร่วมกลุ่ม' }).click()
-  const msg = await mp.getByText(/ไม่พบกลุ่ม|เข้าร่วมกลุ่มไม่สำเร็จ|เข้าร่วมกลุ่ม .* สำเร็จ/).first().innerText({ timeout: 20000 })
+  const msg = await mp.getByText(/ไม่พบกลุ่ม|เข้าร่วมกลุ่มไม่สำเร็จ|กรุณากรอกรหัสกลุ่ม|เข้าร่วมกลุ่ม .* สำเร็จ/).first().innerText({ timeout: 20000 })
   const after = must(await M.client.from('group_members').select('group_id').eq('user_id', M.user.id), 'm').length
-  check('A05', 'JOIN-CODE', 'รหัสเข้ากลุ่มแบบ injection ไม่ทำให้เข้ากลุ่มใด', after === before, `${msg} (${before}->${after})`)
+  check('A05', 'JOIN-CODE', 'รหัสเข้ากลุ่มแบบ injection ไม่ทำให้เข้ากลุ่มใด', after === before, `กรอกได้ "${typed}" | ${msg} (${before}->${after})`)
 
   // ตัวกรองของ API กับค่าที่มี quote ต้องไม่คืนข้อมูลเกิน
   const leak = must(await M.client.from('tasks').select('task_id').eq('title', "x' or '1'='1"), 'filter')
@@ -182,22 +190,25 @@ async function a07() {
   await page.waitForTimeout(3000)
   check('A07', 'RESET-LINK', 'อีเมลรีเซ็ตพาไป /auth/callback?next=/auth/reset-password', !!redirectTo && redirectTo.endsWith('/auth/callback?next=/auth/reset-password'), redirectTo || 'ไม่ได้ส่งคำขอ')
   const res = await page.goto(`${BASE_URL}/auth/reset-password`)
-  const noSession = await page.getByText('ลิงก์ตั้งรหัสผ่านใหม่ไม่ถูกต้องหรือหมดอายุแล้ว').count() > 0
+  const noSession = await page.getByText('ลิงก์ตั้งรหัสผ่านใหม่ไม่ถูกต้องหรือหมดอายุแล้ว').waitFor({ timeout: 20000 }).then(() => true, () => false)
   check('A07', 'RESET-PAGE', 'หน้าตั้งรหัสผ่านใหม่มีอยู่ และปฏิเสธเมื่อไม่มี session จากลิงก์', res.status() === 200 && noSession, `${res.status()} noSessionMessage=${noSession}`)
   // มีลิงก์ที่ถูกต้อง (มี session) ต้องเห็นฟอร์ม: ทดสอบด้วยบัญชีที่ล็อกอินแล้ว
   const lp = await pageAs('member')
   await lp.goto(`${BASE_URL}/auth/reset-password`)
-  const form = await lp.getByRole('button', { name: 'บันทึกรหัสผ่านใหม่' }).count() > 0
+  const form = await lp.getByRole('button', { name: 'บันทึกรหัสผ่านใหม่' }).waitFor({ timeout: 20000 }).then(() => true, () => false)
   check('A07', 'RESET-FORM', 'เมื่อมี session หน้าตั้งรหัสผ่านใหม่แสดงฟอร์ม', form, `form=${form}`)
   await ctx.close()
 }
 
 // ---------- A10 exceptional conditions ----------
-async function a10() {
-  for (const path of ['/dashboard', '/dashboard/groups/00000000-0000-0000-0000-000000000000']) {
+async function a10(L) {
+  const gid = must(await L.client.from('groups').select('group_id').eq('created_by', L.user.id).is('archived_at', null).limit(1).maybeSingle(), 'group')?.group_id
+    ?? must(await L.client.from('groups').select('group_id').eq('created_by', L.user.id).order('created_at', { ascending: false }).limit(1).single(), 'group').group_id
+  for (const path of ['/dashboard', `/dashboard/groups/${gid}`]) {
     const page = await pageAs('leader')
     await page.context().route(`${SUPABASE_URL}/**`, (route) => route.abort())
     await page.goto(`${BASE_URL}${path}`)
+    await page.waitForTimeout(5000)
     const started = Date.now()
     let stuck = true
     while (Date.now() - started < 30000) {
@@ -206,8 +217,10 @@ async function a10() {
       await page.waitForTimeout(1000)
     }
     const text = await page.locator('body').innerText().catch(() => '')
-    const nextError = /Application error|Unhandled Runtime Error|client-side exception/i.test(text)
-    check('A10', `OFFLINE${path.length > 12 ? '-GROUP' : '-DASH'}`, `ตัดการเชื่อมต่อ Supabase แล้ว ${path.slice(0, 26)} ไม่ค้างที่กำลังโหลด และไม่ใช่หน้า error ของ Next.js`, !stuck && !nextError, { stuck, nextError, after: `${Math.round((Date.now() - started) / 1000)}s`, text: text.replace(/\s+/g, ' ').slice(0, 140) })
+    const nextError = /Application error|Unhandled Runtime Error|client-side exception|This page couldn/i.test(text)
+    const stayed = new URL(page.url()).pathname === path
+    const message = /เชื่อมต่อระบบไม่สำเร็จ/.test(text)
+    check('A10', `OFFLINE${path.length > 12 ? '-GROUP' : '-DASH'}`, `ตัดการเชื่อมต่อ Supabase แล้ว ${path.slice(0, 26)} ไม่ค้างที่กำลังโหลด ไม่ใช่หน้า error ของ Next.js และแจ้งข้อผิดพลาดในหน้าเดิม`, !stuck && !nextError && stayed && message, { stuck, nextError, stayed, message, after: `${Math.round((Date.now() - started) / 1000)}s`, text: text.replace(/\s+/g, ' ').slice(0, 140) })
     await page.context().close()
   }
 }
@@ -215,7 +228,7 @@ async function a10() {
 const L = await signInAs('leader', 'ผู้ทดสอบ หัวหน้า')
 const M = await signInAs('member', 'ผู้ทดสอบ สมาชิก')
 const M2 = await signInAs('member2', 'ผู้ทดสอบ สมาชิกสอง')
-for (const [name, fn] of [['A02', a02], ['A03', a03], ['A04', a04], ['A05', () => a05(L, M)], ['A06', () => a06(L, M, M2)], ['A07', a07], ['A10', a10]]) {
+for (const [name, fn] of [['A02', a02], ['A03', a03], ['A04', a04], ['A05', () => a05(L, M)], ['A06', () => a06(L, M, M2)], ['A07', a07], ['A10', () => a10(L)]]) {
   try { await fn() } catch (e) { check(name, 'ERROR', 'สคริปต์ล้มระหว่างตรวจ', false, e.message.split('\n')[0]) }
 }
 await closeBrowser()
@@ -223,4 +236,4 @@ const passed = results.filter((r) => r.pass).length
 console.log(`\nKPI-9 round ${round} OWASP checks: ${passed}/${results.length} passed`)
 const dir = join(ROOT, 'docs', 'evaluation', 'results')
 mkdirSync(dir, { recursive: true })
-writeFileSync(join(dir, `kpi9-round${round}-owasp.json`), JSON.stringify({ kpi: 'KPI-9', criterion: 5, round, at: nowIso(), commit: execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim(), passed, total: results.length, results }, null, 2))
+if (!pilot) writeFileSync(join(dir, `kpi9-round${round}-owasp.json`), JSON.stringify({ kpi: 'KPI-9', criterion: 5, round, at: nowIso(), commit: execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim(), passed, total: results.length, results }, null, 2))

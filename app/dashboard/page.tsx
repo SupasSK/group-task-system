@@ -64,6 +64,8 @@ export default function DashboardPage() {
   // ความคืบหน้าของแต่ละกลุ่ม (0-100)
   const [groupProgress, setGroupProgress] = useState<Record<string, number>>({});
   const [recentLogs, setRecentLogs] = useState<RecentLog[]>([]);
+  // โหลดข้อมูลไม่สำเร็จ (เช่น เน็ตหลุด) ต้องไม่แสดงว่า "ยังไม่มีกลุ่ม"
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     loadUserGroups();
@@ -93,6 +95,7 @@ export default function DashboardPage() {
         `)
         .eq('user_id', user.id);
 
+      if (error) setLoadFailed(true);
       if (!error && memberGroups) {
         const groups: SupabaseGroup[] = memberGroups
           .filter((item: any) => item.groups && !item.groups.archived_at)
@@ -221,7 +224,7 @@ export default function DashboardPage() {
       )}
 
       {/* ยังไม่มีกลุ่ม: แนะนำขั้นแรก */}
-      {!loadingGroups && userGroups.length === 0 && (
+      {!loadingGroups && !loadFailed && userGroups.length === 0 && (
         <section className="gt-card p-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
             <FolderOpen size={24} />
