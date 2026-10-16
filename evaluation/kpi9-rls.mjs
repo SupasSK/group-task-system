@@ -238,9 +238,14 @@ async function main() {
     ['R-09', 'anon', 'deny', 'ออกจากกลุ่ม', () => ok(A.client.rpc('leave_group', { p_group_id: gid }))],
 
     // storage
-    ['S-01', 'member', 'deny', 'อัปโหลดรูปลงโฟลเดอร์ของคนอื่น', () => ok(M.client.storage.from('avatars').upload(`${M2.user.id}/kpi9-${run}.png`, new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }), { upsert: true }))],
-    ['S-02', 'member', 'allow', 'อัปโหลดรูปลงโฟลเดอร์ของตัวเอง', () => ok(M.client.storage.from('avatars').upload(`${M.user.id}/kpi9-${run}.png`, new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }), { upsert: true }))],
-    ['S-03', 'anon', 'deny', 'อัปโหลดรูป', () => ok(A.client.storage.from('avatars').upload(`anon/kpi9-${run}.png`, new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }), { upsert: true }))],
+    // ตั้งชื่อไฟล์ไม่ซ้ำและไม่อัปโหลดทับ แบบเดียวกับหน้า profile (ไฟล์ซ้ำจากรอบก่อนทำให้ S-02 ล้มในรอบที่ 2)
+    ['S-01', 'member', 'deny', 'อัปโหลดรูปลงโฟลเดอร์ของคนอื่น', () => ok(M.client.storage.from('avatars').upload(`${M2.user.id}/kpi9-${Date.now()}.png`, new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' })))],
+    ['S-02', 'member', 'allow', 'อัปโหลดรูปลงโฟลเดอร์ของตัวเอง', async () => {
+      const res = await M.client.storage.from('avatars').upload(`${M.user.id}/kpi9-${Date.now()}.png`, new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' }))
+      if (res.data?.path) await M.client.storage.from('avatars').remove([res.data.path])
+      return { allowed: !res.error, detail: res.error?.message ?? 'no error' }
+    }],
+    ['S-03', 'anon', 'deny', 'อัปโหลดรูป', () => ok(A.client.storage.from('avatars').upload(`anon/kpi9-${Date.now()}.png`, new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' })))],
 
     // กรณีที่เปลี่ยนข้อมูลมาก รันท้ายสุด
     ['Z-01', 'member', 'allow', 'คนหลักกดงานเสร็จ', () => state(M.client.from('tasks').update({ status: 'completed', completed_at: nowIso(), updated_at: nowIso() }).eq('task_id', T1.task_id), async () => (await taskField(T1, 'status')) === 'completed')],

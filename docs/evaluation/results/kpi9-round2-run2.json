@@ -1,0 +1,1038 @@
+{
+  "kpi": "KPI-9",
+  "round": 2,
+  "run": 2,
+  "at": "2026-10-16T10:26:17.185Z",
+  "commit": "e9212de",
+  "group_id": "8ed1429c-d780-48be-b505-4d9f0db9fc40",
+  "passed": 113,
+  "total": 114,
+  "results": [
+    {
+      "id": "G-01",
+      "role": "leader",
+      "desc": "อ่านกลุ่มของตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "G-02",
+      "role": "member",
+      "desc": "อ่านกลุ่มที่เป็นสมาชิก",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "G-03",
+      "role": "outsider",
+      "desc": "อ่านกลุ่มที่ไม่ได้เป็นสมาชิก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "G-04",
+      "role": "removed",
+      "desc": "อ่านกลุ่มหลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "G-05",
+      "role": "anon",
+      "desc": "อ่านกลุ่มโดยไม่ล็อกอิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "G-06",
+      "role": "leader",
+      "desc": "แก้คำอธิบายกลุ่ม",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "G-07",
+      "role": "member",
+      "desc": "แก้คำอธิบายกลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "G-08",
+      "role": "outsider",
+      "desc": "แก้คำอธิบายกลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "G-09",
+      "role": "member",
+      "desc": "เก็บกลุ่มเข้าคลังเองโดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "G-10",
+      "role": "outsider",
+      "desc": "สร้างกลุ่มในนามคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"groups\""
+    },
+    {
+      "id": "GM-01",
+      "role": "member",
+      "desc": "อ่านรายชื่อสมาชิกในกลุ่ม",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "3 rows"
+    },
+    {
+      "id": "GM-02",
+      "role": "outsider",
+      "desc": "อ่านรายชื่อสมาชิก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "GM-03",
+      "role": "removed",
+      "desc": "อ่านรายชื่อสมาชิกหลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "GM-04",
+      "role": "anon",
+      "desc": "อ่านรายชื่อสมาชิก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "GM-05",
+      "role": "outsider",
+      "desc": "เพิ่มตัวเองเข้ากลุ่มโดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"group_members\""
+    },
+    {
+      "id": "GM-06",
+      "role": "removed",
+      "desc": "เพิ่มตัวเองกลับเข้ากลุ่มโดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"group_members\""
+    },
+    {
+      "id": "GM-07",
+      "role": "member",
+      "desc": "เลื่อนตัวเองเป็นหัวหน้า",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "GM-08",
+      "role": "member",
+      "desc": "เพิ่มคนนอกเข้ากลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"group_members\""
+    },
+    {
+      "id": "GM-09",
+      "role": "member",
+      "desc": "ลบหัวหน้าออกจากกลุ่มโดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "GM-10",
+      "role": "anon",
+      "desc": "เข้ากลุ่มด้วยรหัสโดยไม่ล็อกอิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not authenticated"
+    },
+    {
+      "id": "T-01",
+      "role": "member",
+      "desc": "อ่านงานในกลุ่ม",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "5 rows"
+    },
+    {
+      "id": "T-02",
+      "role": "outsider",
+      "desc": "อ่านงานในกลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "T-03",
+      "role": "removed",
+      "desc": "อ่านงานหลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "T-04",
+      "role": "anon",
+      "desc": "อ่านงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "T-05",
+      "role": "leader",
+      "desc": "สร้างงาน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "T-06",
+      "role": "member",
+      "desc": "สร้างงาน (หัวหน้าเท่านั้น)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"tasks\""
+    },
+    {
+      "id": "T-07",
+      "role": "outsider",
+      "desc": "สร้างงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"tasks\""
+    },
+    {
+      "id": "T-08",
+      "role": "member",
+      "desc": "เปลี่ยนสถานะงานของตัวเองเป็น in_progress",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "T-09",
+      "role": "member",
+      "desc": "แก้ priority งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "T-10",
+      "role": "member",
+      "desc": "แก้ deadline งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "T-11",
+      "role": "member",
+      "desc": "แก้ difficulty งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "T-12",
+      "role": "member",
+      "desc": "แก้ headcount งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "T-13",
+      "role": "member",
+      "desc": "โอนงานของตัวเองให้คนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change the main assignee"
+    },
+    {
+      "id": "T-14",
+      "role": "member",
+      "desc": "แก้งานของคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "T-15",
+      "role": "member",
+      "desc": "แย่งงานที่มีคนหลักแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "T-16",
+      "role": "collab",
+      "desc": "ผู้ร่วมทำแก้คำอธิบายงาน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "T-17",
+      "role": "collab",
+      "desc": "ผู้ร่วมทำกดงานเสร็จ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the main assignee or the group leader can mark a task as completed"
+    },
+    {
+      "id": "T-18",
+      "role": "outsider",
+      "desc": "แก้งาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "T-19",
+      "role": "removed",
+      "desc": "แก้งานหลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "T-20",
+      "role": "member",
+      "desc": "ลบงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "TC-01",
+      "role": "member",
+      "desc": "เชิญผู้ร่วมทำ (หัวหน้าเท่านั้น)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_collaborators\""
+    },
+    {
+      "id": "TC-02",
+      "role": "outsider",
+      "desc": "เข้าร่วมงานว่างเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "collaborator must be a member of the group"
+    },
+    {
+      "id": "TC-03",
+      "role": "leader",
+      "desc": "เชิญคนนอกกลุ่มเป็นผู้ร่วมทำ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "collaborator must be a member of the group"
+    },
+    {
+      "id": "TC-04",
+      "role": "member",
+      "desc": "เปลี่ยนสถานะผู้ร่วมทำของคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "TC-05",
+      "role": "outsider",
+      "desc": "อ่านรายชื่อผู้ร่วมทำ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "TC-06",
+      "role": "member2",
+      "desc": "เข้าร่วมงานว่างเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "TC-07",
+      "role": "member",
+      "desc": "claim งานว่างให้ตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "TR-01",
+      "role": "member",
+      "desc": "บันทึกการรับงานของตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "TR-02",
+      "role": "outsider",
+      "desc": "บันทึกการรับงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_responses\""
+    },
+    {
+      "id": "TR-03",
+      "role": "member",
+      "desc": "บันทึกการรับงานในนามคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_responses\""
+    },
+    {
+      "id": "TR-04",
+      "role": "outsider",
+      "desc": "อ่านการตอบรับงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "CM-01",
+      "role": "member",
+      "desc": "เขียนความเห็นในงาน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "CM-02",
+      "role": "outsider",
+      "desc": "เขียนความเห็น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_comments\""
+    },
+    {
+      "id": "CM-03",
+      "role": "member",
+      "desc": "เขียนความเห็นในนามคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_comments\""
+    },
+    {
+      "id": "CM-04",
+      "role": "outsider",
+      "desc": "อ่านความเห็น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "CM-05",
+      "role": "member",
+      "desc": "แก้ความเห็นของตัวเองย้อนหลัง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "CM-06",
+      "role": "member",
+      "desc": "ลบความเห็นของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "CM-07",
+      "role": "leader",
+      "desc": "ลบความเห็นของสมาชิก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "AL-01",
+      "role": "member",
+      "desc": "อ่านประวัติกิจกรรมของกลุ่ม",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "6 rows"
+    },
+    {
+      "id": "AL-02",
+      "role": "outsider",
+      "desc": "อ่านประวัติกิจกรรม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "AL-03",
+      "role": "removed",
+      "desc": "อ่านประวัติกิจกรรมหลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "AL-04",
+      "role": "anon",
+      "desc": "อ่านประวัติกิจกรรม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "AL-05",
+      "role": "member",
+      "desc": "เขียนลง activity_logs โดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "AL-06",
+      "role": "leader",
+      "desc": "แก้แถวประวัติกิจกรรม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "AL-07",
+      "role": "leader",
+      "desc": "ลบแถวประวัติกิจกรรม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "AL-08",
+      "role": "member",
+      "desc": "บันทึกกิจกรรมผ่าน log_activity",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "AL-09",
+      "role": "outsider",
+      "desc": "บันทึกกิจกรรมผ่าน log_activity",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "AL-10",
+      "role": "removed",
+      "desc": "บันทึกกิจกรรมหลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "AL-11",
+      "role": "anon",
+      "desc": "บันทึกกิจกรรมผ่าน log_activity",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not authenticated"
+    },
+    {
+      "id": "AL-12",
+      "role": "outsider",
+      "desc": "ตรวจสายบันทึกของกลุ่มอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "TF-01",
+      "role": "collab",
+      "desc": "ผู้ส่งอ่านฟีดแบคของตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "TF-02",
+      "role": "leader",
+      "desc": "หัวหน้าอ่านฟีดแบค",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "TF-03",
+      "role": "member2",
+      "desc": "ผู้รับอ่านฟีดแบคที่ระบุชื่อผู้ส่ง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "TF-04",
+      "role": "member",
+      "desc": "สมาชิกอื่นอ่านฟีดแบค",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "TF-05",
+      "role": "member",
+      "desc": "ส่งฟีดแบคงานที่ไม่ได้ร่วมทำ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_feedback\""
+    },
+    {
+      "id": "TF-06",
+      "role": "collab",
+      "desc": "แก้คะแนนฟีดแบคที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "TF-07",
+      "role": "collab",
+      "desc": "ลบฟีดแบคที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "PE-01",
+      "role": "member",
+      "desc": "เปิดรอบประเมิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"eval_rounds\""
+    },
+    {
+      "id": "PE-02",
+      "role": "member",
+      "desc": "ปิดรอบประเมิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "PE-03",
+      "role": "member",
+      "desc": "อ่านแบบประเมินที่ตัวเองส่ง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "PE-04",
+      "role": "member2",
+      "desc": "ผู้ถูกประเมินอ่านแถวคะแนน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "PE-05",
+      "role": "leader",
+      "desc": "หัวหน้าอ่านแถวคะแนนดิบ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "PE-06",
+      "role": "member",
+      "desc": "แก้คะแนนที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "PE-07",
+      "role": "member",
+      "desc": "ลบคะแนนที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "PE-08",
+      "role": "leader",
+      "desc": "หัวหน้าประเมินสมาชิก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"peer_evaluations\""
+    },
+    {
+      "id": "PE-09",
+      "role": "collab",
+      "desc": "ประเมินหัวหน้า",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"peer_evaluations\""
+    },
+    {
+      "id": "PE-10",
+      "role": "member",
+      "desc": "ดูผลประเมิน (หัวหน้าเท่านั้น)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can view results"
+    },
+    {
+      "id": "PE-11",
+      "role": "leader",
+      "desc": "ดูผลประเมินขณะรอบยังเปิด",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "round is still open"
+    },
+    {
+      "id": "PE-12",
+      "role": "outsider",
+      "desc": "ดูจำนวนผู้ส่งแบบประเมิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "GV-01",
+      "role": "member",
+      "desc": "บันทึกเวลาเข้าดูของตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "GV-02",
+      "role": "member",
+      "desc": "บันทึกเวลาเข้าดูในนามคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"group_visits\""
+    },
+    {
+      "id": "GV-03",
+      "role": "member2",
+      "desc": "อ่านเวลาเข้าดูของคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "U-01",
+      "role": "member",
+      "desc": "แก้ชื่อที่แสดงของตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "U-02",
+      "role": "member",
+      "desc": "แก้ชื่อของคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "U-03",
+      "role": "member",
+      "desc": "แก้อีเมลในโปรไฟล์ของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table users"
+    },
+    {
+      "id": "U-04",
+      "role": "member",
+      "desc": "อ่านโปรไฟล์สมาชิกกลุ่มเดียวกัน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "U-05",
+      "role": "outsider",
+      "desc": "อ่านโปรไฟล์และอีเมลของคนที่ไม่ได้อยู่กลุ่มเดียวกัน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "U-06",
+      "role": "anon",
+      "desc": "อ่านโปรไฟล์ผู้ใช้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "R-01",
+      "role": "member",
+      "desc": "นำสมาชิกออก (หัวหน้าเท่านั้น)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can remove members"
+    },
+    {
+      "id": "R-02",
+      "role": "leader",
+      "desc": "นำหัวหน้าออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "the group leader cannot be removed"
+    },
+    {
+      "id": "R-03",
+      "role": "member",
+      "desc": "เก็บกลุ่มเข้าคลัง (หัวหน้าเท่านั้น)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can delete this group"
+    },
+    {
+      "id": "R-04",
+      "role": "member",
+      "desc": "ขอโอนหัวหน้าให้ตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can transfer leadership"
+    },
+    {
+      "id": "R-05",
+      "role": "leader",
+      "desc": "เสนอโอนหัวหน้าให้คนนอกกลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "this user is not a member of the group"
+    },
+    {
+      "id": "R-06",
+      "role": "collab",
+      "desc": "ตอบรับการโอนหัวหน้าที่ไม่ได้ถูกเสนอ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "there is no leadership request for you in this group"
+    },
+    {
+      "id": "R-07",
+      "role": "anon",
+      "desc": "ค้นหาผู้ใช้ด้วยอีเมล",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for function find_user_by_email"
+    },
+    {
+      "id": "R-08",
+      "role": "outsider",
+      "desc": "ค้นหาผู้ใช้ด้วยอีเมล (ไม่ได้เป็นหัวหน้ากลุ่มใด)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only a group leader can search users by email"
+    },
+    {
+      "id": "R-09",
+      "role": "anon",
+      "desc": "ออกจากกลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for function leave_group"
+    },
+    {
+      "id": "S-01",
+      "role": "member",
+      "desc": "อัปโหลดรูปลงโฟลเดอร์ของคนอื่น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy"
+    },
+    {
+      "id": "S-02",
+      "role": "member",
+      "desc": "อัปโหลดรูปลงโฟลเดอร์ของตัวเอง",
+      "expect": "allow",
+      "actual": "deny",
+      "pass": false,
+      "detail": "new row violates row-level security policy"
+    },
+    {
+      "id": "S-03",
+      "role": "anon",
+      "desc": "อัปโหลดรูป",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy"
+    },
+    {
+      "id": "Z-01",
+      "role": "member",
+      "desc": "คนหลักกดงานเสร็จ",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "Z-02",
+      "role": "leader",
+      "desc": "หัวหน้าลบงาน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "Z-03",
+      "role": "leader",
+      "desc": "ถอดสมาชิกออกโดยลบแถวตรง ๆ (ต้องผ่าน RPC)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "Z-04",
+      "role": "leader",
+      "desc": "ลบกลุ่มจริง (ต้องเก็บเข้าคลังเพื่อรักษาประวัติ)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "update or delete on table \"groups\" violates foreign key constraint \"activity_logs_group_id_fkey\" on table \"activity_logs\""
+    }
+  ]
+}
