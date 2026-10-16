@@ -11,10 +11,16 @@ export async function loadUnreadCounts(supabase: SupabaseClient, userId: string)
   const lastSeen: Record<string, string> = {}
   for (const v of visits || []) lastSeen[v.group_id] = v.last_seen_at
 
+  // ไม่นับกลุ่มที่เก็บเข้าคลังแล้ว (หน้าอื่นไม่แสดงกลุ่มเหล่านั้น) RLS คืนเฉพาะกลุ่มที่ตนเองอยู่
+  const { data: activeGroups } = await supabase.from('groups').select('group_id').is('archived_at', null)
+  const activeIds = (activeGroups || []).map((g) => g.group_id)
+  if (activeIds.length === 0) return {}
+
   // RLS จำกัดให้เห็นเฉพาะ log ของกลุ่มที่ตนเองเป็นสมาชิกอยู่แล้ว
   const { data: logs } = await supabase
     .from('activity_logs')
     .select('group_id, created_at')
+    .in('group_id', activeIds)
     .neq('actor_id', userId)
     .order('created_at', { ascending: false })
     .limit(500)
