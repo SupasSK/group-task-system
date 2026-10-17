@@ -16,7 +16,13 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 ```
 
 - `npm run lint` เรียก `next lint` ซึ่งถูกถอดออกใน Next.js 16 แล้ว จึงใช้ไม่ได้ ให้เรียก ESLint ตรง ๆ
-- โปรเจกต์ยังไม่มีชุดทดสอบและไม่มี test runner
+- โปรเจกต์ยังไม่มีชุดทดสอบและไม่มี test runner สิ่งที่ใกล้เคียงที่สุดคือสคริปต์วัดผลใน `evaluation/` ซึ่งเป็นแพ็กเกจแยก (`npm install` ในโฟลเดอร์นั้น ใช้ Playwright + Lighthouse):
+  ```bash
+  cd evaluation
+  node kpi1-progress.mjs pilot   # ทดลองเครื่องมือ ไม่บันทึกผล
+  node kpi1-progress.mjs <round> # รันจริง เขียนผลลง docs/evaluation/results/
+  ```
+  สคริปต์ส่วนใหญ่รับ `<round>` หรือ `pilot` (ดูวิธีรันในคอมเมนต์บรรทัดแรกของแต่ละไฟล์ บางตัวมีหลายขั้น เช่น `kpi5-chain.mjs setup|check`) เบราว์เซอร์ยิงไปที่เว็บที่ deploy บน Vercel โดยค่าเริ่มต้น ตั้ง `GT_BASE_URL=http://localhost:3000` เพื่อทดสอบในเครื่อง ส่วน `kpi10-load.js` เป็นสคริปต์ k6 รันผ่าน `kpi10-load-runs.sh` การรันรอบจริงสร้างข้อมูลทดสอบในฐานข้อมูลจริงและเป็นหลักฐานวิทยานิพนธ์ อย่ารันเองถ้าไม่ได้รับคำสั่ง
 - `package.json` ยังมี `@supabase/auth-helpers-nextjs` แต่ไม่มีโค้ดไหนใช้ ให้ใช้ `@supabase/ssr` ตามที่ใช้อยู่
 - ต้องมี `.env.local` ที่กำหนด `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
@@ -51,6 +57,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 - เมื่อ `getUser()` ล้มเพราะเชื่อมต่อไม่ได้ (`isAuthRetryableFetchError`) `layout` และหน้ากลุ่มแสดงข้อความแทนการเด้งไป `/login`
 - `docs/evaluation/` คือเกณฑ์ประเมินวิทยานิพนธ์ที่กำหนดล่วงหน้า (ห้ามแก้เกณฑ์ผ่าน ให้เพิ่มฉบับใหม่) และผลทุกรอบ สคริปต์วัดผลอยู่ใน `evaluation/` (Playwright + บัญชีทดสอบ `gt.test.*@gt-eval.test` รหัสผ่านใน `evaluation/.env.test` ที่ไม่ commit)
 - `supabase-find-user-by-email.sql` — RPC `find_user_by_email(p_email)` ฉบับปิดช่องโหว่ (พบใน KPI-9 รอบที่ 1): ต้องล็อกอินและเป็นหัวหน้าของกลุ่มที่ยังไม่เก็บเข้าคลังอย่างน้อยหนึ่งกลุ่ม anon เรียกไม่ได้ คืน `user_id, full_name, email` ไม่เกิน 1 แถว
+- `supabase-drop-unused.sql` — ลบตาราง `user_stats` และคอลัมน์ `tasks.category`, `tasks.start_date` ที่ไม่มีโค้ดใช้ (รันแล้ว 17 ต.ค. 2569) ตาราง public ที่เหลือคือ 13 ตารางในรายการด้านล่างพอดี
 
 - Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`, `task_comments.comment_id`
 - ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `task_comments`, `activity_logs`, `group_visits`, `eval_rounds`, `peer_evaluations`, `task_collaborators`, `task_feedback`

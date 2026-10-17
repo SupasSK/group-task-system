@@ -20,7 +20,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   tasks.difficulty: easy | medium | hard (แก้ได้เฉพาะหัวหน้า เหมือน priority และ deadline)
   tasks.assignment_type: leader_assign | open_choice
   task_responses.response: accepted | rejected
-- คอลัมน์ของ tasks: deadline, assigned_to, assigned_by, assignment_type, start_date, completed_at, updated_at (ห้ามใช้ due_date หรือ assignee_id) ทุกครั้งที่ update tasks ให้ตั้ง updated_at เป็นเวลาปัจจุบัน
+- คอลัมน์ของ tasks: deadline, assigned_to, assigned_by, assignment_type, completed_at, updated_at (ห้ามใช้ due_date หรือ assignee_id) ทุกครั้งที่ update tasks ให้ตั้ง updated_at เป็นเวลาปัจจุบัน
 - รูปแบบ payload ของ log ที่ต้องตรงกันทุกที่:
   group_created {group_name, work_mode}
   group_deleted {group_name} (หัวหน้าเท่านั้น บันทึกหลัง RPC archive_group สำเร็จ)
