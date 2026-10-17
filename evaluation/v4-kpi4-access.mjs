@@ -99,7 +99,8 @@ async function main() {
   // token หมดอายุจากการรันครั้งก่อน (P6-02)
   const saved = existsSync(TOKENS) ? JSON.parse(readFileSync(TOKENS, 'utf8')) : []
   const expired = saved.find((t) => jwtPayload(t).exp * 1000 < Date.now())
-  writeFileSync(TOKENS, JSON.stringify([...saved.filter((t) => jwtPayload(t).exp * 1000 >= Date.now()), mToken].slice(-5)))
+  // เก็บ token หมดอายุไว้ใช้ซ้ำในการรันครั้งถัดไป (รอบที่ 1 ทิ้งไป ทำให้ run 2 ทดสอบ P6-02 ไม่ได้)
+  writeFileSync(TOKENS, JSON.stringify([...(expired ? [expired] : []), ...[...saved.filter((t) => jwtPayload(t).exp * 1000 >= Date.now()), mToken].slice(-4)]))
 
   // ตัวอ่านสถานะจริง
   const taskField = async (t, col) => (await L.client.from('tasks').select(col).eq('task_id', t.task_id).single()).data?.[col]

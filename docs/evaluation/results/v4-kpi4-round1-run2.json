@@ -1,0 +1,1115 @@
+{
+  "criteria": "v4",
+  "at": "2026-10-17T16:22:10.080Z",
+  "commit": "1b98811",
+  "kpi": "KPI-4",
+  "part": "access",
+  "round": 1,
+  "run": 2,
+  "group_id": "93bbaa24-63df-477f-95d9-434dc7537784",
+  "archived_group_id": "54906167-c953-4088-84e3-3b48c2680f78",
+  "expiredTokenIssuedAt": null,
+  "passed": 121,
+  "total": 122,
+  "pass": false,
+  "results": [
+    {
+      "id": "P1-01",
+      "role": "anon",
+      "desc": "อ่าน groups",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-02",
+      "role": "outsider",
+      "desc": "อ่าน groups",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-03",
+      "role": "removed",
+      "desc": "อ่าน groups หลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-04",
+      "role": "anon",
+      "desc": "อ่าน group_members",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-05",
+      "role": "outsider",
+      "desc": "อ่าน group_members",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-06",
+      "role": "removed",
+      "desc": "อ่าน group_members หลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-07",
+      "role": "outsider",
+      "desc": "เพิ่มตัวเองเข้ากลุ่มโดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"group_members\""
+    },
+    {
+      "id": "P1-08",
+      "role": "anon",
+      "desc": "อ่าน tasks",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-09",
+      "role": "outsider",
+      "desc": "อ่าน tasks",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-10",
+      "role": "removed",
+      "desc": "อ่าน tasks หลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-11",
+      "role": "outsider",
+      "desc": "สร้างงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"tasks\""
+    },
+    {
+      "id": "P1-12",
+      "role": "anon",
+      "desc": "อ่าน task_responses",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-13",
+      "role": "outsider",
+      "desc": "อ่าน task_responses",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-14",
+      "role": "outsider",
+      "desc": "บันทึกการรับงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_responses\""
+    },
+    {
+      "id": "P1-15",
+      "role": "anon",
+      "desc": "อ่าน task_comments",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-16",
+      "role": "outsider",
+      "desc": "อ่าน task_comments",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-17",
+      "role": "removed",
+      "desc": "อ่าน task_comments หลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-18",
+      "role": "outsider",
+      "desc": "เขียนความเห็น",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_comments\""
+    },
+    {
+      "id": "P1-19",
+      "role": "anon",
+      "desc": "อ่าน activity_logs",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "P1-20",
+      "role": "outsider",
+      "desc": "อ่าน activity_logs",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-21",
+      "role": "removed",
+      "desc": "อ่าน activity_logs หลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-22",
+      "role": "anon",
+      "desc": "อ่าน task_collaborators",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-23",
+      "role": "outsider",
+      "desc": "อ่าน task_collaborators",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-24",
+      "role": "outsider",
+      "desc": "เข้าร่วมงานว่างเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "collaborator must be a member of the group"
+    },
+    {
+      "id": "P1-25",
+      "role": "anon",
+      "desc": "อ่าน task_feedback",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-26",
+      "role": "outsider",
+      "desc": "อ่าน task_feedback",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-27",
+      "role": "anon",
+      "desc": "อ่าน eval_rounds",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-28",
+      "role": "outsider",
+      "desc": "อ่าน eval_rounds",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-29",
+      "role": "anon",
+      "desc": "อ่าน peer_evaluations",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-30",
+      "role": "outsider",
+      "desc": "อ่าน peer_evaluations",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-31",
+      "role": "anon",
+      "desc": "อ่าน group_visits",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-32",
+      "role": "outsider",
+      "desc": "อ่าน group_visits",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-33",
+      "role": "anon",
+      "desc": "อ่าน integrity_checks ของกลุ่มใดก็ได้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-34",
+      "role": "outsider",
+      "desc": "อ่าน integrity_checks ของกลุ่มใดก็ได้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-35",
+      "role": "anon",
+      "desc": "อ่าน users",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-36",
+      "role": "outsider",
+      "desc": "อ่านอีเมลของสมาชิกกลุ่มนี้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P1-37",
+      "role": "anon",
+      "desc": "join_group_by_code",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not authenticated"
+    },
+    {
+      "id": "P1-38",
+      "role": "anon",
+      "desc": "log_activity ของกลุ่มนี้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not authenticated"
+    },
+    {
+      "id": "P1-39",
+      "role": "outsider",
+      "desc": "log_activity ของกลุ่มนี้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "P1-40",
+      "role": "removed",
+      "desc": "log_activity หลังถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "P1-41",
+      "role": "outsider",
+      "desc": "verify_activity_chain ของกลุ่มนี้",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "not a member of this group"
+    },
+    {
+      "id": "P1-42",
+      "role": "anon",
+      "desc": "find_user_by_email",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for function find_user_by_email"
+    },
+    {
+      "id": "P1-43",
+      "role": "outsider",
+      "desc": "find_user_by_email (ไม่ได้เป็นหัวหน้ากลุ่มใด)",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only a group leader can search users by email"
+    },
+    {
+      "id": "P1-44",
+      "role": "anon",
+      "desc": "อ่าน activity_heads",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_heads"
+    },
+    {
+      "id": "P1-45",
+      "role": "outsider",
+      "desc": "อ่าน activity_heads",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_heads"
+    },
+    {
+      "id": "P2-01",
+      "role": "member",
+      "desc": "สร้างงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"tasks\""
+    },
+    {
+      "id": "P2-02a",
+      "role": "member",
+      "desc": "แก้ priority งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "P2-02b",
+      "role": "member",
+      "desc": "แก้ deadline งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "P2-02c",
+      "role": "member",
+      "desc": "แก้ difficulty งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "P2-02d",
+      "role": "member",
+      "desc": "แก้ headcount งานของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change priority, deadline, difficulty or headcount"
+    },
+    {
+      "id": "P2-03",
+      "role": "member",
+      "desc": "ลบงาน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P2-04",
+      "role": "member",
+      "desc": "แก้คำอธิบายกลุ่ม",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P2-05",
+      "role": "member",
+      "desc": "เลื่อนตัวเองเป็นหัวหน้า",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P2-06",
+      "role": "member",
+      "desc": "remove_group_member",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can remove members"
+    },
+    {
+      "id": "P2-07",
+      "role": "member",
+      "desc": "archive_group",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can delete this group"
+    },
+    {
+      "id": "P2-08",
+      "role": "member",
+      "desc": "ตั้ง archived_at เองโดยตรง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P2-09",
+      "role": "member",
+      "desc": "request_leader_transfer ให้ตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can transfer leadership"
+    },
+    {
+      "id": "P2-10",
+      "role": "member2",
+      "desc": "respond_leader_transfer ทั้งที่คำขอส่งถึง M",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "there is no leadership request for you in this group"
+    },
+    {
+      "id": "P2-11a",
+      "role": "member",
+      "desc": "เปิดรอบประเมิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"eval_rounds\""
+    },
+    {
+      "id": "P2-11b",
+      "role": "member",
+      "desc": "ปิดรอบประเมิน",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P2-12",
+      "role": "member",
+      "desc": "get_peer_eval_results",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can view results"
+    },
+    {
+      "id": "P2-13",
+      "role": "leader",
+      "desc": "get_peer_eval_results ขณะรอบยังเปิด",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "round is still open"
+    },
+    {
+      "id": "P2-14",
+      "role": "leader",
+      "desc": "อ่านแถวคะแนนดิบ peer_evaluations",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P2-15",
+      "role": "member",
+      "desc": "เชิญผู้ร่วมทำ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_collaborators\""
+    },
+    {
+      "id": "P2-16",
+      "role": "leader",
+      "desc": "นำตัวเองออกด้วย remove_group_member",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "the group leader cannot be removed"
+    },
+    {
+      "id": "P2-17",
+      "role": "leader",
+      "desc": "leave_group ทั้งที่ยังเป็นหัวหน้า",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "the leader must transfer leadership before leaving"
+    },
+    {
+      "id": "P2-20a",
+      "role": "member2",
+      "desc": "ผู้รับอ่านฟีดแบคที่ระบุชื่อผู้ส่ง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P2-20b",
+      "role": "member",
+      "desc": "สมาชิกอื่นอ่านฟีดแบค",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "0 rows"
+    },
+    {
+      "id": "P3-01",
+      "role": "member",
+      "desc": "task_responses ในนาม M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_responses\""
+    },
+    {
+      "id": "P3-02",
+      "role": "member",
+      "desc": "task_comments ในนาม M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_comments\""
+    },
+    {
+      "id": "P3-03",
+      "role": "member",
+      "desc": "peer_evaluations ในนาม M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"peer_evaluations\""
+    },
+    {
+      "id": "P3-04",
+      "role": "member",
+      "desc": "group_visits ของ M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"group_visits\""
+    },
+    {
+      "id": "P3-05",
+      "role": "member",
+      "desc": "แก้ full_name ของ M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P3-06",
+      "role": "member",
+      "desc": "แก้ email ของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table users"
+    },
+    {
+      "id": "P3-07",
+      "role": "member",
+      "desc": "อัปโหลดรูปลงโฟลเดอร์ของ M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy"
+    },
+    {
+      "id": "P3-08",
+      "role": "member",
+      "desc": "INSERT activity_logs ตรง ๆ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "P3-09",
+      "role": "outsider",
+      "desc": "สร้างกลุ่มในนาม L",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"groups\""
+    },
+    {
+      "id": "P3-10a",
+      "role": "leader",
+      "desc": "อ่าน activity_heads ของกลุ่มตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_heads"
+    },
+    {
+      "id": "P3-10b",
+      "role": "leader",
+      "desc": "แก้ activity_heads ของกลุ่มตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_heads"
+    },
+    {
+      "id": "P4-01",
+      "role": "leader",
+      "desc": "UPDATE activity_logs",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "P4-02",
+      "role": "leader",
+      "desc": "DELETE activity_logs",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "permission denied for table activity_logs"
+    },
+    {
+      "id": "P4-03",
+      "role": "member",
+      "desc": "แก้ความเห็นของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P4-04",
+      "role": "member",
+      "desc": "ลบความเห็นของตัวเอง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P4-05",
+      "role": "leader",
+      "desc": "ลบความเห็นของสมาชิก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P4-06",
+      "role": "member",
+      "desc": "แก้คะแนนประเมินที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P4-07",
+      "role": "member",
+      "desc": "ลบคะแนนประเมินที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P4-08",
+      "role": "collab",
+      "desc": "แก้คะแนนฟีดแบคที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P4-09",
+      "role": "collab",
+      "desc": "ลบฟีดแบคที่ส่งแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P5-01",
+      "role": "member",
+      "desc": "โอนงานของตัวเองให้ M2",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the group leader can change the main assignee"
+    },
+    {
+      "id": "P5-02",
+      "role": "member",
+      "desc": "claim งานที่มีคนหลักแล้ว",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P5-03",
+      "role": "collab",
+      "desc": "ผู้ร่วมทำกดงานเสร็จ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "only the main assignee or the group leader can mark a task as completed"
+    },
+    {
+      "id": "P5-04",
+      "role": "leader",
+      "desc": "เชิญผู้ร่วมทำเกิน headcount − 1",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "no collaborator slots left for this task"
+    },
+    {
+      "id": "P5-05",
+      "role": "leader",
+      "desc": "เชิญคนนอกกลุ่มเป็นผู้ร่วมทำ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "collaborator must be a member of the group"
+    },
+    {
+      "id": "P5-06",
+      "role": "leader",
+      "desc": "แก้ deadline งานที่ยังไม่เสร็จโดยไม่ใส่เหตุผล",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "a reason is required to change the deadline, assignee or difficulty"
+    },
+    {
+      "id": "P5-07",
+      "role": "leader",
+      "desc": "เปลี่ยน assigned_to งานที่ยังไม่เสร็จโดยไม่ใส่เหตุผล",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "a reason is required to change the deadline, assignee or difficulty"
+    },
+    {
+      "id": "P5-08",
+      "role": "member",
+      "desc": "ส่งฟีดแบคงานที่ไม่ได้ร่วมทำ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row violates row-level security policy for table \"task_feedback\""
+    },
+    {
+      "id": "P5-09",
+      "role": "member",
+      "desc": "อัปโหลดรูปเกิน 2 MB",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "The object exceeded the maximum allowed size"
+    },
+    {
+      "id": "P5-10",
+      "role": "member",
+      "desc": "ส่ง status ที่ฐานข้อมูลไม่รับ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "new row for relation \"tasks\" violates check constraint \"tasks_status_check\""
+    },
+    {
+      "id": "P6-01",
+      "role": "forged",
+      "desc": "token ของ M ที่แก้ sub เป็น L",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "HTTP 401 {\"code\":\"PGRST301\",\"details\":\"None of the keys was able to decode the JWT\",\"hint"
+    },
+    {
+      "id": "P6-02",
+      "role": "expired",
+      "desc": "token ที่หมดอายุแล้ว",
+      "expect": "deny",
+      "actual": "allow",
+      "pass": false,
+      "detail": "ไม่มี token หมดอายุจากการรันครั้งก่อน (ทดสอบไม่ได้ นับว่าไม่ผ่าน)"
+    },
+    {
+      "id": "P6-03",
+      "role": "removed",
+      "desc": "token ของ R ที่ออกก่อนถูกนำออก",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "HTTP 200 []"
+    },
+    {
+      "id": "P7-01",
+      "role": "member",
+      "desc": "ความเห็นที่มี SQL",
+      "expect": "safe",
+      "actual": "safe",
+      "pass": true,
+      "detail": "stored=true tasks 5->5"
+    },
+    {
+      "id": "P7-02",
+      "role": "outsider",
+      "desc": "join_group_by_code ด้วย ' OR '1'='1",
+      "expect": "safe",
+      "actual": "safe",
+      "pass": true,
+      "detail": "data=[] memberships 0->0"
+    },
+    {
+      "id": "P7-03",
+      "role": "leader",
+      "desc": "find_user_by_email ด้วย % และ ' or 1=1 --",
+      "expect": "safe",
+      "actual": "safe",
+      "pass": true,
+      "detail": "[{\"p\":\"%\",\"n\":0},{\"p\":\"' or 1=1 --\",\"n\":0}]"
+    },
+    {
+      "id": "P7-04",
+      "role": "member",
+      "desc": "ตัวกรอง or=(group_id.neq.<กลุ่มนี้>)",
+      "expect": "safe",
+      "actual": "safe",
+      "pass": true,
+      "detail": "87 rows, นอกกลุ่มของ M 0"
+    },
+    {
+      "id": "P7-05",
+      "role": "member",
+      "desc": "ชื่องานที่ฝัง <img onerror> แสดงเป็นข้อความ",
+      "expect": "safe",
+      "actual": "safe",
+      "pass": true,
+      "detail": "แสดงเป็นข้อความ, สคริปต์ทำงาน=false"
+    },
+    {
+      "id": "P8-01",
+      "role": "member",
+      "desc": "อ่านงานและประวัติของกลุ่ม",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "tasks 6 rows, logs 6 rows"
+    },
+    {
+      "id": "P8-02",
+      "role": "leader",
+      "desc": "สร้างงาน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "P8-03",
+      "role": "member",
+      "desc": "เปลี่ยนสถานะงานของตัวเองเป็น in_progress",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P8-04",
+      "role": "member",
+      "desc": "claim งานว่างให้ตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P8-06",
+      "role": "collab",
+      "desc": "แก้คำอธิบายงานที่ร่วมทำ",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P8-07",
+      "role": "member",
+      "desc": "บันทึกกิจกรรมผ่าน log_activity",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "count 6->7"
+    },
+    {
+      "id": "P8-08",
+      "role": "member",
+      "desc": "เขียนความเห็น",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "P8-09",
+      "role": "member",
+      "desc": "แก้ชื่อที่แสดงของตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P8-10",
+      "role": "member",
+      "desc": "อัปโหลดรูปลงโฟลเดอร์ตัวเอง",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "no error"
+    },
+    {
+      "id": "P8-11",
+      "role": "leader",
+      "desc": "แก้ deadline พร้อม change_reason",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P8-13",
+      "role": "member",
+      "desc": "อ่านงานของกลุ่มที่เก็บเข้าคลังแล้ว",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "1 rows"
+    },
+    {
+      "id": "P8-14",
+      "role": "member",
+      "desc": "อ่านอีเมลของ M2 (กลุ่มเดียวกัน)",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "email=gt.test.member2@gt-eval.test"
+    },
+    {
+      "id": "P8-05",
+      "role": "member",
+      "desc": "คนหลักกดงานเสร็จ",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P8-12",
+      "role": "leader",
+      "desc": "ลบงาน",
+      "expect": "allow",
+      "actual": "allow",
+      "pass": true,
+      "detail": "changed"
+    },
+    {
+      "id": "P2-18",
+      "role": "leader",
+      "desc": "ลบแถว group_members ตรง ๆ",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "unchanged"
+    },
+    {
+      "id": "P2-19",
+      "role": "leader",
+      "desc": "ลบแถว groups จริง",
+      "expect": "deny",
+      "actual": "deny",
+      "pass": true,
+      "detail": "update or delete on table \"groups\" violates foreign key constraint \"activity_logs_group_id_fkey\" on table \"activity_logs\""
+    }
+  ]
+}
