@@ -11,6 +11,8 @@ OUT="$ROOT/docs/evaluation/results"
 URL="${GT_BASE_URL:-https://group-task-system.vercel.app}"
 IMAGE="ghcr.io/zaproxy/zaproxy@sha256:5ccfff9a411743ab2615136a2edd7416bec9ce41572fa94e935df38c14adb2b6"
 mkdir -p "$OUT"
+# ZAP เขียน zap.yaml ทับไฟล์ของชุดเดิมใน results เก็บสำรองไว้แล้วคืนหลังสแกน
+[ -f "$OUT/zap.yaml" ] && cp "$OUT/zap.yaml" "$HERE/.zap.yaml.bak"
 
 for RUN in 1 2; do
   NAME="v4-kpi4-round${ROUND}-zap-run${RUN}"
@@ -21,6 +23,8 @@ for RUN in 1 2; do
   tail -n 3 "$OUT/${NAME}.txt"
   node -e "const j=require(process.argv[1]);const c={};for(const s of j.site)for(const a of s.alerts){const r=a.riskdesc.split(' ')[0];c[r]=(c[r]||0)+1}console.log('alerts by risk:',JSON.stringify(c))" "$OUT/${NAME}.json"
 done
+mv "$OUT/zap.yaml" "$OUT/v4-kpi4-round${ROUND}-zap.yaml"
+[ -f "$HERE/.zap.yaml.bak" ] && mv "$HERE/.zap.yaml.bak" "$OUT/zap.yaml"
 
 for RUN in 1 2; do
   NAME="v4-kpi4-round${ROUND}-npm-audit-run${RUN}.json"
