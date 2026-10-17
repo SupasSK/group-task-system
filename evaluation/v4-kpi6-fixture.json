@@ -1,0 +1,16 @@
+{
+  "criteria": "v4",
+  "kpi": "KPI-6",
+  "group_id": "9a91d911-e96e-4bec-b004-a7351d1c063f",
+  "leader": "gt.test.k4leader@gt-eval.test",
+  "members": [
+    "gt.test.k4member@gt-eval.test",
+    "gt.test.k4member2@gt-eval.test",
+    "gt.test.k4collab@gt-eval.test",
+    "gt.test.k1member@gt-eval.test",
+    "gt.test.k1member2@gt-eval.test"
+  ],
+  "tasks": 30,
+  "logs": 221,
+  "createdAt": "2026-10-17T15:19:59.004Z"
+}

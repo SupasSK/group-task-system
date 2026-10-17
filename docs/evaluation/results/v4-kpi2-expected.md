@@ -12,7 +12,7 @@
 | T4 | medium 2 + medium 2 | 4 | C | A rejected | completed | อนาคต | C (1) | 3 |
 | T5 | medium 2 + hard 3 | 5 | B | — | in_progress | — | ไม่นับ | 4 |
 | T6 | high 3 + hard 3 | 6 | C | B pending | completed | อดีต (เสร็จช้า) | C (1) | 3, 6 |
-| T9 | medium 2 + ไม่ระบุ 2 | 4 | A | — | completed | อนาคต | A (1) | 5 |
+| T9 | medium 2 + ไม่ระบุ (ไม่ส่งค่า ฐานข้อมูลใส่ค่าเริ่มต้น medium = 2; คอลัมน์ difficulty เป็น NOT NULL พบใน pilot) | 4 | A | — | completed | อนาคต | A (1) | 5 |
 
 น้ำหนักรวมของงานที่นับ = 7 + 5 + 2 + 4 + 6 + 4 = **28**, ส่วนที่ควรได้ F = 28 ÷ 4 = **7**
 

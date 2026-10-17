@@ -45,7 +45,8 @@ async function main() {
   const log = (u, action, entityId, payload) => logAs(u, gid, action, 'task', entityId, payload)
 
   const mk = async (title, priority, difficulty, main, extra = {}) => {
-    const t = must(await L.client.from('tasks').insert({ group_id: gid, title, priority, difficulty, headcount: 2, assigned_to: main.user.id, assigned_by: L.user.id, status: 'assigned', assignment_type: 'leader_assign', updated_at: nowIso(), ...extra }).select().single(), title)
+    // difficulty = null หมายถึงไม่ส่งค่า ให้ฐานข้อมูลใช้ค่าเริ่มต้น (คอลัมน์เป็น NOT NULL พบใน pilot)
+    const t = must(await L.client.from('tasks').insert({ group_id: gid, title, priority, ...(difficulty ? { difficulty } : {}), headcount: 2, assigned_to: main.user.id, assigned_by: L.user.id, status: 'assigned', assignment_type: 'leader_assign', updated_at: nowIso(), ...extra }).select().single(), title)
     await log(L, 'task_created', t.task_id, { title, priority, deadline: extra.deadline ?? null })
     return t
   }
