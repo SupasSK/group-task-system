@@ -1,0 +1,341 @@
+{
+  "criteria": "v4",
+  "at": "2026-10-17T15:32:28.929Z",
+  "commit": "862abd7",
+  "kpi": "KPI-3",
+  "round": 1,
+  "setup": {
+    "criteria": "v4",
+    "kpi": "KPI-3",
+    "label": "r1",
+    "at": "2026-10-17T15:28:34.526Z",
+    "commit": "862abd7",
+    "ready": true,
+    "groups": {
+      "control": {
+        "group_id": "4b4bd625-bea1-4844-bcde-71cd8e0a01c7",
+        "name": "[TEST] v4 KPI-3 control r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "edit-payload": {
+        "group_id": "e65a8af9-1f77-408e-8254-b8c80aec3d9b",
+        "name": "[TEST] v4 KPI-3 edit-payload r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "edit-actor": {
+        "group_id": "1ba868ee-a780-42a5-bee0-327adc6d0a80",
+        "name": "[TEST] v4 KPI-3 edit-actor r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "edit-time": {
+        "group_id": "139ccf1d-4bd1-4df0-a11e-60c0a1ef143e",
+        "name": "[TEST] v4 KPI-3 edit-time r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "edit-action": {
+        "group_id": "5abb34d9-bbae-40ba-be2e-39c4452eb723",
+        "name": "[TEST] v4 KPI-3 edit-action r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "rehash": {
+        "group_id": "525330a3-ad40-431c-b905-d85debbb20b4",
+        "name": "[TEST] v4 KPI-3 rehash r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "delete-first": {
+        "group_id": "0e3368b5-b5e8-4b10-a912-2c25fdf22fc2",
+        "name": "[TEST] v4 KPI-3 delete-first r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "delete-mid": {
+        "group_id": "ff0c9932-08b8-496d-9a72-971b1b48c815",
+        "name": "[TEST] v4 KPI-3 delete-mid r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "delete-last": {
+        "group_id": "81a1401a-6f8a-4ffe-b8e8-e2a7938828b0",
+        "name": "[TEST] v4 KPI-3 delete-last r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "insert-mid": {
+        "group_id": "bc5b994a-bf8a-4616-ac1d-572796022203",
+        "name": "[TEST] v4 KPI-3 insert-mid r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      },
+      "swap": {
+        "group_id": "38070cac-ba9e-4dfa-bd03-fad0ca75c99c",
+        "name": "[TEST] v4 KPI-3 swap r1",
+        "logCount": 14,
+        "maxSeq": 14,
+        "before": {
+          "is_valid": true,
+          "broken_at_seq": null
+        }
+      }
+    }
+  },
+  "detected": 10,
+  "controlOk": true,
+  "pass": true,
+  "results": [
+    {
+      "kind": "control",
+      "desc": "กลุ่มควบคุม ไม่แก้",
+      "expectedBrokenAt": null,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "pass": true
+    },
+    {
+      "kind": "edit-payload",
+      "desc": "แก้ payload แถวที่ 5",
+      "expectedBrokenAt": 5,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "pass": true
+    },
+    {
+      "kind": "edit-actor",
+      "desc": "แก้ actor_id แถวที่ 5 เป็นสมาชิกอีกคน",
+      "expectedBrokenAt": 5,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "pass": true
+    },
+    {
+      "kind": "edit-time",
+      "desc": "แก้ created_at แถวที่ 5 ย้อนไป 1 วัน",
+      "expectedBrokenAt": 5,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "pass": true
+    },
+    {
+      "kind": "edit-action",
+      "desc": "แก้ action_type แถวที่ 5",
+      "expectedBrokenAt": 5,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "pass": true
+    },
+    {
+      "kind": "rehash",
+      "desc": "แก้ payload แถวที่ 5 แล้วคำนวณ hash ของแถวนั้นใหม่",
+      "expectedBrokenAt": 6,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "pass": true
+    },
+    {
+      "kind": "delete-first",
+      "desc": "ลบแถวแรก",
+      "expectedBrokenAt": 2,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 2
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 2
+      },
+      "pass": true
+    },
+    {
+      "kind": "delete-mid",
+      "desc": "ลบแถวที่ 5",
+      "expectedBrokenAt": 6,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "pass": true
+    },
+    {
+      "kind": "delete-last",
+      "desc": "ลบแถวสุดท้าย",
+      "expectedBrokenAt": 14,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 14
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 14
+      },
+      "pass": true
+    },
+    {
+      "kind": "insert-mid",
+      "desc": "แทรกแถวปลอมที่ลำดับ 5 (hash ถูกต้อง) และเลื่อนแถวเดิม",
+      "expectedBrokenAt": 6,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 6
+      },
+      "pass": true
+    },
+    {
+      "kind": "swap",
+      "desc": "สลับ seq ของแถวที่ 5 และ 6",
+      "expectedBrokenAt": 5,
+      "before": {
+        "is_valid": true,
+        "broken_at_seq": null
+      },
+      "after": {
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "latestIntegrityCheck": {
+        "checked_at": "2026-10-17T15:31:30.879617+00:00",
+        "is_valid": false,
+        "broken_at_seq": 5
+      },
+      "pass": true
+    }
+  ]
+}

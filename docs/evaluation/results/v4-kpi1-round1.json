@@ -1,0 +1,221 @@
+{
+  "criteria": "v4",
+  "at": "2026-10-17T15:25:08.924Z",
+  "commit": "862abd7",
+  "kpi": "KPI-1",
+  "round": 1,
+  "baseUrl": "https://group-task-system.vercel.app",
+  "group_id": "870199a1-7e55-468d-b619-863409ea6714",
+  "lastSeenAt": "2026-10-17T15:24:59.053+00:00",
+  "clockSkewMs": 569,
+  "newShown": 10,
+  "preFlagged": 0,
+  "pass": true,
+  "checks": [
+    {
+      "id": "NEW-01",
+      "desc": "comment_added หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-02",
+      "desc": "decision_added หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-03",
+      "desc": "task_updated หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-04",
+      "desc": "task_declined หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-05",
+      "desc": "task_status_changed หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-06",
+      "desc": "task_created หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-07",
+      "desc": "task_assigned หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-08",
+      "desc": "task_claimed หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-09",
+      "desc": "task_accepted หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "NEW-10",
+      "desc": "eval_round_opened หลังรับทราบมีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "isNew=true"
+    },
+    {
+      "id": "PRE-01",
+      "desc": "comment_added ก่อนรับทราบไม่มีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "แสดง, isNew=false"
+    },
+    {
+      "id": "PRE-02",
+      "desc": "decision_added ก่อนรับทราบไม่มีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "แสดง, isNew=false"
+    },
+    {
+      "id": "PRE-03",
+      "desc": "comment_added ก่อนรับทราบไม่มีป้าย \"ใหม่\"",
+      "pass": true,
+      "detail": "แสดง, isNew=false"
+    }
+  ],
+  "topics": [
+    {
+      "title": "เรื่องทั่วไปของกลุ่ม",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ หัวหน้า KPI2 สร้างกลุ่ม · 17 ต.ค. 22:24",
+          "isNew": false
+        },
+        {
+          "text": "ผู้ทดสอบ สมาชิก KPI2 เข้าร่วมกลุ่มด้วยรหัส · 17 ต.ค. 22:24",
+          "isNew": false
+        },
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 เปิดรอบประเมินเพื่อน \"NEW10\" · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T12",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 รับงาน · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T11",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 เลือกรับงานเอง · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T10",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 มอบหมายงานให้ ผู้ทดสอบ สมาชิก KPI2 · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T9",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 สร้างงาน (ความสำคัญสูง, กำหนดส่ง ไม่ระบุ) · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T8",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 เปลี่ยนสถานะจาก \"รับแล้ว\" เป็น \"กำลังทำ\" · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T7",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 ปฏิเสธงาน เหตุผล: NEW04 · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T6",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 แก้ไขงาน: กำหนดส่ง จาก \"ไม่ระบุ\" เป็น \"25 ธ.ค. 17:00\" เหตุผล: NEW03 · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T5",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ หัวหน้า KPI2 บันทึกการตัดสินใจ: NEW02 · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T4",
+      "items": [
+        {
+          "text": "ใหม่ผู้ทดสอบ สมาชิก KPI2 เขียนบันทึก: NEW01 · 17 ต.ค. 22:25",
+          "isNew": true
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T3",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ สมาชิก KPI2 เขียนบันทึก: PRE03 · 17 ต.ค. 22:24",
+          "isNew": false
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T2",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ หัวหน้า KPI2 บันทึกการตัดสินใจ: PRE02 · 17 ต.ค. 22:24",
+          "isNew": false
+        }
+      ]
+    },
+    {
+      "title": "งาน: D-T1",
+      "items": [
+        {
+          "text": "ผู้ทดสอบ สมาชิก KPI2 เขียนบันทึก: PRE01 · 17 ต.ค. 22:24",
+          "isNew": false
+        }
+      ]
+    }
+  ]
+}
