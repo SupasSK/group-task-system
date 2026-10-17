@@ -22,7 +22,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
   node kpi1-progress.mjs pilot   # ทดลองเครื่องมือ ไม่บันทึกผล
   node kpi1-progress.mjs <round> # รันจริง เขียนผลลง docs/evaluation/results/
   ```
-  สคริปต์ส่วนใหญ่รับ `<round>` หรือ `pilot` (ดูวิธีรันในคอมเมนต์บรรทัดแรกของแต่ละไฟล์ บางตัวมีหลายขั้น เช่น `kpi5-chain.mjs setup|check`) เบราว์เซอร์ยิงไปที่เว็บที่ deploy บน Vercel โดยค่าเริ่มต้น ตั้ง `GT_BASE_URL=http://localhost:3000` เพื่อทดสอบในเครื่อง ส่วน `kpi10-load.js` เป็นสคริปต์ k6 รันผ่าน `kpi10-load-runs.sh` การรันรอบจริงสร้างข้อมูลทดสอบในฐานข้อมูลจริงและเป็นหลักฐานวิทยานิพนธ์ อย่ารันเองถ้าไม่ได้รับคำสั่ง
+  สคริปต์ของเกณฑ์ฉบับที่ 4 (ชุด KPI ปัจจุบัน) ขึ้นต้นด้วย `v4-` และเขียนผลเป็น `docs/evaluation/results/v4-*` ส่วนไฟล์ `kpi*.mjs` เป็นของชุดเดิม สคริปต์ส่วนใหญ่รับ `<round>` หรือ `pilot` (ดูวิธีรันในคอมเมนต์บรรทัดแรกของแต่ละไฟล์ บางตัวมีหลายขั้น เช่น `kpi5-chain.mjs setup|check`) เบราว์เซอร์ยิงไปที่เว็บที่ deploy บน Vercel โดยค่าเริ่มต้น ตั้ง `GT_BASE_URL=http://localhost:3000` เพื่อทดสอบในเครื่อง ส่วน `kpi10-load.js` เป็นสคริปต์ k6 รันผ่าน `kpi10-load-runs.sh` การรันรอบจริงสร้างข้อมูลทดสอบในฐานข้อมูลจริงและเป็นหลักฐานวิทยานิพนธ์ อย่ารันเองถ้าไม่ได้รับคำสั่ง
 - `package.json` ยังมี `@supabase/auth-helpers-nextjs` แต่ไม่มีโค้ดไหนใช้ ให้ใช้ `@supabase/ssr` ตามที่ใช้อยู่
 - ต้องมี `.env.local` ที่กำหนด `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
