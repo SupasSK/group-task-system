@@ -61,7 +61,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 - `supabase-drop-unused.sql` — ลบตาราง `user_stats` และคอลัมน์ `tasks.category`, `tasks.start_date` ที่ไม่มีโค้ดใช้ (รันแล้ว 17 ต.ค. 2569) ตาราง public ที่เหลือคือ 13 ตารางในรายการด้านล่างพอดี
 
 - Primary key ใช้ชื่อตามตาราง ไม่ใช่ `id`: `groups.group_id`, `tasks.task_id`, `users.user_id` (เท่ากับ auth uid), `task_responses.response_id`, `task_comments.comment_id`
-- ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `task_comments`, `activity_logs`, `group_visits`, `eval_rounds`, `peer_evaluations`, `task_collaborators`, `task_feedback`
+- ตารางที่ใช้: `users`, `groups`, `group_members`, `tasks`, `task_responses`, `task_comments`, `activity_logs`, `group_visits`, `eval_rounds`, `peer_evaluations`, `task_collaborators`, `task_feedback`, `integrity_checks` (13 ตาราง) และ `activity_heads` ที่เพิ่มทีหลังเป็นตารางที่ 14
 - `groups.work_mode`: `leader_all` | `member_choose` | `mixed` — `group_members.role`: `leader` | `member` — `task_comments.kind`: `comment` | `decision` — `tasks.work_url` เก็บลิงก์ผลงาน
 - `group_visits(user_id, group_id, last_seen_at)` ใช้คำนวณกิจกรรมที่ยังไม่ได้อ่าน (`lib/unreadCounts.ts`, `CatchUpDigest`)
 - RPC ที่มีอยู่: `log_activity` (เรียกผ่าน `lib/logActivity.ts` เท่านั้น), `join_group_by_code(p_code)` คืน `{joined_group_id, joined_group_name, newly_joined}`, `find_user_by_email(p_email)`, `verify_activity_chain(p_group_id)` (ตรวจว่า log ไม่ถูกแก้/ลบ), `get_peer_eval_results(p_round_id)`, `peer_eval_submitted_count(p_round_id)`, `remove_group_member(p_group_id, p_user_id)`, `leave_group(p_group_id)`, `request_leader_transfer(p_group_id, p_user_id)`, `respond_leader_transfer(p_group_id, p_accept)`, `archive_group(p_group_id)`
@@ -70,6 +70,7 @@ npx tsc --noEmit     # type-check (tsconfig ตั้ง strict: false)
 ### หน้าต่าง ๆ
 - **ข้อมูลจริง:** `dashboard/page.tsx`, `leader`, `member`, `profile` (แก้ชื่อที่แสดง), `projects/new` (สร้างกลุ่ม), `projects/join` (เข้ากลุ่มด้วยรหัส 6 ตัว) และ `groups/[id]` ซึ่งเป็นหน้าหลักของกลุ่ม มีแท็บ ภาพรวม/งาน/สมาชิก/สรุป/ประเมินเพื่อน (เลือกแท็บได้ด้วย query `?tab=`) และ flow งานทั้งหมด — สร้าง, มอบหมาย, รับ, ปฏิเสธ, claim, เปลี่ยนสถานะ
 - ส่วนประกอบของหน้ากลุ่มแยกไว้ใน `components/dashboard/`: `CatchUpDigest` (สรุปสิ่งที่พลาดไป + ตรวจ log, ใช้ใน `leader` ด้วย), `TaskWorkPanel` (ลิงก์ผลงาน + ความเห็น/การตัดสินใจของงาน), `ParticipationSummary` (คะแนนการมีส่วนร่วม, ใช้ใน `leader` ด้วย, ปุ่มพิมพ์รายงานเรียก `window.print()` และ `@media print` ใน `globals.css` จะพิมพ์เฉพาะองค์ประกอบที่มีคลาส `gt-print-area`), `PeerEvaluation`, `TaskEditModal` (หัวหน้าแก้ไขงาน ต้องใส่เหตุผลเมื่อเปลี่ยนกำหนดส่ง/คนทำ/ความยาก)
+- `components/dashboard/DashboardCalendar.tsx` ใช้เฉพาะในหน้า `dashboard/page.tsx`
 - **redirect ทิ้ง:** `tasks`, `tasks/new` → `/dashboard/leader`; `projects`, `activity`, `contributions` → `/dashboard`
 - ไม่มีข้อมูลตัวอย่าง (mock) เหลือในโค้ดแล้ว ทุกหน้าดึงข้อมูลจริงจาก Supabase
 - ความคืบหน้าของโครงการคำนวณที่เดียวคือ `lib/projectProgress.ts` (งาน `completed` / งานทั้งหมด)
