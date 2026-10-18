@@ -67,7 +67,7 @@ async function main() {
   const card = page.getByRole('heading', { name: DIGEST }).locator('xpath=ancestor::div[contains(@class,"bg-white")][1]')
   const topics = await card.evaluate((el) => [...el.querySelectorAll('div.rounded-xl')].map((d) => ({
     title: d.querySelector('p')?.innerText?.trim(),
-    items: [...d.querySelectorAll('li')].map((li) => ({ text: li.innerText.trim(), isNew: !!li.querySelector('span.bg-rose-500') })),
+    items: [...d.querySelectorAll('li')].map((li) => ({ text: li.innerText.trim(), isNew: [...li.querySelectorAll('span')].some((s) => s.innerText.trim() === 'ใหม่') })),
   })))
   await closeBrowser()
   const items = topics.flatMap((t) => t.items.map((i) => ({ ...i, topic: t.title })))
