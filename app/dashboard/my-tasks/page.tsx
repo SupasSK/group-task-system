@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import TaskWorkPanel from '@/components/dashboard/TaskWorkPanel';
 import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel';
-import { CheckCircle2, ArrowRight, Plus, Mail, FolderOpen } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Plus, Mail, FolderOpen, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase';
 import { logActivity } from '@/lib/logActivity';
-import { isOverdue, toneOf } from '@/lib/statusTone';
+import { isOverdue, toneOf, TONE } from '@/lib/statusTone';
 
 interface RealGroup {
   group_id: string;
@@ -71,7 +71,11 @@ function formatThaiDate(dateStr: string | null) {
   }
 }
 
-type MyTab = 'all' | 'doing' | 'overdue' | 'done' | 'open';
+function formatShortDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+}
+
+type MyTab ='all' | 'doing' | 'overdue' | 'done' | 'open';
 const TABS: { id: MyTab; label: string }[] = [
   { id: 'all', label: 'ทั้งหมด' },
   { id: 'doing', label: 'กำลังทำ' },
@@ -112,6 +116,9 @@ function MyTasks() {
     const tab = searchParams.get('tab');
     return TABS.some((t) => t.id === tab) ? (tab as MyTab) : 'all';
   });
+
+  // งานที่เปิดดูรายละเอียดในหน้าต่าง
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // ปฏิเสธงานโมดอล
   const [rejectModalTask, setRejectModalTask] = useState<MemberTask | null>(null);
@@ -421,11 +428,56 @@ function MyTasks() {
     open: openTasks,
   };
   const list = lists[activeTab];
+  const selectedTask = tasks.find((t) => t.task_id === selectedTaskId) ?? null;
 
-  const taskCard = (t: MemberTask) => {
+  // การ์ดย่อแบบเดียวกับบอร์ดในแท็บงานของหน้ากลุ่ม กดแล้วเปิดรายละเอียดในหน้าต่าง
+  const boardCard = (t: MemberTask) => {
+    const invite = myCollabStatus(t.task_id) === 'pending';
+    const awaitsMe = invite || (t.assigned_to === currentUserId && t.status === 'assigned');
+    const tone = t.status === 'rejected' ? 'neutral' : toneOf(t, invite);
+    return (
+      <button
+        key={t.task_id}
+        type="button"
+        onClick={() => {
+          setActionMessage(null);
+          setSelectedTaskId(t.task_id);
+        }}
+        className={`block w-full cursor-pointer rounded-xl border bg-white p-3 text-left shadow-sm hover:border-violet-300 ${
+          tone === 'overdue' ? 'border-rose-300' : 'border-slate-200'
+        }`}
+      >
+        <p className="truncate text-[12px] font-semibold text-slate-600">{t.group_name}</p>
+        <p className="text-[14px] font-semibold leading-snug text-slate-900">{t.title}</p>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">
+            {t.assignment_type === 'open_choice' ? 'เปิดให้เลือก' : 'มอบหมาย'}
+          </span>
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-800">
+            ความสำคัญ: {(PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.medium).label}
+          </span>
+          {awaitsMe && (
+            <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${TONE.waiting.badge}`}>รอคุณตอบ</span>
+          )}
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+          <span className={`text-[12px] ${tone === 'overdue' ? 'font-semibold text-rose-700' : 'text-slate-600'}`}>
+            {t.deadline ? `ส่ง ${formatShortDate(t.deadline)}` : 'ไม่มีกำหนดส่ง'}
+          </span>
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[tone].badge}`}>
+            {tone === 'overdue' ? TONE.overdue.label : (STATUS_CONFIG[t.status] || STATUS_CONFIG.pending).label}
+          </span>
+        </div>
+      </button>
+    );
+  };
+
+  // รายละเอียดงาน แสดงในหน้าต่างเมื่อกดการ์ด
+  const taskDetail = (t: MemberTask) => {
     const priority = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.medium;
     const status = STATUS_CONFIG[t.status] || STATUS_CONFIG.in_progress;
-    const isOpen = activeTab === 'open';
+    // หน้าต่างค้างเปิดหลังกดรับงาน จึงดูจากรายการงานว่างแทนแท็บที่เลือก
+    const isOpen = openTasks.includes(t);
 
     return (
       <div key={t.task_id} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -539,18 +591,8 @@ function MyTasks() {
     );
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-[24px] font-bold text-slate-900">งานของฉัน</h1>
-          <p className="text-[14px] text-slate-700">รวมจากทุกกลุ่ม</p>
-        </div>
-      </div>
-
-      {/* ข้อความแจ้งเตือนผลการดำเนินงาน */}
-      {actionMessage && (
+  // ข้อความแจ้งเตือนผลการดำเนินงาน (แสดงในหน้าต่างรายละเอียดเมื่อเปิดอยู่)
+  const messageBox = actionMessage && (
         <div
           className={`px-4 py-3 rounded-2xl text-sm ${
             actionMessage.type === 'success'
@@ -562,7 +604,19 @@ function MyTasks() {
         >
           {actionMessage.text}
         </div>
-      )}
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-[24px] font-bold text-slate-900">งานของฉัน</h1>
+          <p className="text-[14px] text-slate-700">รวมจากทุกกลุ่ม</p>
+        </div>
+      </div>
+
+      {!selectedTask && messageBox}
 
       {!loaded && (
         <div className="gt-card flex h-[320px] items-center justify-center animate-pulse text-[13px] text-slate-500">
@@ -595,7 +649,7 @@ function MyTasks() {
               <h2 className="flex items-center gap-2 text-[15px] font-bold text-slate-900">
                 <Mail size={17} className="text-amber-600" /> รอคุณตอบรับ ({invites.length})
               </h2>
-              {invites.map((t) => taskCard(t))}
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{invites.map(boardCard)}</div>
             </section>
           )}
 
@@ -639,9 +693,30 @@ function MyTasks() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">{list.map((t) => taskCard(t))}</div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{list.map(boardCard)}</div>
           )}
         </>
+      )}
+
+      {/* หน้าต่างรายละเอียดงาน: ปุ่มรับ/ปฏิเสธ/เริ่ม/เสร็จ ทีมงาน ลิงก์ผลงาน และความเห็นอยู่ในนี้ทั้งหมด */}
+      {selectedTask && (
+        <div
+          className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-900/40 px-4 py-10"
+          onClick={() => setSelectedTaskId(null)}
+        >
+          <div className="relative w-full max-w-2xl space-y-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setSelectedTaskId(null)}
+              aria-label="ปิด"
+              className="absolute -top-9 right-0 rounded-full bg-white p-1.5 text-slate-700 shadow"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {messageBox}
+            {taskDetail(selectedTask)}
+          </div>
+        </div>
       )}
 
       {/* โมดอลปฏิเสธงาน (สำหรับสมาชิก) */}
