@@ -14,12 +14,14 @@ body {
   background: var(--gt-bg);
 }
 
+/* gradient เหลือไว้แค่โลโก้ (หน้า login ใช้ gradient ของตัวเอง) */
 .gt-gradient {
   background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 48%, #ec4899 100%);
 }
 
+/* หลอดความคืบหน้า: ม่วงสีเดียว ไม่ไล่สี ให้สีสถานะเด่นกว่า */
 .gt-gradient-x {
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  background: #7c3aed;
 }
 
 .gt-card {
@@ -53,12 +55,12 @@ body {
   font-weight: 600;
   cursor: pointer;
   border-radius: 12px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  background: #7c3aed;
+  transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
 .gt-btn:hover {
-  opacity: 0.92;
+  background: #6d28d9;
 }
 
 .gt-btn:disabled {

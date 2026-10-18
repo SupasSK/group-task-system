@@ -59,7 +59,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#f4f6fb] md:flex-row">
-      <Suspense fallback={<aside className="gt-gradient hidden w-[220px] h-screen shrink-0 md:block" />}>
+      <Suspense fallback={<aside className="hidden h-screen w-[220px] shrink-0 border-r border-slate-200 bg-white md:block" />}>
         <Sidebar displayName={displayName} avatarUrl={avatarUrl} />
       </Suspense>
       <main className="min-w-0 flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-7">
@@ -68,7 +68,8 @@ export default function DashboardLayout({
             เชื่อมต่อระบบไม่สำเร็จ ข้อมูลที่แสดงอาจไม่ครบ กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้านี้
           </div>
         )}
-        {children}
+        {/* ความกว้างเนื้อหาเท่ากันทุกหน้า */}
+        <div className="mx-auto w-full max-w-6xl">{children}</div>
       </main>
     </div>
   );

@@ -4,16 +4,65 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { loadUnreadCounts } from '@/lib/unreadCounts'
-import { LayoutGrid, Crown, User, LogOut, Users } from 'lucide-react'
+import { LayoutGrid, Crown, User, LogOut, Users, Bell } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import UserAvatar from '@/components/ui/UserAvatar'
+
+type UnreadGroup = { group_id: string; group_name: string; count: number }
+
+// กระดิ่ง: จำนวนกิจกรรมใหม่รวมทุกกลุ่ม กดแล้วเห็นว่ามาจากกลุ่มไหน
+function NotificationBell({ groups, align }: { groups: UnreadGroup[]; align: 'left' | 'right' }) {
+  const [open, setOpen] = useState(false)
+  const total = groups.reduce((sum, g) => sum + g.count, 0)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label={`การแจ้งเตือน ${total} รายการ`}
+        className="relative rounded-xl p-2 text-slate-700 hover:bg-slate-100"
+      >
+        <Bell size={20} />
+        {total > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 rounded-full bg-slate-800 px-1.5 text-[11px] font-bold leading-5 text-white">
+            {total > 99 ? '99+' : total}
+          </span>
+        )}
+      </button>
+      {open && (
+        <>
+          {/* กดที่อื่นเพื่อปิด */}
+          <button aria-label="ปิดการแจ้งเตือน" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+          <div className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} z-40 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg`}>
+            <p className="px-2 pb-1 pt-1 text-[12px] font-semibold text-slate-600">ความเคลื่อนไหวที่ยังไม่ได้อ่าน</p>
+            {groups.length === 0 ? (
+              <p className="px-2 py-3 text-[13px] text-slate-600">ไม่มีความเคลื่อนไหวใหม่</p>
+            ) : (
+              groups.map((g) => (
+                <Link
+                  key={g.group_id}
+                  href={`/dashboard/groups/${g.group_id}`}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 hover:bg-slate-50"
+                >
+                  <span className="truncate text-[13px] text-slate-800">{g.group_name}</span>
+                  <span className="shrink-0 rounded-full bg-slate-800 px-2 py-0.5 text-[12px] font-semibold text-white">{g.count} ใหม่</span>
+                </Link>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export default function Sidebar({ displayName, avatarUrl }: { displayName?: string; avatarUrl?: string | null }) {
   const pathname = usePathname()
   const supabase = createClient()
   const name = displayName || ''
-  // จำนวนกิจกรรมใหม่รวมทุกกลุ่ม (นับใหม่ทุกครั้งที่เปลี่ยนหน้า)
-  const [unreadTotal, setUnreadTotal] = useState(0)
+  // กิจกรรมใหม่แยกตามกลุ่ม (นับใหม่ทุกครั้งที่เปลี่ยนหน้า)
+  const [unreadGroups, setUnreadGroups] = useState<UnreadGroup[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -21,7 +70,18 @@ export default function Sidebar({ displayName, avatarUrl }: { displayName?: stri
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || cancelled) return
       const counts = await loadUnreadCounts(supabase, user.id)
-      if (!cancelled) setUnreadTotal(Object.values(counts).reduce((sum, n) => sum + n, 0))
+      const ids = Object.keys(counts)
+      if (ids.length === 0) {
+        if (!cancelled) setUnreadGroups([])
+        return
+      }
+      const { data: rows } = await supabase.from('groups').select('group_id, group_name').in('group_id', ids)
+      if (cancelled) return
+      setUnreadGroups(
+        (rows || [])
+          .map((g) => ({ group_id: g.group_id, group_name: g.group_name, count: counts[g.group_id] }))
+          .sort((a, b) => b.count - a.count),
+      )
     }
     load()
     return () => {
@@ -34,7 +94,6 @@ export default function Sidebar({ displayName, avatarUrl }: { displayName?: stri
     window.location.href = '/login'
   }
 
-  // คงรายการเมนูเดิมของระบบ แต่เปลี่ยนไอคอนเป็น Line/Outline สไตล์ตามรูป
   const navItems = [
     { href: '/dashboard', icon: LayoutGrid, label: 'แดชบอร์ด', exact: true },
     { href: '/dashboard/leader', icon: Crown, label: 'หัวหน้า', exact: false },
@@ -42,75 +101,73 @@ export default function Sidebar({ displayName, avatarUrl }: { displayName?: stri
   ]
 
   return (
-    <aside className="gt-gradient flex shrink-0 flex-row items-center gap-1 px-2 py-2 text-white select-none md:h-screen md:w-[220px] md:flex-col md:items-stretch md:gap-0 md:px-4 md:py-6">
-      {/* Brand */}
-      <div className="mb-6 hidden items-center gap-2.5 md:flex">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 border border-white/25">
-          <Users size={16} strokeWidth={2.2} />
+    <aside className="flex shrink-0 flex-row items-center gap-1 border-b border-slate-200 bg-white px-2 py-2 select-none md:h-screen md:w-[220px] md:flex-col md:items-stretch md:gap-0 md:border-b-0 md:border-r md:px-4 md:py-6">
+      {/* Brand + กระดิ่ง (จอกว้าง) — gradient เหลือไว้แค่โลโก้ */}
+      <div className="mb-6 hidden items-center justify-between md:flex">
+        <div className="flex items-center gap-2.5">
+          <div className="gt-gradient flex h-8 w-8 items-center justify-center rounded-xl text-white">
+            <Users size={16} strokeWidth={2.2} />
+          </div>
+          <span className="text-[20px] font-bold tracking-tight text-slate-900">GroupTask</span>
         </div>
-        <span className="text-[20px] font-bold tracking-tight">GroupTask</span>
+        <NotificationBell groups={unreadGroups} align="left" />
       </div>
 
-      {/* User Card */}
-      <Link
-        href="/dashboard/profile"
-        title="ตั้งค่าโปรไฟล์"
-        className="mb-6 hidden items-center gap-3 p-2.5 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition md:flex"
-      >
-        <UserAvatar src={avatarUrl} name={name} className="h-9 w-9 rounded-xl bg-white/20 text-sm ring-2 ring-white/30" />
-        <div className="min-w-0">
-          <div className="truncate text-[13px] font-semibold">{name}</div>
-          <div className="text-[11px] text-white/60">ตั้งค่าโปรไฟล์</div>
-        </div>
-      </Link>
-
-      {/* Nav — สไตล์แบบรูป: มุมมน Glassmorphism, ไอคอนเส้นสีขาว, ตัวหนังสือขาวคมชัด */}
-      <nav className="flex flex-1 flex-row gap-1 md:flex-col md:gap-2">
+      <nav className="flex flex-1 flex-row gap-1 md:flex-col md:gap-1.5">
         {navItems.map(({ href, icon: Icon, label, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-2xl px-2 py-2 text-[12px] transition-all duration-200 md:flex-none md:justify-start md:gap-3.5 md:px-4 md:py-3 md:text-[14px] ${
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[12px] transition-colors md:flex-none md:justify-start md:gap-3 md:px-3 md:py-2.5 md:text-[14px] ${
                 active
-                  ? 'bg-white/25 backdrop-blur-md text-white font-semibold shadow-sm border border-white/15'
-                  : 'text-white/80 hover:bg-white/10 hover:text-white font-medium'
+                  ? 'bg-violet-50 font-semibold text-violet-700'
+                  : 'font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <Icon size={19} strokeWidth={2.2} className="shrink-0" />
               <span>{label}</span>
-              {href === '/dashboard' && unreadTotal > 0 && (
-                <span className="rounded-full bg-rose-500 px-1.5 text-[11px] font-bold leading-5 text-white md:ml-auto">
-                  {unreadTotal > 99 ? '99+' : unreadTotal}
-                </span>
-              )}
             </Link>
           )
         })}
       </nav>
 
-      {/* ชื่อบัญชีบนจอแคบ (จอกว้างใช้การ์ดผู้ใช้ด้านบน) */}
+      {/* กระดิ่ง + ชื่อบัญชีบนจอแคบ */}
+      <div className="md:hidden">
+        <NotificationBell groups={unreadGroups} align="right" />
+      </div>
       <Link
         href="/dashboard/profile"
         aria-label="ตั้งค่าโปรไฟล์"
         className="flex min-w-0 max-w-[90px] items-center gap-1.5 md:hidden"
       >
-        <UserAvatar src={avatarUrl} name={name} className="h-7 w-7 rounded-lg bg-white/20 text-xs ring-1 ring-white/30" />
-        <span className="truncate text-[11px] font-semibold">{name}</span>
+        <UserAvatar src={avatarUrl} name={name} className="h-7 w-7 rounded-lg bg-slate-200 text-xs text-slate-700" />
+        <span className="truncate text-[11px] font-semibold text-slate-800">{name}</span>
       </Link>
 
-      {/* ออกจากระบบ — สไตล์เดียวกับเมนู */}
+      {/* โปรไฟล์ + ออกจากระบบ (จอกว้างอยู่ล่างสุด) */}
+      <Link
+        href="/dashboard/profile"
+        title="ตั้งค่าโปรไฟล์"
+        className={`mt-auto hidden items-center gap-3 rounded-xl p-2 transition-colors md:flex ${
+          pathname.startsWith('/dashboard/profile') ? 'bg-violet-50' : 'hover:bg-slate-100'
+        }`}
+      >
+        <UserAvatar src={avatarUrl} name={name} className="h-9 w-9 rounded-xl bg-slate-200 text-sm text-slate-700" />
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-semibold text-slate-900">{name}</div>
+          <div className="text-[12px] text-slate-600">ตั้งค่าโปรไฟล์</div>
+        </div>
+      </Link>
       <button
         onClick={handleSignOut}
         aria-label="ออกจากระบบ"
-        className="flex items-center gap-3.5 rounded-2xl px-3 py-2 text-left text-[14px] text-white/80 hover:bg-white/10 hover:text-white transition-all cursor-pointer font-medium md:mt-auto md:px-4 md:py-3"
+        className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left text-[14px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 md:mt-1 md:px-3 md:py-2.5"
       >
         <LogOut size={19} strokeWidth={2.2} className="shrink-0" />
         <span className="hidden md:inline">ออกจากระบบ</span>
       </button>
-
-      <p className="mt-4 hidden pt-2 text-[11px] text-white/40 md:block">v2.0 • GroupTask</p>
     </aside>
   )
 }
