@@ -1,2 +1,6 @@
-// หน้าสมาชิกเดิมย้ายไปเป็นหน้า "งานของฉัน" แล้ว (เฟส 5 จะเปลี่ยนเป็น redirect)
-export { default } from '../my-tasks/page';
+import { redirect } from "next/navigation";
+
+// หน้าสมาชิกเดิมย้ายไปเป็นหน้า "งานของฉัน" แล้ว
+export default function MemberPage() {
+  redirect("/dashboard/my-tasks");
+}

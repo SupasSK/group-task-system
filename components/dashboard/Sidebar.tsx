@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { loadUnreadCounts } from '@/lib/unreadCounts'
-import { LayoutGrid, Crown, User, LogOut, Users, Bell } from 'lucide-react'
+import { Home, FolderKanban, CalendarDays, LogOut, Users, Bell } from 'lucide-react'
 import { createClient } from '@/utils/supabase'
 import UserAvatar from '@/components/ui/UserAvatar'
 
@@ -95,9 +95,9 @@ export default function Sidebar({ displayName, avatarUrl }: { displayName?: stri
   }
 
   const navItems = [
-    { href: '/dashboard', icon: LayoutGrid, label: 'แดชบอร์ด', exact: true },
-    { href: '/dashboard/leader', icon: Crown, label: 'หัวหน้า', exact: false },
-    { href: '/dashboard/member', icon: User, label: 'สมาชิก', exact: false },
+    { href: '/dashboard', icon: Home, label: 'หน้าหลัก', exact: true },
+    { href: '/dashboard/groups', icon: FolderKanban, label: 'กลุ่มของฉัน', exact: false },
+    { href: '/dashboard/calendar', icon: CalendarDays, label: 'ปฏิทิน', exact: false },
   ]
 
   return (
