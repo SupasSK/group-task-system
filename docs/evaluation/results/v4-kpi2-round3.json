@@ -1,0 +1,228 @@
+{
+  "criteria": "v4",
+  "at": "2026-10-18T13:33:07.438Z",
+  "commit": "32d38d0",
+  "kpi": "KPI-2",
+  "round": 3,
+  "baseUrl": "https://group-task-system.vercel.app",
+  "group_id": "cb23557a-acff-456e-bb99-d40442fcd035",
+  "measuredAt": "2026-10-18T13:33:06.341Z",
+  "fixtureDifficultyT9": "medium",
+  "expected": {
+    "L": {
+      "workload": 0,
+      "punctual": 0,
+      "activityScore": 0,
+      "consistency": 15,
+      "total": 15,
+      "share": 0
+    },
+    "A": {
+      "workload": 40,
+      "punctual": 16.666666666666668,
+      "activityScore": 20,
+      "consistency": 15,
+      "total": 91.66666666666667,
+      "share": 45
+    },
+    "B": {
+      "workload": 31.428571428571427,
+      "punctual": 25,
+      "activityScore": 12,
+      "consistency": 15,
+      "total": 83.42857142857143,
+      "share": 20
+    },
+    "C": {
+      "workload": 40,
+      "punctual": 12.5,
+      "activityScore": 0,
+      "consistency": 15,
+      "total": 67.5,
+      "share": 36
+    }
+  },
+  "passed": 4,
+  "total": 4,
+  "pass": true,
+  "results": [
+    {
+      "member": "L",
+      "name": "ผู้ทดสอบ หัวหน้า KPI6",
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "member": "A",
+      "name": "ผู้ทดสอบ เอ KPI6",
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 91.667,
+          "shown": 92,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 40,
+          "shown": 40,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 16.667,
+          "shown": 17,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 20,
+          "shown": 20,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 45,
+          "shown": 45,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "member": "B",
+      "name": "ผู้ทดสอบ บี KPI6",
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 83.429,
+          "shown": 83,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 31.429,
+          "shown": 31,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 25,
+          "shown": 25,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 12,
+          "shown": 12,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 20,
+          "shown": 20,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "member": "C",
+      "name": "ผู้ทดสอบ ซี KPI6",
+      "pass": true,
+      "checks": [
+        {
+          "field": "total",
+          "expected": 67.5,
+          "shown": 68,
+          "pass": true
+        },
+        {
+          "field": "workload",
+          "expected": 40,
+          "shown": 40,
+          "pass": true
+        },
+        {
+          "field": "punctual",
+          "expected": 12.5,
+          "shown": 13,
+          "pass": true
+        },
+        {
+          "field": "activityScore",
+          "expected": 0,
+          "shown": 0,
+          "pass": true
+        },
+        {
+          "field": "consistency",
+          "expected": 15,
+          "shown": 15,
+          "pass": true
+        },
+        {
+          "field": "share",
+          "expected": 36,
+          "shown": 36,
+          "pass": true
+        }
+      ]
+    }
+  ],
+  "rawCards": [
+    "ผู้ทดสอบ เอ KPI6\n\nสมาชิก\n\n92/100\n\nภาระงาน\n40/40\nตรงเวลา\n17/25\nกิจกรรม\n20/20\nสม่ำเสมอ\n15/15\nเสร็จ 3 งาน\n45% ของกลุ่ม\nทันกำหนด 2/3\nปฏิเสธ 0\nกิจกรรม 5 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์\n\nผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ",
+    "ผู้ทดสอบ บี KPI6\n\nสมาชิก\n\n83/100\n\nภาระงาน\n31/40\nตรงเวลา\n25/25\nกิจกรรม\n12/20\nสม่ำเสมอ\n15/15\nเสร็จ 2 งาน\n20% ของกลุ่ม\nทันกำหนด 2/2\nปฏิเสธ 0\nกิจกรรม 3 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์\n\nผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ",
+    "ผู้ทดสอบ ซี KPI6\n\nสมาชิก\n\n68/100\n\nภาระงาน\n40/40\nตรงเวลา\n13/25\nกิจกรรม\n0/20\nสม่ำเสมอ\n15/15\nเสร็จ 2 งาน\n36% ของกลุ่ม\nทันกำหนด 1/2\nปฏิเสธ 0\nกิจกรรม 0 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์\n\nผลประเมินจากเพื่อน: ยังไม่มีผล หรือผู้ประเมินไม่พอ",
+    "ผู้ทดสอบ หัวหน้า KPI6\n\nหัวหน้า\n\n15/100\n\nภาระงาน\n0/40\nตรงเวลา\n0/25\nกิจกรรม\n0/20\nสม่ำเสมอ\n15/15\nเสร็จ 0 งาน\n0% ของกลุ่ม\nทันกำหนด 0/0\nปฏิเสธ 0\nกิจกรรม 0 ครั้ง\nมีกิจกรรม 1/1 สัปดาห์"
+  ]
+}

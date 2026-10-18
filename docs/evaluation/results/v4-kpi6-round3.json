@@ -1,0 +1,173 @@
+{
+  "criteria": "v4",
+  "at": "2026-10-18T13:36:10.944Z",
+  "commit": "32d38d0",
+  "kpi": "KPI-6",
+  "round": 3,
+  "baseUrl": "https://group-task-system.vercel.app",
+  "preset": "desktop",
+  "fixture": {
+    "criteria": "v4",
+    "kpi": "KPI-6",
+    "group_id": "9a91d911-e96e-4bec-b004-a7351d1c063f",
+    "leader": "gt.test.k4leader@gt-eval.test",
+    "members": [
+      "gt.test.k4member@gt-eval.test",
+      "gt.test.k4member2@gt-eval.test",
+      "gt.test.k4collab@gt-eval.test",
+      "gt.test.k1member@gt-eval.test",
+      "gt.test.k1member2@gt-eval.test"
+    ],
+    "tasks": 30,
+    "logs": 221,
+    "createdAt": "2026-10-17T15:19:59.004Z"
+  },
+  "environment": {
+    "lighthouse": "13.4.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36",
+    "benchmarkIndex": 2068.5,
+    "machine": "LAPTOP-07ENH24H",
+    "cpu": "12th Gen Intel(R) Core(TM) i5-12450HX"
+  },
+  "pass": true,
+  "results": [
+    {
+      "path": "/dashboard",
+      "runs": [
+        {
+          "score": 93,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard",
+          "fcp": 432.12355,
+          "lcp": 944.8161106994628,
+          "tbt": 0,
+          "cls": 0.14841200682952455,
+          "si": 616.12998299386,
+          "warmup": true
+        },
+        {
+          "score": 91,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard",
+          "fcp": 489.8999,
+          "lcp": 1194.281260699463,
+          "tbt": 0,
+          "cls": 0.14841200682952455,
+          "si": 887.8192821479403,
+          "warmup": false
+        },
+        {
+          "score": 93,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard",
+          "fcp": 432.9145,
+          "lcp": 941.6004606994629,
+          "tbt": 0,
+          "cls": 0.14841200682952455,
+          "si": 834.4402677091845,
+          "warmup": false
+        },
+        {
+          "score": 92,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard",
+          "fcp": 478.84965,
+          "lcp": 1019.7294106994628,
+          "tbt": 0,
+          "cls": 0.14841200682952455,
+          "si": 772.7361190346787,
+          "warmup": false
+        },
+        {
+          "score": 93,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard",
+          "fcp": 427.5227,
+          "lcp": 952.0845606994628,
+          "tbt": 0,
+          "cls": 0.14841200682952455,
+          "si": 762.1506440119717,
+          "warmup": false
+        },
+        {
+          "score": 93,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard",
+          "fcp": 446.0494,
+          "lcp": 995.2360606994629,
+          "tbt": 0,
+          "cls": 0.14841200682952455,
+          "si": 830.5756787211521,
+          "warmup": false
+        }
+      ],
+      "medianScore": 93,
+      "medianLcp": 995.2360606994629,
+      "onTarget": true,
+      "pass": true
+    },
+    {
+      "path": "/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+      "runs": [
+        {
+          "score": 85,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+          "fcp": 251.02560000000003,
+          "lcp": 1082.8048,
+          "tbt": 0,
+          "cls": 0.23436879432624114,
+          "si": 1510.7499495967377,
+          "warmup": true
+        },
+        {
+          "score": 86,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+          "fcp": 253.14165000000003,
+          "lcp": 1046.2417,
+          "tbt": 0,
+          "cls": 0.23436879432624114,
+          "si": 1262.6506726070056,
+          "warmup": false
+        },
+        {
+          "score": 85,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+          "fcp": 253.67274999999998,
+          "lcp": 1037.9823000000001,
+          "tbt": 0,
+          "cls": 0.23436879432624114,
+          "si": 1515.8772596490219,
+          "warmup": false
+        },
+        {
+          "score": 86,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+          "fcp": 250.79494999999997,
+          "lcp": 993.0069,
+          "tbt": 0,
+          "cls": 0.23436879432624114,
+          "si": 1333.9126893664288,
+          "warmup": false
+        },
+        {
+          "score": 85,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+          "fcp": 252.7509,
+          "lcp": 1000.5507,
+          "tbt": 0,
+          "cls": 0.23436879432624114,
+          "si": 1429.9860547107098,
+          "warmup": false
+        },
+        {
+          "score": 86,
+          "finalUrl": "https://group-task-system.vercel.app/dashboard/groups/9a91d911-e96e-4bec-b004-a7351d1c063f",
+          "fcp": 252.85425000000006,
+          "lcp": 983.6458000000002,
+          "tbt": 0,
+          "cls": 0.23436879432624114,
+          "si": 1300.4110618514483,
+          "warmup": false
+        }
+      ],
+      "medianScore": 86,
+      "medianLcp": 1000.5507,
+      "onTarget": true,
+      "pass": true
+    }
+  ]
+}
