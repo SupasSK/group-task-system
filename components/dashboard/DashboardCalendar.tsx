@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import {
-  ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  Clock, CheckCircle2, AlertCircle, Plus, Pin,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { TONE, type Tone } from '@/lib/statusTone';
 
 export interface EventItem {
   id: string;
@@ -13,10 +11,8 @@ export interface EventItem {
   project: string;
   dateStr: string; // YYYY-MM-DD
   time?: string;
-  type: 'deadline' | 'review' | 'meeting' | 'milestone';
-  color: string; // Tailwind bg class
+  tone: Tone; // สีตามสถานะ (lib/statusTone.ts)
   completed?: boolean;
-  overdue?: boolean;
   href?: string; // หน้ากลุ่มของงาน (คลิกรายการใต้ปฏิทินแล้วไปที่นี่)
 }
 
@@ -26,6 +22,15 @@ const THAI_MONTHS = [
 ];
 
 const THAI_WEEKDAYS_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+// แถบงานในช่องวัน: พื้นอ่อน + เส้นซ้ายสีเข้มตามสถานะ
+const BAR: Record<Tone, string> = {
+  doing: 'bg-sky-50 border-l-sky-500 text-sky-900',
+  waiting: 'bg-amber-50 border-l-amber-500 text-amber-900',
+  done: 'bg-emerald-50 border-l-emerald-500 text-emerald-900',
+  overdue: 'bg-rose-50 border-l-rose-500 text-rose-900',
+  neutral: 'bg-slate-50 border-l-slate-400 text-slate-800',
+};
 
 function formatYMD(date: Date) {
   const y = date.getFullYear();
@@ -41,7 +46,7 @@ function getWeekStart(date: Date) {
   return d;
 }
 
-// events = กำหนดส่งงานจริงจากกลุ่มของผู้ใช้ (หน้าแดชบอร์ดเป็นผู้ส่งมา)
+// events = กำหนดส่งงานจริงจากกลุ่มของผู้ใช้ (หน้าปฏิทินเป็นผู้ส่งมา)
 export default function DashboardCalendar({ events }: { events: EventItem[] }) {
   const [today] = useState(() => new Date());
   const [weekStart, setWeekStart] = useState<Date>(getWeekStart(today));
@@ -104,250 +109,139 @@ export default function DashboardCalendar({ events }: { events: EventItem[] }) {
   };
 
   const selectedDayEvents = events.filter((e) => e.dateStr === selectedStr);
+  const navBtn = 'rounded-lg p-1.5 text-slate-700 hover:bg-slate-100';
 
-  const typeIcon = (type: EventItem['type']) => {
-    if (type === 'deadline') return <AlertCircle size={12} />;
-    if (type === 'review') return <Clock size={12} />;
-    if (type === 'milestone') return <CheckCircle2 size={12} />;
-    return <CalendarIcon size={12} />;
+  const bar = (ev: EventItem) => (
+    <div
+      key={ev.id}
+      title={`${ev.project}: ${ev.title}`}
+      className={`rounded-md border-l-[3px] px-1.5 py-1 text-[12px] leading-snug ${BAR[ev.tone]} ${ev.completed ? 'opacity-70' : ''}`}
+    >
+      <span className="block truncate text-[11px] font-semibold opacity-80">{ev.project}</span>
+      <span className="line-clamp-2">{ev.title}</span>
+    </div>
+  );
+
+  // ช่องวัน ใช้ทั้งมุมมองสัปดาห์ (มือถือ) และเดือน (จอคอม) dim = วันนอกเดือนที่แสดง
+  const dayCell = (day: Date, dim: boolean, tall: string) => {
+    const dStr = formatYMD(day);
+    const dayEvents = events.filter((e) => e.dateStr === dStr);
+    return (
+      <button
+        key={dStr}
+        type="button"
+        onClick={() => selectDay(day)}
+        className={`${tall} w-full border-b border-r border-slate-100 p-1.5 text-left align-top ${
+          dStr === selectedStr ? 'bg-violet-50' : dim ? 'bg-slate-50' : 'bg-white hover:bg-slate-50'
+        }`}
+      >
+        <span
+          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-semibold ${
+            dStr === todayStr ? 'bg-violet-600 text-white' : dim ? 'text-slate-400' : 'text-slate-800'
+          }`}
+        >
+          {day.getDate()}
+        </span>
+        <div className={`mt-1 space-y-1 ${dim ? 'opacity-60' : ''}`}>
+          {dayEvents.slice(0, 2).map(bar)}
+          {dayEvents.length > 2 && (
+            <span className="px-1 text-[12px] font-medium text-slate-600">+{dayEvents.length - 2} อื่น ๆ</span>
+          )}
+        </div>
+      </button>
+    );
   };
 
   return (
-    <section className="gt-card overflow-hidden rounded-3xl border border-slate-100 shadow-sm bg-white">
+    <section className="rounded-2xl border border-slate-200 bg-white">
       {/* ===== Top Bar ===== */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-100">
-            <CalendarIcon size={20} />
-          </div>
-          <div>
-            <h2 className="text-[17px] font-bold text-slate-800 leading-tight">ปฏิทินงาน</h2>
-            <p className="text-[12px] text-slate-400 md:hidden">{weekLabel()}</p>
-            <p className="text-[12px] text-slate-400 hidden md:block">{monthLabel}</p>
-          </div>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+        <h2 className="text-[16px] font-bold text-slate-900">
+          <span className="md:hidden">{weekLabel()}</span>
+          <span className="hidden md:inline">{monthLabel}</span>
+        </h2>
 
-        <div className="flex items-center gap-2">
-          {/* ปุ่มสร้างงานใหม่ */}
-          <Link
-            href="/dashboard/leader"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[13px] font-semibold shadow-md shadow-indigo-100 hover:opacity-90 hover:scale-[1.02] transition-all"
-          >
-            <Plus size={15} />
-            สร้างงาน
-          </Link>
-
-          {/* นำทางสัปดาห์ (มือถือ) / เดือน (จอคอม) */}
-          <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
-            <button
-              onClick={goToday}
-              className="px-2.5 py-1 text-[12px] font-semibold text-indigo-600 hover:bg-white rounded-lg transition-colors"
-            >
-              วันนี้
-            </button>
-            <div className="h-3.5 w-px bg-slate-200" />
-            <button onClick={prevWeek} aria-label="สัปดาห์ก่อน" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors md:hidden">
-              <ChevronLeft size={16} />
-            </button>
-            <button onClick={nextWeek} aria-label="สัปดาห์ถัดไป" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors md:hidden">
-              <ChevronRight size={16} />
-            </button>
-            <button onClick={prevMonth} aria-label="เดือนก่อน" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors hidden md:block">
-              <ChevronLeft size={16} />
-            </button>
-            <button onClick={nextMonth} aria-label="เดือนถัดไป" className="p-1 text-slate-500 hover:text-slate-800 hover:bg-white rounded-lg transition-colors hidden md:block">
-              <ChevronRight size={16} />
-            </button>
-          </div>
+        {/* นำทางสัปดาห์ (มือถือ) / เดือน (จอคอม) */}
+        <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 p-0.5">
+          <button onClick={goToday} className="rounded-md px-2.5 py-1 text-[13px] font-semibold text-violet-700 hover:bg-slate-100">
+            วันนี้
+          </button>
+          <button onClick={prevWeek} aria-label="สัปดาห์ก่อน" className={`${navBtn} md:hidden`}>
+            <ChevronLeft size={18} />
+          </button>
+          <button onClick={nextWeek} aria-label="สัปดาห์ถัดไป" className={`${navBtn} md:hidden`}>
+            <ChevronRight size={18} />
+          </button>
+          <button onClick={prevMonth} aria-label="เดือนก่อน" className={`${navBtn} hidden md:block`}>
+            <ChevronLeft size={18} />
+          </button>
+          <button onClick={nextMonth} aria-label="เดือนถัดไป" className={`${navBtn} hidden md:block`}>
+            <ChevronRight size={18} />
+          </button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-7 border-b border-slate-100">
+        {THAI_WEEKDAYS_SHORT.map((w) => (
+          <span key={w} className="py-2 text-center text-[12px] font-semibold text-slate-600">
+            {w}
+          </span>
+        ))}
       </div>
 
       {/* ===== Weekly Grid (มือถือ) ===== */}
-      <div className="grid grid-cols-7 divide-x divide-slate-100 md:hidden">
-        {weekDays.map((day, i) => {
-          const dStr = formatYMD(day);
-          const isToday = dStr === todayStr;
-          const isSelected = dStr === selectedStr;
-          const dayEvents = events.filter((e) => e.dateStr === dStr);
-          const isWeekend = i === 0 || i === 6;
-
-          return (
-            <button
-              key={dStr}
-              type="button"
-              onClick={() => selectDay(day)}
-              className={`flex flex-col items-center gap-1 py-3 px-1 min-h-[100px] sm:min-h-[120px] transition-colors text-left w-full ${
-                isSelected
-                  ? 'bg-indigo-50/80'
-                  : isWeekend
-                  ? 'bg-slate-50/50 hover:bg-slate-100/60'
-                  : 'bg-white hover:bg-slate-50/70'
-              }`}
-            >
-              {/* หัววัน */}
-              <div className="flex flex-col items-center gap-0.5 w-full">
-                <span className={`text-[11px] font-semibold ${
-                  isWeekend
-                    ? i === 0 ? 'text-rose-400' : 'text-indigo-400'
-                    : 'text-slate-400'
-                }`}>
-                  {THAI_WEEKDAYS_SHORT[i]}
-                </span>
-                <span className={`flex h-7 w-7 items-center justify-center rounded-full text-[14px] font-bold transition-all ${
-                  isToday
-                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm'
-                    : isSelected
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-slate-700'
-                }`}>
-                  {day.getDate()}
-                </span>
-              </div>
-
-              {/* Event blocks */}
-              <div className="flex flex-col gap-1 w-full px-1 mt-1">
-                {dayEvents.slice(0, 2).map((ev) => (
-                  <div
-                    key={ev.id}
-                    className={`${ev.color} text-white rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 leading-tight truncate ${ev.completed ? 'opacity-60' : ''}`}
-                  >
-                    {typeIcon(ev.type)}
-                    <span className="truncate">{ev.title}</span>
-                  </div>
-                ))}
-                {dayEvents.length > 2 && (
-                  <span className="text-[10px] text-slate-400 font-medium px-1">
-                    +{dayEvents.length - 2} อื่นๆ
-                  </span>
-                )}
-              </div>
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-7 md:hidden">
+        {weekDays.map((day) => dayCell(day, false, 'min-h-[120px]'))}
       </div>
 
       {/* ===== Monthly Grid (จอคอม) ===== */}
-      <div className="hidden md:block">
-        <div className="grid grid-cols-7 border-b border-slate-100">
-          {THAI_WEEKDAYS_SHORT.map((w, i) => (
-            <span
-              key={w}
-              className={`py-2 text-center text-[11px] font-semibold ${
-                i === 0 ? 'text-rose-400' : i === 6 ? 'text-indigo-400' : 'text-slate-400'
-              }`}
-            >
-              {w}
-            </span>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 divide-x divide-slate-100">
-          {monthDays.map((day, i) => {
-            const dStr = formatYMD(day);
-            const isToday = dStr === todayStr;
-            const isSelected = dStr === selectedStr;
-            const inMonth = day.getMonth() === monthStart.getMonth();
-            const dayEvents = events.filter((e) => e.dateStr === dStr);
-            const isWeekend = i % 7 === 0 || i % 7 === 6;
-
-            return (
-              <button
-                key={dStr}
-                type="button"
-                onClick={() => selectDay(day)}
-                className={`flex flex-col gap-1 p-1.5 min-h-[96px] border-b border-slate-100 transition-colors text-left w-full ${
-                  isSelected
-                    ? 'bg-indigo-50/80'
-                    : isWeekend || !inMonth
-                    ? 'bg-slate-50/50 hover:bg-slate-100/60'
-                    : 'bg-white hover:bg-slate-50/70'
-                }`}
-              >
-                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold ${
-                  isToday
-                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm'
-                    : isSelected
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : inMonth
-                    ? 'text-slate-700'
-                    : 'text-slate-300'
-                }`}>
-                  {day.getDate()}
-                </span>
-                <div className={`flex flex-col gap-1 w-full ${inMonth ? '' : 'opacity-50'}`}>
-                  {dayEvents.slice(0, 2).map((ev) => (
-                    <div
-                      key={ev.id}
-                      className={`${ev.color} text-white rounded-md px-1.5 py-0.5 text-[10px] font-semibold flex items-center gap-1 leading-tight truncate ${ev.completed ? 'opacity-60' : ''}`}
-                    >
-                      {typeIcon(ev.type)}
-                      <span className="truncate">{ev.title}</span>
-                    </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <span className="text-[10px] text-slate-400 font-medium px-1">
-                      +{dayEvents.length - 2} อื่นๆ
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <div className="hidden grid-cols-7 md:grid">
+        {monthDays.map((day) => dayCell(day, day.getMonth() !== monthStart.getMonth(), 'min-h-[104px]'))}
       </div>
 
       {/* ===== Selected Day Events Panel ===== */}
-      <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/40">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
-            <Pin size={14} className="text-indigo-500" />
+      <div className="rounded-b-2xl bg-slate-50 px-4 py-4">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[14px] font-semibold text-slate-900">
             {selectedDate.getDate()} {THAI_MONTHS[selectedDate.getMonth()]} {selectedDate.getFullYear() + 543}
-          </span>
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 font-semibold">
+          </p>
+          <span className="rounded-full bg-white px-2.5 py-0.5 text-[12px] font-semibold text-slate-700 ring-1 ring-slate-200">
             {selectedDayEvents.length} รายการ
           </span>
         </div>
 
         {selectedDayEvents.length === 0 ? (
-          <div className="py-5 text-center text-slate-400 text-[13px] bg-white rounded-2xl border border-dashed border-slate-200">
-            ไม่มีกำหนดการในวันนี้
-          </div>
+          <p className="rounded-xl border border-dashed border-slate-300 bg-white py-5 text-center text-[13px] text-slate-600">
+            ไม่มีกำหนดส่งในวันนี้
+          </p>
         ) : (
           <div className="space-y-2">
             {selectedDayEvents.map((e) => (
               <Link
                 key={e.id}
                 href={e.href ?? '#'}
-                className="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 transition-all shadow-sm"
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 hover:border-violet-300"
               >
-                <div className="flex items-center gap-3">
-                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center text-white ${e.color} shadow-sm text-sm flex-shrink-0`}>
-                    {typeIcon(e.type)}
-                  </div>
-                  <div>
-                    <p className={`text-[13px] font-semibold leading-tight ${e.completed ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`h-9 w-1.5 shrink-0 rounded-full ${TONE[e.tone].dot}`} />
+                  <div className="min-w-0">
+                    <p className={`truncate text-[14px] font-semibold ${e.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
                       {e.title}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
-                        {e.project}
-                      </span>
+                    <p className="flex items-center gap-1 text-[12px] text-slate-600">
+                      {e.project}
                       {e.time && (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                        <>
+                          {' · '}
                           <Clock size={11} />
                           {e.time} น.
-                        </span>
+                        </>
                       )}
-                    </div>
+                    </p>
                   </div>
                 </div>
-                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${
-                  e.completed
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : e.overdue
-                    ? 'bg-rose-100 text-rose-700'
-                    : 'bg-amber-100 text-amber-700'
-                }`}>
-                  {e.completed ? 'เสร็จสิ้น' : e.overdue ? 'เลยกำหนด' : 'ยังไม่เสร็จ'}
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${TONE[e.tone].badge}`}>
+                  {TONE[e.tone].label}
                 </span>
               </Link>
             ))}

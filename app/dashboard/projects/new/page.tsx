@@ -1,16 +1,33 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { createClient } from '@/utils/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { logActivity } from '@/lib/logActivity'
-import { Plus, Crown, User, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react'
 
-export default function ProjectsPage() {
+const WORK_MODES = [
+  { value: 'leader_all', label: 'หัวหน้าคุมทั้งหมด', help: 'หัวหน้ามอบหมายงานให้คนอื่น' },
+  { value: 'member_choose', label: 'สมาชิกเลือกเอง', help: 'เปิดรายการงานให้สมาชิกเลือกรับ' },
+  { value: 'mixed', label: 'แบบผสมผสาน', help: 'หัวหน้ามอบหมายได้ และเปิดงานว่างให้เลือกได้' },
+]
+
+const card = 'rounded-2xl border border-slate-200 bg-white p-5'
+const input = 'w-full rounded-xl border border-slate-300 px-3 py-2.5 text-[14px] text-slate-900 outline-none focus:border-violet-500'
+
+// หน้าเดียวมีทั้งเข้ากลุ่มด้วยรหัสและสร้างกลุ่มใหม่ ใช้ทั้ง /projects/new และ /projects/join
+export default function CreateOrJoinGroupPage() {
   const supabase = createClient()
   const router = useRouter()
-  const [projects, setProjects] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
+  const pathname = usePathname()
+
+  // ===== เข้ากลุ่มด้วยรหัส =====
+  const [digits, setDigits] = useState(['', '', '', '', '', ''])
+  const [joining, setJoining] = useState(false)
+  const [joinMessage, setJoinMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
+  const inputs = useRef<Array<HTMLInputElement | null>>([])
+
+  // ===== สร้างกลุ่ม =====
   const [creating, setCreating] = useState(false)
   const [formError, setFormError] = useState('')
   const [created, setCreated] = useState<{ group_id: string; join_code: string } | null>(null)
@@ -20,36 +37,97 @@ export default function ProjectsPage() {
     work_mode: 'mixed'
   })
 
-  useEffect(() => {
-    loadProjects()
-  }, [])
+  const updateDigit = (index: number, value: string) => {
+    // รองรับตัวเลขและตัวอักษรภาษาอังกฤษ
+    const clean = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (!clean) {
+      const copy = [...digits]
+      copy[index] = ''
+      setDigits(copy)
+      return
+    }
+    const nextChar = clean.slice(-1)
+    const copy = [...digits]
+    copy[index] = nextChar
+    setDigits(copy)
+    if (index < 5) inputs.current[index + 1]?.focus()
+  }
 
-  const loadProjects = async () => {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/login')
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !digits[index] && index > 0) {
+      inputs.current[index - 1]?.focus()
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData('text').trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (pasted) {
+      const chars = pasted.slice(0, 6).split('')
+      const newDigits = [...digits]
+      chars.forEach((c, idx) => {
+        newDigits[idx] = c
+      })
+      setDigits(newDigits)
+      const nextFocus = Math.min(chars.length, 5)
+      inputs.current[nextFocus]?.focus()
+    }
+  }
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const code = digits.join('').toUpperCase()
+    setJoinMessage(null)
+    if (code.length !== 6) {
+      setJoinMessage({ type: 'error', text: 'กรุณากรอกรหัสกลุ่ม 6 ตัวอักษรให้ครบถ้วน' })
       return
     }
 
-    const { data, error } = await supabase
-      .from('groups')
-      .select(`
-        group_id,
-        group_name,
-        description,
-        work_mode,
-        join_code,
-        created_at,
-        created_by,
-        group_members!inner(role)
-      `)
-      .eq('group_members.user_id', user.id)
-      .is('archived_at', null)
-      .order('created_at', { ascending: false })
+    setJoining(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setJoinMessage({ type: 'error', text: 'กรุณาเข้าสู่ระบบก่อนเข้าร่วมกลุ่ม' })
+        router.push('/login')
+        return
+      }
 
-    if (!error) setProjects(data || [])
-    setLoading(false)
+      const { data: rows, error: rpcError } = await supabase.rpc(
+        'join_group_by_code',
+        { p_code: code }
+      )
+
+      if (rpcError) {
+        setJoinMessage({ type: 'error', text: 'เข้าร่วมกลุ่มไม่สำเร็จ: ' + rpcError.message })
+        setJoining(false)
+        return
+      }
+
+      if (!rows || rows.length === 0) {
+        setJoinMessage({ type: 'error', text: 'ไม่พบกลุ่มที่ตรงกับรหัสนี้ หรือรหัสไม่ถูกต้อง' })
+        setJoining(false)
+        return
+      }
+
+      const result = rows[0] as {
+        joined_group_id: string
+        joined_group_name: string
+        newly_joined: boolean
+      }
+
+      setJoinMessage({
+        type: 'success',
+        text: result.newly_joined
+          ? `เข้าร่วมกลุ่ม "${result.joined_group_name}" สำเร็จแล้ว กำลังพาไปที่กลุ่ม...`
+          : `คุณเป็นสมาชิกของกลุ่ม "${result.joined_group_name}" อยู่แล้ว กำลังพาไปที่กลุ่ม...`,
+      })
+
+      router.push(`/dashboard/groups/${result.joined_group_id}`)
+    } catch (err: any) {
+      setJoinMessage({ type: 'error', text: 'เกิดข้อผิดพลาด: ' + err.message })
+    } finally {
+      setJoining(false)
+    }
   }
 
   const generateJoinCode = () => {
@@ -122,161 +200,154 @@ export default function ProjectsPage() {
     setCreated({ group_id: group.group_id, join_code: joinCode })
     setCreating(false)
     setForm({ group_name: '', description: '', work_mode: 'mixed' })
-    loadProjects()
-  }
-
-  const openModal = () => {
-    setCreated(null)
-    setFormError('')
-    setShowModal(true)
-  }
-
-  if (loading && projects.length === 0) {
-    return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="gt-card flex h-[320px] items-center justify-center animate-pulse text-[13px] text-slate-400">
-          กำลังโหลดข้อมูล...
-        </div>
-      </div>
-    )
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">โครงการ/กลุ่มของฉัน</h1>
-        <button
-          onClick={openModal}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-1.5"
-        >
-          <Plus size={18} />
-          สร้างกลุ่มใหม่
-        </button>
-      </div>
+    <div className="space-y-5">
+      <Link
+        href="/dashboard/groups"
+        className="inline-flex items-center gap-1 text-[13px] font-medium text-slate-600 hover:text-slate-900"
+      >
+        <ArrowLeft size={15} /> กลับไปกลุ่มของฉัน
+      </Link>
+      <h1 className="text-[24px] font-bold text-slate-900">สร้าง / เข้ากลุ่ม</h1>
 
-      {projects.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <p className="text-lg">ยังไม่มีกลุ่ม</p>
-          <p className="text-sm mt-1">กดปุ่มด้านบนเพื่อสร้างกลุ่มแรกของคุณ</p>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {projects.map((g) => (
+      <div className="grid gap-5 md:grid-cols-2">
+        {/* ===== เข้ากลุ่มด้วยรหัส ===== */}
+        <form onSubmit={handleJoin} className={`${card} space-y-4 self-start`}>
+          <div>
+            <h2 className="text-[16px] font-bold text-slate-900">เข้ากลุ่มด้วยรหัส</h2>
+            <p className="text-[13px] text-slate-700">กรอกรหัส 6 ตัว (ตัวอักษรหรือตัวเลข) ที่ได้จากหัวหน้ากลุ่ม</p>
+          </div>
+          {joinMessage && (
             <div
-              key={g.group_id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all cursor-pointer"
-              onClick={() => router.push(`/dashboard/groups/${g.group_id}`)}
+              className={`flex items-start gap-2 rounded-xl p-3 text-left text-sm ${
+                joinMessage.type === 'success'
+                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border border-rose-200 bg-rose-50 text-rose-800'
+              }`}
             >
-              <h3 className="text-lg font-semibold text-gray-800">{g.group_name}</h3>
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{g.description || 'ไม่มีรายละเอียด'}</p>
-              <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
-                <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 flex items-center gap-1">
-                  {g.group_members?.[0]?.role === 'leader' ? <Crown size={12} /> : <User size={12} />}
-                  {g.group_members?.[0]?.role === 'leader' ? 'หัวหน้า' : 'สมาชิก'}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {g.work_mode === 'leader_all' && 'หัวหน้าคุม'}
-                  {g.work_mode === 'member_choose' && 'สมาชิกเลือก'}
-                  {g.work_mode === 'mixed' && 'แบบผสม'}
-                </span>
-              </div>
+              {joinMessage.type === 'success' ? (
+                <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+              ) : (
+                <AlertCircle size={18} className="mt-0.5 shrink-0" />
+              )}
+              <span>{joinMessage.text}</span>
             </div>
-          ))}
-        </div>
-      )}
+          )}
+          <div className="flex gap-1.5 sm:gap-2" onPaste={handlePaste}>
+            {digits.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => {
+                  inputs.current[index] = el
+                }}
+                value={digit}
+                onChange={(e) => updateDigit(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                maxLength={1}
+                autoFocus={index === 0 && pathname.endsWith('/join')}
+                aria-label={`รหัสตัวที่ ${index + 1}`}
+                className={`h-12 w-10 rounded-xl text-center text-[20px] font-bold text-slate-900 outline-none sm:w-12 ${
+                  digit ? 'border-2 border-violet-500 bg-white' : 'border border-slate-300 bg-white focus:border-violet-500'
+                }`}
+              />
+            ))}
+          </div>
+          <button type="submit" disabled={joining} className="gt-btn px-4 py-2.5 text-[14px]">
+            {joining ? 'กำลังตรวจสอบและเข้าร่วม...' : 'เข้าร่วมกลุ่ม'}
+          </button>
+        </form>
 
-      {/* ===== MODAL สร้างกลุ่ม ===== */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            {created ? (
-              <div className="text-center">
-                <CheckCircle2 size={44} className="mx-auto text-emerald-500" />
-                <h2 className="text-xl font-bold mt-3">สร้างกลุ่มสำเร็จ</h2>
-                <p className="text-sm text-gray-500 mt-4">รหัสเข้าร่วม ส่งให้สมาชิกเพื่อเข้ากลุ่ม</p>
-                <p className="mt-2 text-3xl font-bold tracking-[0.3em] text-indigo-600">{created.join_code}</p>
-                <div className="flex gap-3 pt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50"
-                  >
-                    ปิด
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/dashboard/groups/${created.group_id}`)}
-                    className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium"
-                  >
-                    ไปที่กลุ่ม
-                  </button>
-                </div>
-              </div>
-            ) : (
-            <>
-            <h2 className="text-xl font-bold mb-6">สร้างกลุ่มใหม่</h2>
-            {formError && (
-              <div className="flex items-start gap-2 p-3 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700">
-                <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                <span>{formError}</span>
-              </div>
-            )}
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อกลุ่ม *</label>
-                <input
-                  type="text"
-                  required
-                  value={form.group_name}
-                  onChange={(e) => setForm({...form, group_name: e.target.value})}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="เช่น โปรเจกต์วิทยานิพนธ์"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">รายละเอียด</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({...form, description: e.target.value})}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="คำอธิบายกลุ่ม"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">รูปแบบการทำงาน</label>
-                <select
-                  value={form.work_mode}
-                  onChange={(e) => setForm({...form, work_mode: e.target.value})}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="leader_all">หัวหน้าคุมทั้งหมด — มอบหมายงานให้คนอื่น</option>
-                  <option value="member_choose">สมาชิกเลือกเอง — เปิดรายการให้เลือก</option>
-                  <option value="mixed">แบบผสมผสาน — ทั้งสองแบบ</option>
-                </select>
-              </div>
-              <div className="flex gap-3 pt-2">
+        {/* ===== สร้างกลุ่มใหม่ ===== */}
+        <section className={`${card} space-y-4`}>
+          {created ? (
+            <div className="py-4 text-center">
+              <CheckCircle2 size={44} className="mx-auto text-emerald-600" />
+              <h2 className="mt-3 text-[18px] font-bold text-slate-900">สร้างกลุ่มสำเร็จ</h2>
+              <p className="mt-4 text-[13px] text-slate-700">รหัสเข้าร่วม ส่งให้สมาชิกเพื่อเข้ากลุ่ม</p>
+              <p className="mt-2 text-3xl font-bold tracking-[0.3em] text-slate-900">{created.join_code}</p>
+              <div className="flex gap-3 pt-6">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50"
+                  onClick={() => setCreated(null)}
+                  className="flex-1 rounded-xl border border-slate-300 py-2.5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  ยกเลิก
+                  สร้างกลุ่มอื่น
                 </button>
                 <button
-                  type="submit"
-                  disabled={creating}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium disabled:opacity-50"
+                  type="button"
+                  onClick={() => router.push(`/dashboard/groups/${created.group_id}`)}
+                  className="gt-btn flex-1 py-2.5 text-[14px]"
                 >
-                  {creating ? 'กำลังสร้าง...' : 'สร้างกลุ่ม'}
+                  ไปที่กลุ่ม
                 </button>
               </div>
-            </form>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-[16px] font-bold text-slate-900">สร้างกลุ่มใหม่</h2>
+              {formError && (
+                <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+              <form onSubmit={handleCreate} className="space-y-4">
+                <label className="block text-[13px] font-medium text-slate-700">
+                  ชื่อกลุ่ม *
+                  <input
+                    type="text"
+                    required
+                    value={form.group_name}
+                    onChange={(e) => setForm({...form, group_name: e.target.value})}
+                    className={`${input} mt-1`}
+                    placeholder="เช่น โปรเจกต์วิทยานิพนธ์"
+                  />
+                </label>
+                <label className="block text-[13px] font-medium text-slate-700">
+                  รายละเอียด
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm({...form, description: e.target.value})}
+                    className={`${input} mt-1`}
+                    rows={3}
+                    placeholder="คำอธิบายกลุ่ม"
+                  />
+                </label>
+                <fieldset>
+                  <legend className="mb-1 text-[13px] font-medium text-slate-700">รูปแบบการทำงาน</legend>
+                  <div className="space-y-1.5">
+                    {WORK_MODES.map((m) => (
+                      <label
+                        key={m.value}
+                        className={`flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 ${
+                          form.work_mode === m.value ? 'border-violet-500 bg-violet-50' : 'border-slate-200'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="work_mode"
+                          checked={form.work_mode === m.value}
+                          onChange={() => setForm({...form, work_mode: m.value})}
+                          className="mt-1 accent-violet-600"
+                        />
+                        <span>
+                          <span className="block text-[14px] font-semibold text-slate-900">{m.label}</span>
+                          <span className="text-[12px] text-slate-600">{m.help}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <button type="submit" disabled={creating} className="gt-btn w-full py-2.5 text-[14px]">
+                  {creating ? 'กำลังสร้าง...' : 'สร้างกลุ่ม'}
+                </button>
+              </form>
             </>
-            )}
-          </div>
-        </div>
-      )}
+          )}
+        </section>
+      </div>
     </div>
   )
 }

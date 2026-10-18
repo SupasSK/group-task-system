@@ -189,11 +189,11 @@ export default function DashboardPage() {
   }).length;
 
   const stats = [
-    { label: 'กลุ่มทั้งหมด', value: userGroups.length, icon: FolderOpen, tone: 'bg-slate-100 text-slate-700', num: 'text-slate-900' },
-    { label: 'งานที่ฉันรับทำ', value: accepted.length, icon: ClipboardList, tone: 'bg-slate-100 text-slate-700', num: 'text-slate-900' },
-    { label: 'กำลังทำ', value: accepted.filter((t) => toneOf(t) === 'doing').length, icon: Zap, tone: 'bg-sky-100 text-sky-700', num: 'text-sky-700' },
-    { label: 'เสร็จแล้ว', value: accepted.filter((t) => t.status === 'completed').length, icon: CheckCircle2, tone: 'bg-emerald-100 text-emerald-700', num: 'text-emerald-700' },
-    { label: 'เลยกำหนด', value: overdue.length, icon: AlertTriangle, tone: 'bg-rose-100 text-rose-700', num: 'text-rose-700' },
+    { label: 'กลุ่มทั้งหมด', href: '/dashboard/groups', value: userGroups.length, icon: FolderOpen, tone: 'bg-slate-100 text-slate-700', num: 'text-slate-900' },
+    { label: 'งานที่ฉันรับทำ', href: '/dashboard/my-tasks', value: accepted.length, icon: ClipboardList, tone: 'bg-slate-100 text-slate-700', num: 'text-slate-900' },
+    { label: 'กำลังทำ', href: '/dashboard/my-tasks?tab=doing', value: accepted.filter((t) => toneOf(t) === 'doing').length, icon: Zap, tone: 'bg-sky-100 text-sky-700', num: 'text-sky-700' },
+    { label: 'เสร็จแล้ว', href: '/dashboard/my-tasks?tab=done', value: accepted.filter((t) => t.status === 'completed').length, icon: CheckCircle2, tone: 'bg-emerald-100 text-emerald-700', num: 'text-emerald-700' },
+    { label: 'เลยกำหนด', href: '/dashboard/my-tasks?tab=overdue', value: overdue.length, icon: AlertTriangle, tone: 'bg-rose-100 text-rose-700', num: 'text-rose-700' },
   ];
 
   const taskRow = (t: HomeTask, icon?: React.ReactNode) => {
@@ -357,10 +357,10 @@ export default function DashboardPage() {
       <section>
         <p className="mb-2 text-[13px] text-slate-600">งานของฉัน รวมจากทุกกลุ่ม</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {stats.map(({ label, value, icon: Icon, tone, num }) => (
+          {stats.map(({ label, href, value, icon: Icon, tone, num }) => (
             <Link
               key={label}
-              href="/dashboard/member"
+              href={href}
               className="rounded-2xl border border-slate-200 bg-white p-4 text-left hover:border-violet-300"
             >
               <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
@@ -372,7 +372,7 @@ export default function DashboardPage() {
           ))}
         </div>
         {openCount > 0 && (
-          <Link href="/dashboard/member" className="mt-3 inline-block text-[13px] font-semibold text-violet-700 hover:underline">
+          <Link href="/dashboard/my-tasks?tab=open" className="mt-3 inline-block text-[13px] font-semibold text-violet-700 hover:underline">
             มีงานว่างให้เลือกรับ {openCount} งาน →
           </Link>
         )}
