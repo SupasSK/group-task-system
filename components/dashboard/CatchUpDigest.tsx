@@ -189,8 +189,10 @@ export default function CatchUpDigest({
 
       const seen: string | null = visit?.last_seen_at ?? null
       const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      // ยังไม่เคยกดรับทราบ: แสดงทุกรายการ ให้ตรงกับตัวเลขบนกระดิ่ง (lib/unreadCounts.ts)
+      const from = seen ?? new Date(0).toISOString()
       setLastSeen(seen)
-      setSince(seen && new Date(seen) < dayAgo ? seen : dayAgo.toISOString())
+      setSince(new Date(from) < dayAgo ? from : dayAgo.toISOString())
       setLogs(logRows || [])
       setLoading(false)
     }
