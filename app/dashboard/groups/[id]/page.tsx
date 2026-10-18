@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { projectProgress } from '@/lib/projectProgress'
-import { openWorkload } from '@/lib/workload'
+import { openWorkload, taskTeam } from '@/lib/workload'
+import { toneOf, TONE } from '@/lib/statusTone'
 import { isAuthRetryableFetchError } from '@supabase/supabase-js'
 import { createClient } from '@/utils/supabase'
 import { logActivity } from '@/lib/logActivity'
@@ -14,7 +15,7 @@ import PeerEvaluation from '@/components/dashboard/PeerEvaluation'
 import TaskTeamPanel, { type Collaborator } from '@/components/dashboard/TaskTeamPanel'
 import TaskEditModal from '@/components/dashboard/TaskEditModal'
 import UserAvatar from '@/components/ui/UserAvatar'
-import { ArrowLeft, Check, CircleCheck, Crown, Pencil, User, X } from 'lucide-react'
+import { ArrowLeft, Check, CircleCheck, Copy, Crown, Pencil, Plus, Trash2, User, X } from 'lucide-react'
 
 interface Group {
   group_id: string
@@ -74,13 +75,25 @@ const PRIORITY_CONFIG: Record<Task['priority'], { label: string; className: stri
   urgent: { label: 'ด่วน', className: 'bg-rose-100 text-rose-700 font-bold' },
 }
 
+// สีตามชุดสีสถานะใน lib/statusTone.ts
 const STATUS_CONFIG: Record<Task['status'], { label: string; className: string }> = {
-  pending: { label: 'รอผู้รับ', className: 'bg-slate-100 text-slate-700' },
-  assigned: { label: 'รอตอบรับ', className: 'bg-amber-100 text-amber-800' },
-  accepted: { label: 'รับแล้ว', className: 'bg-indigo-100 text-indigo-700' },
-  in_progress: { label: 'กำลังทำ', className: 'bg-blue-100 text-blue-700' },
-  completed: { label: 'เสร็จแล้ว', className: 'bg-emerald-100 text-emerald-700' },
-  rejected: { label: 'ถูกปฏิเสธ', className: 'bg-rose-100 text-rose-700' },
+  pending: { label: 'รอผู้รับ', className: TONE.neutral.badge },
+  assigned: { label: 'รอตอบรับ', className: TONE.waiting.badge },
+  accepted: { label: 'รับแล้ว', className: TONE.doing.badge },
+  in_progress: { label: 'กำลังทำ', className: TONE.doing.badge },
+  completed: { label: 'เสร็จแล้ว', className: TONE.done.badge },
+  rejected: { label: 'ถูกปฏิเสธ', className: TONE.neutral.badge },
+}
+
+// คอลัมน์ของบอร์ดงาน
+const BOARD_COLUMNS: { key: string; title: string; pill: string; statuses: Task['status'][] }[] = [
+  { key: 'todo', title: 'รอเริ่ม', pill: 'bg-slate-200 text-slate-800', statuses: ['pending', 'assigned', 'accepted', 'rejected'] },
+  { key: 'doing', title: 'กำลังทำ', pill: TONE.doing.badge, statuses: ['in_progress'] },
+  { key: 'done', title: 'เสร็จแล้ว', pill: TONE.done.badge, statuses: ['completed'] },
+]
+
+function formatShortDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
 }
 
 function formatThaiDateTime(dateStr: string | null) {
@@ -134,8 +147,8 @@ export default function GroupDetailPage() {
   const [transferConfirmId, setTransferConfirmId] = useState<string | null>(null)
   const [transferLoading, setTransferLoading] = useState(false)
   const [transferMessage, setTransferMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  // หัวหน้ากำลังยืนยันจะลบกลุ่ม
-  const [deleteGroupConfirm, setDeleteGroupConfirm] = useState(false)
+  // หัวหน้าต้องพิมพ์ชื่อกลุ่มให้ตรงก่อนลบ
+  const [deleteGroupText, setDeleteGroupText] = useState('')
   const [deleteGroupLoading, setDeleteGroupLoading] = useState(false)
   const [deleteGroupError, setDeleteGroupError] = useState<string | null>(null)
 
@@ -144,6 +157,9 @@ export default function GroupDetailPage() {
   const [taskResponses, setTaskResponses] = useState<TaskResponse[]>([])
   const [tasksLoading, setTasksLoading] = useState(false)
   const [taskActionMessage, setTaskActionMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
+  // งานที่เปิดดูรายละเอียดในหน้าต่าง ?task=<id> เปิดงานนั้นทันที (มาจากหน้าหลักหรือปฏิทิน)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => searchParams.get('task'))
+  const [boardFilter, setBoardFilter] = useState<'all' | 'mine' | 'open'>('all')
 
   // ฟอร์มสร้างงาน
   // ?new=1 เปิดฟอร์มสร้างงานทันที (มาจากปุ่มสร้างงานในหน้าหัวหน้า)
@@ -905,7 +921,7 @@ export default function GroupDetailPage() {
         <p className="text-gray-600 mb-4">เชื่อมต่อระบบไม่สำเร็จ โหลดข้อมูลกลุ่มไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่</p>
         <button
           onClick={() => window.location.reload()}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all"
+          className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all"
         >
           ลองใหม่
         </button>
@@ -919,7 +935,7 @@ export default function GroupDetailPage() {
         <p className="text-gray-600 mb-4">ไม่พบกลุ่มนี้ หรือคุณไม่ใช่สมาชิกของกลุ่ม</p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all"
+          className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all"
         >
           กลับไปแดชบอร์ด
         </button>
@@ -927,9 +943,259 @@ export default function GroupDetailPage() {
     )
   }
 
+  const selectedTask = tasks.find((t) => t.task_id === selectedTaskId) ?? null
+  const boardTasks = tasks.filter((t) =>
+    boardFilter === 'all'
+      ? true
+      : boardFilter === 'mine'
+      ? !!currentUserId && taskTeam(t, collaborators).includes(currentUserId)
+      : t.status === 'pending' || t.status === 'rejected'
+  )
+  // งานที่รอฉันตอบ: ถูกมอบหมายเป็นคนหลัก หรือถูกเชิญเป็นผู้ร่วมทำ
+  const awaitsMe = (t: Task) =>
+    t.status !== 'completed' &&
+    ((t.assignment_type === 'leader_assign' && t.status === 'assigned' && t.assigned_to === currentUserId) ||
+      collaborators.some((c) => c.task_id === t.task_id && c.user_id === currentUserId && c.status === 'pending'))
+
+  // ข้อความผลการดำเนินการ แสดงในหน้าต่างงานถ้าเปิดอยู่ ไม่งั้นแสดงบนแท็บงาน
+  const taskMessageBox = taskActionMessage && (
+    <div
+      className={`px-4 py-3 rounded-xl text-sm ${
+        taskActionMessage.type === 'success'
+          ? 'bg-green-50 text-green-700 border border-green-200'
+          : taskActionMessage.type === 'error'
+          ? 'bg-red-50 text-red-700 border border-red-200'
+          : 'bg-blue-50 text-blue-700 border border-blue-200'
+      }`}
+    >
+      {taskActionMessage.text}
+    </div>
+  )
+
+  // การ์ดงานบนบอร์ด
+  const renderBoardCard = (t: Task) => {
+    const invite = awaitsMe(t)
+    const tone = t.status === 'rejected' ? 'neutral' : toneOf(t, invite)
+    const team = taskTeam(t, collaborators)
+    const owner = t.assigned_to === currentUserId ? 'คุณ' : getUserDisplayName(t.assigned_to)
+    return (
+      <button
+        key={t.task_id}
+        onClick={() => {
+          setTaskActionMessage(null)
+          setSelectedTaskId(t.task_id)
+        }}
+        className={`block w-full rounded-xl border bg-white p-3 text-left shadow-sm hover:border-violet-300 cursor-pointer ${
+          tone === 'overdue' ? 'border-rose-300' : 'border-slate-200'
+        }`}
+      >
+        <p className="text-[14px] font-semibold leading-snug text-slate-900">{t.title}</p>
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">
+            {t.assignment_type === 'open_choice' ? 'เปิดให้เลือก' : 'มอบหมาย'}
+          </span>
+          <span className="inline-flex max-w-full items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-800">
+            <User className="h-3 w-3 shrink-0" />
+            <span className="truncate">{owner}</span>
+            {team.length > 1 && <span className="shrink-0">+{team.length - 1}</span>}
+          </span>
+          {invite && (
+            <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${TONE.waiting.badge}`}>รอคุณตอบ</span>
+          )}
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+          <span className={`text-[12px] ${tone === 'overdue' ? 'font-semibold text-rose-700' : 'text-slate-600'}`}>
+            {t.deadline ? `ส่ง ${formatShortDate(t.deadline)}` : 'ไม่มีกำหนดส่ง'}
+          </span>
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[tone].badge}`}>
+            {tone === 'overdue' ? TONE.overdue.label : (STATUS_CONFIG[t.status] || STATUS_CONFIG.pending).label}
+          </span>
+        </div>
+      </button>
+    )
+  }
+
+  // รายละเอียดงานหนึ่งงาน แสดงในหน้าต่างเมื่อกดการ์ดบนบอร์ด
+  const renderTaskDetail = (t: Task) => {
+    const priorityInfo = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.medium
+    const statusInfo = STATUS_CONFIG[t.status] || STATUS_CONFIG.pending
+    const isAssignee = t.assigned_to === currentUserId
+    const taskCollaborators = collaborators.filter((c) => c.task_id === t.task_id)
+    // ผู้ร่วมทำที่รับงานแล้วทำได้เหมือนคนหลัก ยกเว้นกด "เสร็จแล้ว"
+    const isCollaborator = taskCollaborators.some(
+      (c) => c.user_id === currentUserId && c.status === 'accepted'
+    )
+    const isAwaitingResponse = t.assignment_type === 'leader_assign' && isAssignee && t.status === 'assigned'
+    const latestRejection = t.status === 'rejected' ? getLatestRejection(t.task_id) : null
+    const isOverdue = t.status !== 'completed' && !!t.deadline && new Date(t.deadline) < new Date()
+
+    return (
+      <div
+        key={t.task_id}
+        className={`bg-white rounded-2xl border p-5 space-y-3 ${isOverdue ? 'border-rose-300' : 'border-slate-200'}`}
+      >
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="space-y-1 max-w-xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-bold text-gray-800">{t.title}</h3>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${priorityInfo.className}`}>
+                ความสำคัญ: {priorityInfo.label}
+              </span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-700">
+                ความยาก: {DIFFICULTY_LABEL[t.difficulty] ?? 'กลาง'}
+              </span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${statusInfo.className}`}>
+                {statusInfo.label}
+              </span>
+            </div>
+            {t.description && (
+              <p className="text-xs text-gray-600 leading-relaxed mt-1">{t.description}</p>
+            )}
+          </div>
+
+          <div className="sm:text-right text-xs space-y-1 min-w-fit">
+            <p className="text-gray-500">
+              กำหนดส่ง:{' '}
+              <span className={`font-semibold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}`}>
+                {formatThaiDateTime(t.deadline)}
+              </span>
+              {isOverdue && (
+                <span className="ml-1.5 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
+                  เลยกำหนด
+                </span>
+              )}
+            </p>
+            <p className="text-gray-500">
+              ผู้รับผิดชอบ:{' '}
+              <span className="font-semibold text-indigo-700">
+                {getUserDisplayName(t.assigned_to)}
+                {isAssignee && <span className="text-gray-400 ml-1">(คุณ)</span>}
+              </span>
+            </p>
+            {/* งานที่เสร็จแล้วแก้ไม่ได้ เพื่อไม่ให้คะแนนย้ายจากคนที่ทำเสร็จ */}
+            {isLeader && t.status !== 'completed' && (
+              <button
+                onClick={() => {
+                  setTaskActionMessage(null)
+                  setEditModalTask(t)
+                }}
+                className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition whitespace-nowrap cursor-pointer"
+              >
+                <Pencil className="h-3.5 w-3.5" /> แก้ไขงาน
+              </button>
+            )}
+          </div>
+        </div>
+
+        <TaskTeamPanel
+          task={t}
+          collaborators={taskCollaborators}
+          currentUserId={currentUserId}
+          isLeader={isLeader}
+          members={members}
+          onChanged={loadTasks}
+        />
+
+        <TaskWorkPanel
+          task={t}
+          currentUserId={currentUserId}
+          canEdit={isLeader || isAssignee || isCollaborator}
+        />
+
+        {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
+        {t.status === 'rejected' && (
+          <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-xs text-rose-800 flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <span className="font-semibold">
+                ปฏิเสธโดย {getUserDisplayName(latestRejection?.user_id || t.assigned_to)}
+              </span>
+              {latestRejection?.note && (
+                <span className="ml-2 text-rose-600">
+                  (เหตุผล: {latestRejection.note})
+                </span>
+              )}
+            </div>
+            {/* หัวหน้าเห็นปุ่มเปลี่ยนผู้รับผิดชอบ */}
+            {isLeader && (
+              <button
+                onClick={() => {
+                  setTaskActionMessage(null)
+                  setReassignModalTask(t)
+                  setReassignMemberId('')
+                }}
+                className="px-3 py-1 bg-white border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold hover:bg-rose-100 transition whitespace-nowrap cursor-pointer"
+              >
+                เปลี่ยนผู้รับผิดชอบ
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ปุ่มการกระทำสำหรับสมาชิก */}
+        {/* 1. กรณีงานว่าง (open_choice) ที่ยังไม่มีผู้รับ */}
+        {t.assignment_type === 'open_choice' && t.status === 'pending' && !t.assigned_to && (
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-end">
+            <button
+              onClick={() => handleClaimTask(t)}
+              className="px-4 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-semibold hover:shadow-md transition cursor-pointer"
+            >
+              {t.headcount > 1 ? 'รับเป็นผู้รับผิดชอบหลัก' : 'เลือกรับงานนี้'}
+            </button>
+          </div>
+        )}
+
+        {/* 2. การตอบรับงาน (เฉพาะผู้ใช้ที่เป็น assigned_to และงานมี status = 'assigned') */}
+        {isAwaitingResponse && (
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
+            <button
+              onClick={() => handleAcceptTask(t)}
+              className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
+            >
+              รับงาน
+            </button>
+            <button
+              onClick={() => {
+                setTaskActionMessage(null)
+                setRejectModalTask(t)
+                setRejectReason('')
+              }}
+              className="px-4 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold hover:bg-rose-100 transition cursor-pointer"
+            >
+              ปฏิเสธ
+            </button>
+          </div>
+        )}
+
+        {/* 3. การดำเนินงานและส่งงาน (เมื่อผู้ใช้รับงานแล้ว หรือกำลังทำ) */}
+        {(isAssignee || isCollaborator) && (t.status === 'accepted' || t.status === 'in_progress') && (
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
+            {t.status === 'accepted' && (
+              <button
+                onClick={() => handleStartTask(t)}
+                className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
+              >
+                เริ่มทำงาน
+              </button>
+            )}
+            {isAssignee ? (
+              <button
+                onClick={() => handleCompleteTask(t)}
+                className="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
+              >
+                <CircleCheck className="h-3.5 w-3.5" /> ทำเสร็จแล้ว
+              </button>
+            ) : (
+              <span className="text-xs text-gray-400">ผู้รับผิดชอบหลักเป็นผู้กดเสร็จแล้ว</span>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'ภาพรวม' },
-    { id: 'tasks', label: 'งาน' },
+    { id: 'tasks', label: `งาน (${tasks.length})` },
     { id: 'members', label: `สมาชิก (${members.length})` },
     { id: 'summary', label: 'สรุปผล' },
     { id: 'evaluation', label: 'ประเมินเพื่อน' },
@@ -938,77 +1204,53 @@ export default function GroupDetailPage() {
   return (
     <div className="space-y-6">
       {/* ===== Header ===== */}
-      <div className="flex items-center gap-3 mb-2">
-        <button
-          onClick={() => router.push(isLeader ? '/dashboard/leader' : '/dashboard/member')}
-          className="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors text-sm"
-        >
-          <ArrowLeft className="h-4 w-4" /> กลับ
-        </button>
-      </div>
+      <button
+        onClick={() => router.push('/dashboard/groups')}
+        className="inline-flex items-center gap-1 text-[13px] font-medium text-slate-600 hover:text-slate-900"
+      >
+        <ArrowLeft className="h-4 w-4" /> กลับ
+      </button>
 
       {/* ===== ข้อมูลกลุ่ม ===== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <header className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">{group.group_name}</h1>
-            <p className="text-sm text-gray-500 mt-1">{group.description || 'ไม่มีรายละเอียด'}</p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-[22px] font-bold text-slate-900">{group.group_name}</h1>
+              {isLeader ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[12px] font-semibold text-violet-800">
+                  <Crown className="h-3 w-3" /> หัวหน้า
+                </span>
+              ) : (
+                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[12px] font-semibold text-slate-700">สมาชิก</span>
+              )}
+            </div>
+            <p className="mt-1 text-[14px] text-slate-700">{group.description || 'ไม่มีรายละเอียด'}</p>
           </div>
 
           {/* รหัสเข้าร่วม */}
-          <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center gap-3 min-w-fit">
+          <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-2.5 min-w-fit">
             <div>
-              <p className="text-xs text-gray-400 mb-0.5">รหัสเข้าร่วม</p>
-              <p className="text-lg font-mono font-bold text-indigo-600 tracking-widest">{group.join_code}</p>
+              <p className="text-[12px] text-slate-600">รหัสเข้าร่วม</p>
+              <p className="font-mono text-[17px] font-bold tracking-widest text-slate-900">{group.join_code}</p>
             </div>
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
             >
               {copied ? (
                 <>
-                  คัดลอกแล้ว <Check className="h-3.5 w-3.5" />
+                  <Check className="h-3.5 w-3.5" /> คัดลอกแล้ว
                 </>
               ) : (
-                'คัดลอก'
+                <>
+                  <Copy className="h-3.5 w-3.5" /> คัดลอก
+                </>
               )}
             </button>
           </div>
         </div>
-
-        {/* ลบกลุ่ม (เฉพาะหัวหน้า) */}
-        {isLeader && (
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end gap-2 flex-wrap">
-            {deleteGroupError && <span className="text-xs text-red-600 mr-auto">{deleteGroupError}</span>}
-            {deleteGroupConfirm ? (
-              <>
-                <span className="text-xs text-red-600">ลบกลุ่ม? กลุ่มจะถูกซ่อนจากสมาชิกทุกคน งานและประวัติยังเก็บไว้</span>
-                <button
-                  onClick={handleDeleteGroup}
-                  disabled={deleteGroupLoading}
-                  className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50"
-                >
-                  {deleteGroupLoading ? 'กำลังลบ...' : 'ยืนยัน'}
-                </button>
-                <button
-                  onClick={() => setDeleteGroupConfirm(false)}
-                  disabled={deleteGroupLoading}
-                  className="px-3 py-1 border border-gray-200 text-gray-600 rounded-lg text-xs hover:bg-gray-50 disabled:opacity-50"
-                >
-                  ยกเลิก
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setDeleteGroupConfirm(true)}
-                className="px-3 py-1 border border-red-200 text-red-600 rounded-lg text-xs hover:bg-red-50 whitespace-nowrap"
-              >
-                ลบกลุ่ม
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      </header>
 
       <IntegrityAlert groupId={id} />
 
@@ -1055,10 +1297,10 @@ export default function GroupDetailPage() {
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`shrink-0 whitespace-nowrap pb-3 text-[14px] transition-colors ${
+            className={`shrink-0 whitespace-nowrap border-b-2 pb-2.5 text-[14px] transition-colors ${
               activeTab === item.id
-                ? 'border-b-2 border-indigo-500 font-semibold text-indigo-600'
-                : 'border-b-2 border-transparent text-slate-400 hover:text-slate-600'
+                ? 'border-violet-600 font-semibold text-violet-700'
+                : 'border-transparent font-medium text-slate-600 hover:text-slate-900'
             }`}
           >
             {item.label}
@@ -1069,12 +1311,12 @@ export default function GroupDetailPage() {
       {/* ===== แท็บ: ภาพรวม ===== */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-base font-semibold text-gray-800 mb-4">ข้อมูลภาพรวมกลุ่ม</h2>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="mb-3 text-[15px] font-bold text-slate-900">ข้อมูลภาพรวมกลุ่ม</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs text-gray-400">รูปแบบการทำงาน</p>
-                <p className="text-sm font-semibold text-gray-800 mt-1">
+              <div className="rounded-xl bg-slate-50 p-3.5">
+                <p className="text-[12px] text-slate-600">รูปแบบการทำงาน</p>
+                <p className="mt-0.5 text-[14px] font-semibold text-slate-900">
                   {group.work_mode === 'leader_all'
                     ? 'หัวหน้าคุม'
                     : group.work_mode === 'member_choose'
@@ -1084,31 +1326,31 @@ export default function GroupDetailPage() {
                     : group.work_mode}
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs text-gray-400">บทบาทของฉันในกลุ่ม</p>
-                <p className="text-sm font-semibold text-gray-800 mt-1">
+              <div className="rounded-xl bg-slate-50 p-3.5">
+                <p className="text-[12px] text-slate-600">บทบาทของฉันในกลุ่ม</p>
+                <p className="mt-0.5 text-[14px] font-semibold text-slate-900">
                   {isLeader ? 'หัวหน้า' : 'สมาชิก'}
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs text-gray-400">จำนวนสมาชิก</p>
-                <p className="text-sm font-semibold text-gray-800 mt-1">{members.length} คน</p>
+              <div className="rounded-xl bg-slate-50 p-3.5">
+                <p className="text-[12px] text-slate-600">จำนวนสมาชิก</p>
+                <p className="mt-0.5 text-[14px] font-semibold text-slate-900">{members.length} คน</p>
               </div>
             </div>
 
             {/* หลอดความคืบหน้าของโครงการ */}
             <div className="mt-5">
               <div className="mb-1.5 flex items-center justify-between text-sm">
-                <span className="font-semibold text-gray-700">ความคืบหน้าของโครงการ</span>
-                <span className="font-bold text-indigo-600">{projectProgress(tasks)}%</span>
+                <span className="font-semibold text-slate-800">ความคืบหน้าของโครงการ</span>
+                <span className="font-bold text-violet-700">{projectProgress(tasks)}%</span>
               </div>
-              <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
                 <div
-                  className="h-full rounded-full gt-gradient-x transition-all"
+                  className="h-full rounded-full bg-violet-600 transition-all"
                   style={{ width: `${projectProgress(tasks)}%` }}
                 />
               </div>
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-[12px] text-slate-600">
                 เสร็จแล้ว {tasks.filter((t) => t.status === 'completed').length} จาก {tasks.length} งาน
               </p>
             </div>
@@ -1122,32 +1364,62 @@ export default function GroupDetailPage() {
               onOpenTasks={() => setActiveTab('tasks')}
             />
           )}
+
+          {/* ===== ตั้งค่ากลุ่ม: ลบกลุ่ม (เฉพาะหัวหน้า) ต้องพิมพ์ชื่อกลุ่มให้ตรงก่อน ===== */}
+          {isLeader && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="text-[15px] font-bold text-slate-900">ตั้งค่ากลุ่ม</h2>
+              <div className="mt-3 rounded-xl border border-rose-200 p-4">
+                <p className="text-[14px] font-semibold text-rose-800">ลบกลุ่ม</p>
+                <p className="mt-1 text-[13px] text-slate-700">
+                  กลุ่มจะถูกเก็บเข้าคลัง สมาชิกทุกคนจะไม่เห็นกลุ่มนี้อีก งานและประวัติยังเก็บไว้
+                </p>
+                <label className="mt-3 block text-[13px] text-slate-700">
+                  พิมพ์ <span className="font-semibold text-slate-900">{group.group_name}</span> เพื่อยืนยัน
+                  <input
+                    value={deleteGroupText}
+                    onChange={(e) => setDeleteGroupText(e.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-[14px] text-slate-900 outline-none focus:border-violet-500"
+                  />
+                </label>
+                {deleteGroupError && <p className="mt-2 text-[13px] text-rose-700">{deleteGroupError}</p>}
+                <button
+                  onClick={handleDeleteGroup}
+                  disabled={deleteGroupLoading || deleteGroupText.trim() !== group.group_name.trim()}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-200"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> {deleteGroupLoading ? 'กำลังลบ...' : 'ลบกลุ่มนี้'}
+                </button>
+              </div>
+            </section>
+          )}
         </div>
       )}
 
       {/* ===== แท็บ: งาน ===== */}
       {activeTab === 'tasks' && (
         <div className="space-y-6">
-          {/* ข้อความแจ้งเตือนผลการดำเนินการ */}
-          {taskActionMessage && (
-            <div
-              className={`px-4 py-3 rounded-xl text-sm ${
-                taskActionMessage.type === 'success'
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : taskActionMessage.type === 'error'
-                  ? 'bg-red-50 text-red-700 border border-red-200'
-                  : 'bg-blue-50 text-blue-700 border border-blue-200'
-              }`}
-            >
-              {taskActionMessage.text}
-            </div>
-          )}
+          {/* ข้อความแจ้งเตือนผลการดำเนินการ (ถ้าเปิดหน้าต่างงานอยู่จะแสดงในหน้าต่างแทน) */}
+          {!selectedTask && taskMessageBox}
 
-          {/* ส่วนหัวของแท็บงาน พร้อมปุ่มสร้างงาน (เฉพาะหัวหน้า) */}
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="text-lg font-bold text-gray-800">รายการงานในกลุ่ม ({tasks.length})</h2>
-              <p className="text-xs text-gray-500 mt-0.5">ติดตามสถานะ มอบหมาย และส่งต่องานในกลุ่ม</p>
+          {/* ตัวกรองบอร์ด และปุ่มสร้างงาน (เฉพาะหัวหน้า) */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                ['all', 'ทั้งหมด'],
+                ['mine', 'ของฉัน'],
+                ['open', 'ยังไม่มีคนทำ'],
+              ] as const).map(([fid, label]) => (
+                <button
+                  key={fid}
+                  onClick={() => setBoardFilter(fid)}
+                  className={`rounded-full px-3 py-1 text-[13px] font-medium cursor-pointer ${
+                    boardFilter === fid ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
             {isLeader && (
               <button
@@ -1155,16 +1427,17 @@ export default function GroupDetailPage() {
                   setTaskActionMessage(null)
                   setShowCreateModal(true)
                 }}
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:shadow-md transition-all whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-violet-700 whitespace-nowrap cursor-pointer"
               >
-                + สร้างงาน
+                <Plus className="h-4 w-4" /> สร้างงาน
               </button>
             )}
           </div>
 
-          {/* กล่อง/ฟอร์มสร้างงานใหม่ (เฉพาะหัวหน้า) */}
+          {/* หน้าต่างฟอร์มสร้างงานใหม่ (เฉพาะหัวหน้า) */}
           {showCreateModal && isLeader && (
-            <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 p-6 space-y-4">
+            <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-900/40 px-4 py-10">
+            <div className="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <h3 className="text-base font-bold text-gray-800">สร้างงานใหม่</h3>
                 <button
@@ -1360,202 +1633,62 @@ export default function GroupDetailPage() {
                   <button
                     type="submit"
                     disabled={createTaskLoading}
-                    className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:shadow-md transition disabled:opacity-50"
+                    className="px-5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-semibold hover:shadow-md transition disabled:opacity-50"
                   >
                     {createTaskLoading ? 'กำลังสร้าง...' : 'บันทึกสร้างงาน'}
                   </button>
                 </div>
               </form>
             </div>
+            </div>
           )}
 
-          {/* รายการงาน */}
+          {/* บอร์ดงาน 3 คอลัมน์ กดการ์ดเพื่อเปิดรายละเอียดในหน้าต่าง */}
           {tasksLoading ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-400 text-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-[13px] text-slate-600">
               กำลังโหลดรายการงาน...
             </div>
           ) : tasks.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center text-gray-400 text-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-[13px] text-slate-600">
               ยังไม่มีงานในกลุ่มนี้
             </div>
           ) : (
-            <div className="space-y-4">
-              {tasks.map((t) => {
-                const priorityInfo = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.medium
-                const statusInfo = STATUS_CONFIG[t.status] || STATUS_CONFIG.pending
-                const isAssignee = t.assigned_to === currentUserId
-                const taskCollaborators = collaborators.filter((c) => c.task_id === t.task_id)
-                // ผู้ร่วมทำที่รับงานแล้วทำได้เหมือนคนหลัก ยกเว้นกด "เสร็จแล้ว"
-                const isCollaborator = taskCollaborators.some(
-                  (c) => c.user_id === currentUserId && c.status === 'accepted'
-                )
-                const isAwaitingResponse = t.assignment_type === 'leader_assign' && isAssignee && t.status === 'assigned'
-                const latestRejection = t.status === 'rejected' ? getLatestRejection(t.task_id) : null
-                const isOverdue = t.status !== 'completed' && !!t.deadline && new Date(t.deadline) < new Date()
-
+            <div className="grid gap-3 md:grid-cols-3">
+              {BOARD_COLUMNS.map((col) => {
+                const items = boardTasks.filter((t) => col.statuses.includes(t.status))
                 return (
-                  <div
-                    key={t.task_id}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3 hover:border-indigo-100 transition"
-                  >
-                    <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <div className="space-y-1 max-w-xl">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-base font-bold text-gray-800">{t.title}</h3>
-                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${priorityInfo.className}`}>
-                            ความสำคัญ: {priorityInfo.label}
-                          </span>
-                          <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-violet-100 text-violet-700">
-                            ความยาก: {DIFFICULTY_LABEL[t.difficulty] ?? 'กลาง'}
-                          </span>
-                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${statusInfo.className}`}>
-                            {statusInfo.label}
-                          </span>
-                        </div>
-                        {t.description && (
-                          <p className="text-xs text-gray-600 leading-relaxed mt-1">{t.description}</p>
-                        )}
-                      </div>
-
-                      <div className="sm:text-right text-xs space-y-1 min-w-fit">
-                        <p className="text-gray-500">
-                          กำหนดส่ง:{' '}
-                          <span className={`font-semibold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}`}>
-                            {formatThaiDateTime(t.deadline)}
-                          </span>
-                          {isOverdue && (
-                            <span className="ml-1.5 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
-                              เลยกำหนด
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-gray-500">
-                          ผู้รับผิดชอบ:{' '}
-                          <span className="font-semibold text-indigo-700">
-                            {getUserDisplayName(t.assigned_to)}
-                            {isAssignee && <span className="text-gray-400 ml-1">(คุณ)</span>}
-                          </span>
-                        </p>
-                        {/* งานที่เสร็จแล้วแก้ไม่ได้ เพื่อไม่ให้คะแนนย้ายจากคนที่ทำเสร็จ */}
-                        {isLeader && t.status !== 'completed' && (
-                          <button
-                            onClick={() => {
-                              setTaskActionMessage(null)
-                              setEditModalTask(t)
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-indigo-200 text-indigo-700 rounded-lg text-xs font-semibold hover:bg-indigo-50 transition whitespace-nowrap cursor-pointer"
-                          >
-                            <Pencil className="h-3.5 w-3.5" /> แก้ไขงาน
-                          </button>
-                        )}
-                      </div>
+                  <section key={col.key} className="rounded-2xl border border-slate-200 bg-slate-100/70 p-2.5">
+                    <h3 className="mb-2.5 flex items-center gap-2 px-1">
+                      <span className={`rounded-md px-2 py-0.5 text-[13px] font-bold ${col.pill}`}>{col.title}</span>
+                      <span className="text-[13px] font-semibold text-slate-600">{items.length}</span>
+                    </h3>
+                    <div className="space-y-2">
+                      {items.map(renderBoardCard)}
+                      {items.length === 0 && <p className="px-1 py-3 text-[12px] text-slate-600">ไม่มีงาน</p>}
                     </div>
-
-                    <TaskTeamPanel
-                      task={t}
-                      collaborators={taskCollaborators}
-                      currentUserId={currentUserId}
-                      isLeader={isLeader}
-                      members={members}
-                      onChanged={loadTasks}
-                    />
-
-                    <TaskWorkPanel
-                      task={t}
-                      currentUserId={currentUserId}
-                      canEdit={isLeader || isAssignee || isCollaborator}
-                    />
-
-                    {/* แสดงกรณีถูกปฏิเสธ (rejected): ห้ามล้าง assigned_to แสดงป้ายปฏิเสธโดย พร้อมเหตุผล */}
-                    {t.status === 'rejected' && (
-                      <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-xs text-rose-800 flex items-center justify-between gap-2 flex-wrap">
-                        <div>
-                          <span className="font-semibold">
-                            ปฏิเสธโดย {getUserDisplayName(latestRejection?.user_id || t.assigned_to)}
-                          </span>
-                          {latestRejection?.note && (
-                            <span className="ml-2 text-rose-600">
-                              (เหตุผล: {latestRejection.note})
-                            </span>
-                          )}
-                        </div>
-                        {/* หัวหน้าเห็นปุ่มเปลี่ยนผู้รับผิดชอบ */}
-                        {isLeader && (
-                          <button
-                            onClick={() => {
-                              setTaskActionMessage(null)
-                              setReassignModalTask(t)
-                              setReassignMemberId('')
-                            }}
-                            className="px-3 py-1 bg-white border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold hover:bg-rose-100 transition whitespace-nowrap cursor-pointer"
-                          >
-                            เปลี่ยนผู้รับผิดชอบ
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ปุ่มการกระทำสำหรับสมาชิก */}
-                    {/* 1. กรณีงานว่าง (open_choice) ที่ยังไม่มีผู้รับ */}
-                    {t.assignment_type === 'open_choice' && t.status === 'pending' && !t.assigned_to && (
-                      <div className="pt-2 border-t border-gray-100 flex items-center justify-end">
-                        <button
-                          onClick={() => handleClaimTask(t)}
-                          className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition cursor-pointer"
-                        >
-                          {t.headcount > 1 ? 'รับเป็นผู้รับผิดชอบหลัก' : 'เลือกรับงานนี้'}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* 2. การตอบรับงาน (เฉพาะผู้ใช้ที่เป็น assigned_to และงานมี status = 'assigned') */}
-                    {isAwaitingResponse && (
-                      <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleAcceptTask(t)}
-                          className="px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
-                        >
-                          รับงาน
-                        </button>
-                        <button
-                          onClick={() => {
-                            setTaskActionMessage(null)
-                            setRejectModalTask(t)
-                            setRejectReason('')
-                          }}
-                          className="px-4 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold hover:bg-rose-100 transition cursor-pointer"
-                        >
-                          ปฏิเสธ
-                        </button>
-                      </div>
-                    )}
-
-                    {/* 3. การดำเนินงานและส่งงาน (เมื่อผู้ใช้รับงานแล้ว หรือกำลังทำ) */}
-                    {(isAssignee || isCollaborator) && (t.status === 'accepted' || t.status === 'in_progress') && (
-                      <div className="pt-2 border-t border-gray-100 flex items-center justify-end gap-2">
-                        {t.status === 'accepted' && (
-                          <button
-                            onClick={() => handleStartTask(t)}
-                            className="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition cursor-pointer"
-                          >
-                            เริ่มทำงาน
-                          </button>
-                        )}
-                        {isAssignee ? (
-                          <button
-                            onClick={() => handleCompleteTask(t)}
-                            className="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition cursor-pointer"
-                          >
-                            <CircleCheck className="h-3.5 w-3.5" /> ทำเสร็จแล้ว
-                          </button>
-                        ) : (
-                          <span className="text-xs text-gray-400">ผู้รับผิดชอบหลักเป็นผู้กดเสร็จแล้ว</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  </section>
                 )
               })}
+            </div>
+          )}
+
+          {/* หน้าต่างรายละเอียดงาน: ปุ่มรับ/ปฏิเสธ/เริ่ม/เสร็จ ทีมงาน ลิงก์ผลงาน และความเห็นอยู่ในนี้ทั้งหมด */}
+          {selectedTask && (
+            <div
+              className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-900/40 px-4 py-10"
+              onClick={() => setSelectedTaskId(null)}
+            >
+              <div className="relative w-full max-w-2xl space-y-3" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setSelectedTaskId(null)}
+                  aria-label="ปิด"
+                  className="absolute -top-9 right-0 rounded-full bg-white p-1.5 text-slate-700 shadow"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                {taskMessageBox}
+                {renderTaskDetail(selectedTask)}
+              </div>
             </div>
           )}
 
@@ -1670,7 +1803,7 @@ export default function GroupDetailPage() {
                     type="button"
                     onClick={handleConfirmReassign}
                     disabled={reassignLoading || !reassignMemberId}
-                    className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition disabled:opacity-50"
+                    className="px-5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-semibold hover:shadow-md transition disabled:opacity-50"
                   >
                     {reassignLoading ? 'กำลังบันทึก...' : 'มอบหมายงานใหม่'}
                   </button>
@@ -1701,7 +1834,7 @@ export default function GroupDetailPage() {
                 <button
                   onClick={handleAddMember}
                   disabled={addLoading}
-                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm whitespace-nowrap"
+                  className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 text-sm whitespace-nowrap"
                 >
                   {addLoading ? 'กำลังเพิ่ม...' : 'เพิ่มสมาชิก'}
                 </button>

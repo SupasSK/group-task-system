@@ -56,7 +56,7 @@ export default function CalendarPage() {
                 time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
                 tone: toneOf(t),
                 completed: t.status === 'completed',
-                href: `/dashboard/groups/${t.group_id}?tab=tasks`,
+                href: `/dashboard/groups/${t.group_id}?tab=tasks&task=${t.task_id}`,
               };
             })
         );

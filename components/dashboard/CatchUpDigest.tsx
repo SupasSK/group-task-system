@@ -64,7 +64,8 @@ export const ACTION_STYLE: Record<string, { icon: LucideIcon; className: string 
   eval_round_closed: { icon: Star, className: EVAL_STYLE },
 }
 
-const PAGE_SIZE = 20
+// การ์ดประวัติแสดงรายการล่าสุดเท่านี้ กด "ดูทั้งหมด" เพื่อแสดงที่เหลือ
+const HISTORY_LIMIT = 10
 
 interface ActivityLog {
   log_id: number
@@ -158,8 +159,8 @@ export default function CatchUpDigest({
   const [verifyText, setVerifyText] = useState<{ ok: boolean; text: string } | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [acknowledging, setAcknowledging] = useState(false)
-  // จำนวนรายการที่แสดงในการ์ดประวัติ เพิ่มทีละ PAGE_SIZE เมื่อกด "ดูเพิ่ม"
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  // จำนวนรายการที่แสดงในการ์ดประวัติ
+  const [visibleCount, setVisibleCount] = useState(HISTORY_LIMIT)
 
   useEffect(() => {
     let cancelled = false
@@ -358,7 +359,7 @@ export default function CatchUpDigest({
             {onOpenTasks && (
               <button
                 onClick={onOpenTasks}
-                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors cursor-pointer"
               >
                 ดูงานและผลงานทั้งหมด <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -375,13 +376,13 @@ export default function CatchUpDigest({
         ) : (
           <div className="mt-4 space-y-3">
             {topics.map((topic) => (
-              <div key={topic.key} className="rounded-xl bg-indigo-50/60 border border-indigo-100 p-3.5">
+              <div key={topic.key} className="rounded-xl bg-slate-50 border border-slate-200 p-3.5">
                 <p className="text-sm font-semibold text-gray-800">{topic.title}</p>
                 <ul className="mt-2 space-y-1.5">
                   {topic.items.map((log) => (
                     <li key={log.log_id} className="text-xs text-gray-600">
                       {isNew(log) && (
-                        <span className="mr-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        <span className="mr-1.5 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-white">
                           ใหม่
                         </span>
                       )}
@@ -402,7 +403,7 @@ export default function CatchUpDigest({
           <button
             onClick={handleVerify}
             disabled={verifying}
-            className="text-xs px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+            className="text-xs px-3 py-1.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-60"
           >
             {verifying ? 'กำลังตรวจสอบ...' : 'ตรวจสอบความถูกต้องของประวัติ'}
           </button>
@@ -464,10 +465,10 @@ export default function CatchUpDigest({
             {logs.length > visibleCount && (
               <div className="mt-1 text-center">
                 <button
-                  onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-                  className="text-xs px-4 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors cursor-pointer"
+                  onClick={() => setVisibleCount(logs.length)}
+                  className="text-xs px-4 py-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                 >
-                  ดูเพิ่ม ({logs.length - visibleCount} รายการ)
+                  ดูทั้งหมด ({logs.length} รายการ)
                 </button>
               </div>
             )}

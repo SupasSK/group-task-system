@@ -52,7 +52,7 @@ function dueText(t: HomeTask) {
   return `ส่ง ${THAI_WEEKDAYS[d.getDay()]} ${shortDate(d)}`;
 }
 
-const taskHref = (t: HomeTask) => `/dashboard/groups/${t.group_id}?tab=tasks`;
+const taskHref = (t: HomeTask) => `/dashboard/groups/${t.group_id}?tab=tasks&task=${t.task_id}`;
 
 export default function DashboardPage() {
   const supabase = createClient();
